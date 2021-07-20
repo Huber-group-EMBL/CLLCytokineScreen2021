@@ -1,0 +1,47 @@
+ompiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+
+#Other files and folders#
+########################
+**/*_cache/
+**/*_files/
+
+#Specific Folders#
+#################
+figs/*.png
+figs/*.pdf
+vignettes/*.png
+vignettes/*.pdf
+inst/figs/*.png
+inst/figs/*.pdf
+inst/shiny/data_for_shiny/
+
+#Specific Files#
+################
+inst/doc/*.xlsx
+data/CLL.allBams.peaks.overlaps.bed
+data/sampleTable_TF.tsv

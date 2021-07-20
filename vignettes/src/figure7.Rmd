@@ -1,0 +1,328 @@
+---
+title: 'CLL Cytokine Screen 2021: Figure 7'
+author: "Holly Giles and Peter Bruch"
+date: "`r doc_date()`"
+output:
+  BiocStyle::html_document:
+      toc: yes
+      toc_depth: 3
+      toc_float: yes
+      code_folding: "hide" 
+---
+
+
+In this sub-vignette we present the analysis and source code for figure 7. This sub-vignette can be built along with all other sub-vignettes by running CLLCytokineScreen2021.Rmd. 
+
+# Set up
+Load libraries 
+```{r loadLibraries7, cache = FALSE, message = FALSE, warning = FALSE}
+
+library(patchwork)
+library(maxstat)
+library(survminer)
+library(survival)
+library(ggpubr)
+library(rlang)
+library(ggbeeswarm)
+library(dplyr)
+
+```
+ 
+Set plot directory
+```{r plotDir7}
+plotDir = ifelse(exists(".standalone"), "", "../../inst/figs/")
+if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
+```
+
+
+# Load data
+Raw
+```{r loadData7}
+
+#ihc_patient_data: 596 x 7 tibble containing IHC staining intensities forpIRAK4, pSTAT6 and STAT6 staining in CLL and healthy tissue 
+load( "../../data/ihc_patient_data.RData")
+
+#ihc_surv_data: 200 x 15 tibble containing IHC staining intensities for pIRAK4, pSTAT6 and STAT6 staining in CLL and healthy tissue, along with meta data (including clinical outcomes) on each patient sample
+load( "../../data/ihc_surv_data.RData")
+
+```
+
+
+```{r loadData_fromtsv7, eval = FALSE}
+
+#ihc_patient_data: 596 x 7 tibble containing IHC staining intensities forpIRAK4, pSTAT6 and STAT6 staining in CLL and healthy tissue 
+ihc_patient_data <- read.table(file= "../../inst/extdata/ihc_patient_data.txt",header = TRUE) %>% as_tibble() %>% dplyr::group_by(PatientID)
+
+#ihc_surv_data: 200 x 15 tibble containing IHC staining intensities for pIRAK4, pSTAT6 and STAT6 staining in CLL and healthy tissue, along with meta data (including clinical outcomes) on each patient sample
+ihc_surv_data <- read.table(file= "../../inst/extdata/ihc_surv_data.txt",header = TRUE) %>% as_tibble() %>% dplyr::group_by(PatientID)
+
+
+```
+
+
+Process
+```{r processData7}
+
+#convert stain type to factor
+ihc_patient_data$Stain <- factor(ihc_patient_data$Stain, levels = c("pSTAT6", "STAT6" , "pIRAK4"))
+
+```
+
+
+# Set aesthetics
+```{r defineAesthetics7}
+
+source("../../R/themes_colors.R")
+
+```
+
+
+# Plot Figures
+
+## Figure 7A
+Beeswarm-boxplot of mean staining intensities of pSTAT6, for healthy and CLL LN samples
+```{r, Fig7A, fig.path=plotDir, dev=c("png", "pdf"), fig.width=7, fig.height=7}
+
+Fig7A <-
+  ihc_patient_data %>%
+  #get staining intensities for pSTAT6 only
+  dplyr::filter(Stain %in% c("pSTAT6")) %>%
+  #plot staining intensity, stratified by CLL / Healthy LN
+  ggplot(aes(x = Tissue, y = Intensity)) +
+  geom_boxplot() +
+  geom_beeswarm(aes(color=Tissue), alpha=1, cex=2) +
+  #add p values
+  stat_compare_means(method = "t.test", comparisons=list(c(1,2)), size=6) +
+  scale_color_manual(values = c(palreds[8], palblues[2])) +
+  xlab("") +
+  ylab("Mean pSTAT6 Staining Intensity") +
+  guides(color = "none") +
+  scale_x_discrete(labels = c( "CLL"="CLL-infiltrated \nlymph nodes", "LK"="Non-neoplastic \nlymph nodes")) +
+  coord_cartesian(clip = "off") +
+  #add preset theme 2
+  t2
+
+Fig7A
+
+```
+
+## Figure 7B
+Beeswarm-boxplot of mean staining intensities of pIRAK4, for healthy and CLL LN samples
+```{r Fig7B, fig.path=plotDir, dev=c("png", "pdf"), fig.width=7, fig.height=7}
+
+Fig7B <-
+  ihc_patient_data %>%
+  #filter for pIRAK4 staining intensities only
+  dplyr::filter(Stain%in%c("pIRAK4")) %>%
+  #plot staining intensity, stratified by CLL / Healthy LN
+  ggplot(aes(x=Tissue, y=Intensity)) +
+  geom_boxplot() +
+  geom_beeswarm(aes(color=Tissue), alpha=1, cex=2) +
+  #add p values 
+  stat_compare_means(method = "t.test", comparisons=list(c(1,2)), size=6) +
+  scale_color_manual(values = c(palreds[8], palblues[2])) +
+  xlab("") +
+  ylab("Mean pIRAK4 Staining Intensity") +
+  guides(color="none") +
+  scale_x_discrete(labels = c( "CLL"="CLL-infiltrated \nlymph nodes", "LK"="Non-neoplastic \nlymph nodes")) +
+  coord_cartesian(clip = "off") +
+  #add preset theme 2
+  t2
+
+
+
+Fig7B
+
+```
+
+## Figure 7C
+Image of IHC cross-section of CLL-infiltrated LN stained for pSTAT6
+```{r Fig7C, fig.path=plotDir, dev=c("png", "pdf"), fig.width=6, fig.height=4}
+
+Fig7C <-cowplot::ggdraw() +
+  cowplot::draw_image( "../../inst/images/CLL1_I3_pSTAT6.png", scale = 1)
+
+Fig7C
+
+```
+
+
+
+## Figure 7D
+Image of IHC cross-section of healthy LN stained for pSTAT6
+```{r Fig7D, fig.path=plotDir, dev=c("png", "pdf"), fig.width=6, fig.height=4}
+
+##read image
+Fig7D <- cowplot::ggdraw() + 
+  cowplot::draw_image("../../inst/images/LK2_B4_pSTAT6.png", scale = 1)
+
+Fig7D
+
+```
+
+## Figure 7E
+Image of IHC cross-section of CLL-infiltrated LN stained for pIRAK4
+```{r Fig7E, fig.path=plotDir, dev=c("png", "pdf"), fig.width=6, fig.height=4}
+
+Fig7E <- cowplot::ggdraw() + 
+  cowplot::draw_image( "../../inst/images/CLL1_I3_pIRAK4.png", scale = 1)
+
+Fig7E
+
+```
+
+
+## Figure 7F
+Image of IHC cross-section of healthy LN stained for pIRAK4
+```{r Fig7F, fig.path=plotDir, dev=c("png", "pdf"), fig.width=6, fig.height=4}
+
+
+Fig7F <- cowplot::ggdraw() + 
+  cowplot::draw_image( "../../inst/images/LK2_B4_pIRAK4.png", scale = 1)
+
+Fig7F
+```
+
+
+## Figure 7G
+Kaplan-Meier curve to show associations of pSTAT6 levels with treatment free survival.     
+In Figures 7G and 7H the two pSTAT6 and pIRAK4 groups (high /low) were defined by  mean staining intensities dichotomised using maximally selected rank statistics. The same 64 CLL lymph node samples were used for both Kaplan-Meier plots. 50 patient samples were in the high pSTAT6 group, and 52 in the high pIRAK4 group.       
+
+Prework for 7G and H
+```{r KaplanMeier_prework7, warning=FALSE}
+
+#Define stains for which want to visualize TTT
+stains <- c("pSTAT6", "pIRAK4")
+
+
+#Get optimal cut offs 
+stats <- lapply(stains, function(stn){
+ 
+  survival <- dplyr::select(ihc_surv_data, PatientID, Tissue, Diagnosis, Sex, TTT, treatedAfter, stn)
+  colnames(survival) <- c("PatientID", "Tissue", "Diagnosis", "Sex", "TTT", "treatedAfter", "target")
+  
+  #Run test to obtain cut off threshold for high pSTAT6 versus low pSTAT6
+
+  maxtest <- maxstat.test(Surv(TTT, treatedAfter)~ target, 
+                          data = survival,
+                          smethod = "LogRank",
+                          alpha = NULL)
+  
+  cutpoint <- maxtest$estimate
+  
+ })
+  
+  names(stats) <- c("pSTAT6", "pIRAK4")
+  
+                                          
+  #Annotate by cutoff point
+  survdf <- mutate(ihc_surv_data, 
+                   phosphoSTAT6 = ifelse(pSTAT6 < stats$pSTAT6, "low", "high"), 
+                   phosphoIRAK4 = ifelse(pIRAK4 < stats$pIRAK4, "low", "high"))
+  
+                                      
+
+  #fit survival models
+  f_pstat6 <- survfit(Surv(TTT, treatedAfter) ~ phosphoSTAT6, data= survdf)
+  f_pirak4 <- survfit(Surv(TTT, treatedAfter) ~ phosphoIRAK4, data= survdf)
+  
+  fits <- list(pSTAT6 = f_pstat6, pIRAK4 = f_pirak4)
+  
+  #Make plot
+  gg = ggsurvplot_list(fits, 
+                       survdf,  
+                       pval=TRUE, 
+                       palette=c(palreds[8],palreds[3]),  
+                       risk.table = TRUE, legend.title = "", 
+                       ggtheme = t2, 
+                       legend.labs =list(c("High", "Low"),c("High", "Low")),  
+                       xlab="Time in years", ylab="\nTreatment free survival", title= "", legend = "bottom")
+
+  
+
+```
+
+
+```{r, Fig7G, fig.path=plotDir, dev=c("png", "pdf"), fig.width=16, fig.height=7}
+
+#get plot for pSTAT6 stain
+ Fig7G <-
+  wrap_elements(gg$pSTAT6$plot + 
+                  theme(axis.title.x = element_blank()) +
+                  gg$pSTAT6$table + 
+                  theme(plot.title = element_blank()) +
+                  plot_layout(ncol = 1, heights = c(85, 15)))
+  
+Fig7G
+
+```
+
+
+## Figure 7H
+Kaplan-Meier curve to show associations of pSTAT6 levels with treatment free survival.   
+```{r Fig7H, fig.path=plotDir, dev=c("png", "pdf"), fig.width=16, fig.height=7}
+
+#get plot for pIRAK4 stain 
+Fig7H <- wrap_elements(gg$pIRAK4$plot+ 
+                         theme(axis.title.x = element_blank()) +
+                         gg$pIRAK4$table + 
+                         theme(plot.title = element_blank()) +
+                  plot_layout(ncol=1, heights = c(85, 15))) 
+
+
+Fig7H
+
+```
+
+
+# Assemble Figure
+```{r, Fig7, fig.path=plotDir, dev=c("png", "pdf"),fig.height=15, fig.width=16}
+
+design1 <-"
+  ACG
+  ADG
+  BEH
+  BFH
+  "
+tp <- theme(plot.tag = element_text(size = 30, vjust = 1))
+
+Fig7 <-
+  wrap_elements(Fig7A) + tp +
+  wrap_elements(Fig7B) + tp +
+  Fig7C + tp +
+  Fig7D + tp +
+  Fig7E + tp +
+  Fig7F + tp +
+  
+  Fig7G + tp +
+  
+  Fig7H + tp +
+  
+  plot_layout(design = design1, widths = c(1,0.7,1), heights =c(0.8, 1, 0.8, 1))+
+  plot_annotation(tag_levels = "A")
+  
+Fig7
+  
+ 
+
+```
+
+
+# Count tables
+```{r countTables}
+
+ihc_surv_data %>% 
+  ungroup() %>% 
+  mutate(TFT = ifelse(is.na(TFT)|TFT == "NA", "NA", "Available" )) %>% 
+  dplyr::group_by(Diagnosis, TFT) %>% 
+  count()
+
+```
+
+# Appendix
+```{r appendix7}
+Sys.info()
+
+sessionInfo()
+```
+

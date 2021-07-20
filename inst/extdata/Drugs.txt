@@ -1,0 +1,13 @@
+ID	Name	main_targets	target_category	group	pathway	distributor	cat_no	conc1	conc2	approved_012020	devel_012020
+D_001	Ibrutinib	BTK	BCR	kinase inhibitor	B-cell receptor	Selleck Chemicals	S2680	500nM	50nM	1	0
+D_002	Idelalisib	PI3K delta	BCR	kinase inhibitor	B-cell receptor	Selleck Chemicals	S2226	500nM	50nM	1	0
+D_003	Fludarabine	Purine analogue	DDR	chemotherapeutic agent	Other	Selleck Chemicals	S1491	2000nM	200nM	1	0
+D_004	Nutlin-3a	MDM2	DDR	other	Other	Selleck Chemicals	S8059	10000nM	1000nM	0	1
+D_005	Selumetinib	MEK1/2	MAPK	kinase inhibitor	Other	Selleck Chemicals	S1008	1000nM	100nM	0	1
+D_006	BAY-11-7085	NFkB	NFkB	other	Other	Selleck Chemicals	S7352	2000nM	200nM	0	1
+D_007	Everolimus	mTOR	mTOR	other	Other	Selleck Chemicals	S1120	500nM	50nM	1	0
+D_008	PRT062607	SYK	BCR	kinase inhibitor	B-cell receptor	Selleck Chemicals	S8032	500nM	50nM	0	1
+D_009	Pyridone-6 	JAK1/2/3	JAK/STAT	kinase inhibitor	Other	MedChemExpress	457021-03-7	500nM	50nM	0	1
+D_010	Ralimetinib	p38 MAPK	MAPK	kinase inhibitor	Other	Selleck Chemicals	S1494	1500nM	150nM	0	1
+D_011	Luminespib	HSP90	HSP90	other	Other	Selleck Chemicals	S1069	200nM	20nM	0	1
+D_012	I-BET 762	BRD2/3/4	Epigenome	other	Other	Selleck Chemicals	S7189	1000nM	100nM	0	1

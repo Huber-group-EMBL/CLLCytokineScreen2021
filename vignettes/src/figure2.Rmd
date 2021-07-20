@@ -1,0 +1,989 @@
+---
+title: 'CLL Cytokine Screen 2021: Figure 2'
+author: "Holly Giles and Peter Bruch"
+date: "`r doc_date()`"
+output:
+  BiocStyle::html_document:
+      toc: yes
+      toc_depth: 3
+      toc_float: yes
+      code_folding: "hide" 
+---
+
+In this sub-vignette we present the analysis and source code for Figure 2. This sub-vignette can be built along with all others, to generate all  figures, by running CLLCytokineScreen2021.Rmd. 
+
+# Set up
+Load libraries
+```{r loadLibraries2, cache = FALSE, message = FALSE, warning = FALSE}
+
+library(RColorBrewer)
+library(ggrepel)
+library(patchwork)
+library(ggplot2)
+library(tidyr)
+library(ggbeeswarm)
+library(magrittr)
+library(pheatmap)
+library(ggfortify)
+library(gridExtra)
+library(DESeq2)
+library(survival)
+library(survminer)
+library(glmnet)
+library(ConsensusClusterPlus)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(msigdbr)
+library(dplyr)
+library(tidyverse)
+
+```
+
+Set plotting directory
+```{r plotDir2}
+
+plotDir = ifelse(exists(".standalone"), "", "../../inst/figs/")
+if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
+
+```
+
+# Load data
+Raw
+```{r loadData2}
+
+#df: tibble containing all screening viability data
+load( "../../data/df.RData")
+
+#patMeta: tibble containing all patient genetic data
+load( "../../data/patMeta.RData")
+
+#LDT: tibble containing Lymhpocyte DOubling Times for patients in screen
+load( "../../data/LDT.RData")
+
+#survT: tibble containing disease progression data for patients in screen 
+load( "../../data/survT.RData")
+
+#dds_smp: DESeqDataSet containing RNA counts and assosciated meta data for matched samples to those in screen 
+load( "../../data/dds_smp.RData")
+
+```
+
+```{r loadData_fromtsv2, eval = FALSE}
+
+#From tsvs
+#screening data
+df <- read.table(file= "../../inst/extdata/df.txt",header = TRUE) %>% as_tibble()
+
+#Patient meta data
+patMeta <- read.table(file= "../../inst/extdata/patMeta.txt",header = TRUE) %>% as_tibble()
+
+#Lymphocyte Doubling Times
+LDT <- read.table(file= "../../inst/extdata/LDT.txt",header = TRUE) %>% as_tibble()
+
+#Survival times
+survT <- read.table(file= "../../inst/extdata/survT.txt",header = TRUE) %>% as_tibble()
+
+#RNA data
+rna_countsMatrix <- read.table(file=  "../../inst/extdata/rna_countsMatrix.txt", header = TRUE) 
+coldata_rna <- read.table(file="../../inst/extdata/coldata_rna.txt", header= TRUE)
+rowdata_rna <- read.table(file=  "../../inst/extdata/rowdata_rna.txt", header= TRUE) 
+
+
+#Arrange data for analysis
+#screening data
+df$Cytokine <- factor(df$Cytokine, levels= c("No Cytokine",
+                                              "Resiquimod", 
+                                              "IL-4", 
+                                              "TGF-b1",
+                                              "IL-1b",
+                                              "Interferon gamma",
+                                              "SDF-1a",
+                                              "sCD40L" ,
+                                              "sCD40L+IL-4",
+                                              "soluble anti-IgM", 
+                                              "CpG ODN",
+                                              "IL-6",
+                                              "IL-10",
+                                              "IL-21",
+                                              "HS-5 CM", 
+                                              "IL-15",
+                                              "BAFF",
+                                              "IL-2" ))
+
+
+#patMeta
+patMeta[sapply(patMeta, is.character)] <- lapply(patMeta[sapply(patMeta, is.character)], as.factor)
+patMeta[sapply(patMeta, is.integer)] <- lapply(patMeta[sapply(patMeta, is.integer)], as.factor)
+patMeta$PatientID <- as.character(patMeta$PatientID)
+
+#RNA
+#assemble deseq object
+rownames(coldata_rna) <- coldata_rna$PatientID
+dds_smp <- DESeqDataSetFromMatrix(rna_countsMatrix, coldata_rna, design =~1)
+rowData(dds_smp) <- rowdata_rna
+
+```
+
+
+
+Process data
+```{r processData2}
+# Subset data to Cytokine only treatments, no drugs 
+
+df <- dplyr::filter(df, Drug == "DMSO", Cytokine != "No Cytokine")
+
+```
+
+
+# Define Aesthetics
+```{r defineAesthetics2}
+
+source("../../R/themes_colors.R")
+
+```
+
+
+# Define additional functions
+*deckel function:*  to  set limits of scaling factor. Accepts a number `x`, and two numeric limits, `lower` and `upper`.
+```{r deckelFunction2}
+deckel <- function(x, lower = -Inf, upper = +Inf) ifelse(x<lower, lower, ifelse(x>upper, upper, x))
+```
+
+*medianCenter_MadScale function:*  to scale viability values according to MAD and then center values at zero. Maximum/minimum size of scaling factor set with deckel (above). Accepts a vector `x` to scale.
+```{r medianCenter_MadScaleFunction2}
+
+medianCenter_MadScale <- function(x) {
+  s=0
+  (x - s) / deckel(mad(x, center = s), lower = 0.05, upper = 0.2)
+}
+
+
+```
+
+*scaleCytResp function:*  to apply `medianCenter_MadScale` row wise to viability matrix. Accepts `x`, a matrix of log(viability) values. 
+```{r scaleCytRespFunction2}
+
+scaleCytResp  <- function(x) t(apply(x, 1, medianCenter_MadScale)) 
+
+```
+
+*Hierarchical clustering function:* To provide cluster function for running `ConsensusClusterPlus`. Accepts `this_dist`, a dissimilarity structure as produced by `dist` and `k`, the number of clusters to assign. 
+```{r hcfunction2}
+
+myclusterfunction = function(this_dist, k){
+    #run hierarchical cluster analysis on dissimilarity structure this_dist  
+    hc = hclust(this_dist)
+    #cut cut tree into k groups 
+    assignment = cutree(hc, k)
+    return(assignment)
+}
+
+```
+
+
+*Euclidean Distance function:* To provide distance function for running `ConsensusClusterPlus`. Calculates Euclidean distances for matrix `x`.
+```{r myDistfunc2}
+
+myDistFunc = function(x){ dist(x, method="euclidean")}
+
+```
+
+*Factor2Ind*: To generate indicator matrix from a factor. Given a factor  `x`, create an indicator matrix of dimension `length(x)` multiplied by `nlevels(x)-1`, dropping the column corresponding to the baseline level (by default the first level is used as baseline).
+
+```{r factor2indFunction2}
+factor2ind <- function(x, baseline)
+{
+
+  xname <- deparse(substitute(x))
+  n <- length(x)
+  x <- as.factor(x)
+  if(!missing(baseline)) x <- relevel(x, baseline)
+  X <- matrix(0, n, length(levels(x)))
+  X[(1:n) + n*(unclass(x)-1)] <- 1
+  X[is.na(x),] <- NA
+  dimnames(X) <- list(names(x), paste(xname, levels(x), sep = ":"))
+  return(X[,-1,drop=FALSE])
+}
+```
+
+
+*Function for multinomial regression*: To perform multinomial regression to identify genetic features that are predictors of cluster assignment. Provide a feature matrix `X` and a response matrix `y`, and specify `method` (regression method), `repeats` (number of repeats of the regression) and `folds` (number of folds to split the data into for cross validation). 
+```{r runGlm.multiFunction2}
+runGlm.multi <- 
+  function(X, y, method = "ridge", repeats=20, folds = 3) {
+  modelList <- list()
+  lambdaList <- c()
+  
+  coefMat <- 
+    lapply(unique(y), function(n) {
+    mat <- matrix(NA, ncol(X), repeats)
+    rownames(mat) <- colnames(X)
+    mat
+  })
+  
+  names(coefMat) <- unique(y)
+  
+  alpha = switch(method, lasso = 1, ridge = 0, stop("Please provide a valid method: lasso or ridge"))
+
+  
+  for (i in seq(repeats)) {
+
+      #balanced sampling
+      vecFold <- mltools::folds(y, nfolds = folds, stratified = TRUE, seed = i*1996)
+      res <- cv.glmnet(X, y, type.measure = "class",
+                       foldid = vecFold, alpha = alpha, standardize = FALSE,
+                       intercept = TRUE, family = "multinomial")
+      lambdaList <- c(lambdaList, res$lambda.min)
+      modelList[[i]] <- res
+      
+      coefModel <- coef(res, s = "lambda.min")
+      for (n in names(coefModel)) {
+        coefMat[[n]][,i] <- coefModel[[n]][-1]
+      }
+  }
+  list(modelList = modelList, lambdaList = lambdaList, coefMat = coefMat)
+  }
+
+
+
+```
+
+*Sum coefficients:* to drop all features from multinomial regression that don't meet specified cut off criteria, and gather coefficients for all remaining other features, for all repeats of the regression. Accepts a matrix `coefMat`, plus numeric values for `coefCut`, the minimum value of that the average coefficient should be, and `freqCut`, the minimum proportion of repeats that a coefficient should be significant.  
+
+```{r sumCoef2}
+
+sumCoef <- function(coefMat, coefCut = 0, freqCut =1) {
+  meanCoef <- rowMeans(abs(coefMat))
+  freqCoef <- rowMeans(coefMat != 0)
+  subMat <- coefMat[meanCoef > coefCut & freqCoef >= freqCut,,drop=FALSE]
+  eachTab <- data.frame(subMat) %>%
+     rownames_to_column("feature") %>% gather(key = "rep",value = "coef",-feature) %>%
+     mutate(rep = gsub("X","",rep))
+  return(eachTab)
+} 
+
+```
+
+
+# Plot Figures 
+##  Figure 2A
+Heatmap of all scaled log(viability) values, for all patient samples and stimuli.      
+In the code below, the viability data is  normalised to DMSO controls and each row is scaled according to MAD. Limits are applied to scaling factor for optimal visualisation. The heatmap is plotted using pheatmap: the ordering of the columns (patient samples) is obtained from the dendrogram that results from runninng ConsensusClusterPlus using hierarchical clustering with the Euclidean metric. The rows are globally ordered using the dendrogram order produced by hclust with default branch arrangement.
+```{r prepMatrix2}
+
+########### Viability matrix ################
+#make viability matrix for cytokine treatments for patients
+viab.mat <- dplyr::select(df, 
+                          PatientID, 
+                          Log, 
+                          Cytokine) %>% 
+            tidyr::spread(Cytokine, Log) %>%
+  as.data.frame()
+
+#make PatientID the row names
+rownames(viab.mat) <- unlist(viab.mat[,1]) # the first row will be the header
+viab.mat <- dplyr::select(viab.mat,-PatientID) 
+
+#Transform matrix
+viab.mat <- t(viab.mat)
+
+#keep unscaled matrix 
+viab.mat.unscaled <- viab.mat
+
+#run scaleCytResp on viability matrix
+viab.mat <- scaleCytResp(viab.mat)
+
+#apply deckel function to matrix
+#Calculate dendrogram 
+breaks <- c(seq(-3, 3, length.out = 101)) 
+
+viab.mat.lims <- deckel(viab.mat,
+                            lower = dplyr::first(breaks),
+                            upper = dplyr::last(breaks))
+
+```
+
+Run consensus clustering
+```{r, ConsensusClustering2}
+
+
+results = ConsensusClusterPlus(d = viab.mat.lims, 
+                               maxK = 7, 
+                               reps = 10000, 
+                               pItem = 0.8, 
+                               pFeature = 1,  
+                               clusterAlg = "myclusterfunction",
+                               distance = "myDistFunc", 
+                               plot = NULL, 
+                               seed = 1386, 
+                               finalLinkage = "complete", 
+                               innerLinkage = "complete")
+
+
+
+```
+
+Get cluster annotations
+```{r, heatmapClusters2}
+
+#Extract consensus clusters for k = 4
+clusters <- 
+  results[[4]][["consensusClass"]] %>%
+  tibble::enframe() %>% 
+  dplyr::rename(PatientID="name", Cluster="value") 
+
+#get table of clusters
+clusters <- 
+  clusters %>% 
+  dplyr::select(PatientID, Cluster)
+
+#get matrix
+cluster_matrix <- as.dist( 1 - results[[4]]$ml )
+
+#add clusters to patMeta
+patMeta_cl <- left_join(clusters, patMeta, by = "PatientID")
+
+```
+
+Arrange annotations for heatmap
+```{r, heatmapAnnotations2}
+
+#Sort heatmap annotations
+#Select annotations from patMeta_cl
+Heatmap_Annotation <- dplyr::select(patMeta_cl, 
+                                    PatientID, 
+                                    IGHV.status, 
+                                    trisomy12,
+                                    TP53,
+                                    ATM,
+                                    treatment, 
+                                    gender, 
+                                    Cluster) %>%
+  
+  #Adjust names/levels for legend
+  mutate(treatment=case_when(treatment==0~"No", 
+                             treatment==1~"Yes")) %>%
+
+  mutate(gender=case_when(gender=="f"~"Female", 
+                          gender=="m"~"Male")) %>%
+  
+  mutate(IGHV.status=case_when(IGHV.status=="U"~"Unmutated", 
+                               IGHV.status=="M"~"Mutated"))
+
+
+#Rename columns for legend
+colnames(Heatmap_Annotation) <- c("PatientID", 
+                                  "IGHV status",
+                                  "trisomy 12", 
+                                  "TP53", 
+                                  "ATM",
+                                  "Pretreated", 
+                                  "Sex", 
+                                  "Cluster")
+
+#make Pat IDs the rownames
+Heatmap_Annotation <- as.data.frame(Heatmap_Annotation)
+rownames(Heatmap_Annotation) <- unlist(Heatmap_Annotation$PatientID)
+
+#Tidy Up Heatmap Annotation table
+Heatmap_Annotation$Cluster <- as.factor(Heatmap_Annotation$Cluster)
+
+Heatmap_Annotation <- dplyr::select(Heatmap_Annotation,-"PatientID")
+
+
+```
+
+Define aesthetics for heatmap and annotations
+```{r heatmapAesthetics2}
+
+########### Set Heatmap Aesthetics ###############
+#Generate red-blue divergent palette
+breaks <- c(seq(-3, 3, length.out = 101)) %>% `names<-`(
+     colorRampPalette(c(palblues, 
+                       "white",  "white", "white",
+                         palreds))(101))
+
+#Specify colors of annotations 
+ ann_colors = 
+   list(
+    "IGHV status" = c("Unmutated"=IGHV[1],
+                      "Mutated"=IGHV[2]),
+    "Sex" = c("Female"=Sex[1],
+              "Male"=Sex[2]),
+    "Pretreated" = c("No"=Mutant[1],
+                  "Yes"=Mutant[2]),
+    "trisomy 12" = c("1"=Mutant[2],
+                     "0"=Mutant[1]),
+    "ATM" = c("1"=Mutant[2],
+              "0"=Mutant[1]),
+    "TP53" = c("1"=Mutant[2],
+               "0"=Mutant[1]),
+    "Cluster" = c("1"=colors[1],
+                  "2"=colors[2],
+                  "3"=colors[3],
+                  "4"=colors[4]))
+```
+
+Plot Figure
+```{r Fig2A, fig.path=plotDir, dev=c("png", "pdf"), fig.width=16, fig.height=8, warning = FALSE}
+
+#Plot heatmap
+Fig2A <- 
+pheatmap(viab.mat.lims,  
+         scale = "none",
+         clustering_method = "complete", 
+         cluster_cols = TRUE,
+         show_colnames = FALSE,
+         cutree_cols = 4,
+         clustering_distance_cols = cluster_matrix,
+         annotation_col = Heatmap_Annotation,
+         annotation_colors = ann_colors,
+         cellheight = 22,
+         cellwidth = 4,
+         breaks = breaks,
+         color= names(breaks),
+         border_color=NA,
+         fontsize=12,
+         fontsize_row=16,
+         legend_breaks = c(-3,0,3),
+         labels_row = c("SDF-1\u03B1","TGF-\u03B21","IL6","IL10","Resiquimod","CpG ODN","IL4","sCD40L + IL4","sCD40L","BAFF","IL1\u03B2","soluble anti-IgM","IL15","IL2","Interferon \u03B3","IL21","HS-5 CM") ) 
+        
+
+Fig2A
+
+
+```
+
+
+## Figure 2B
+```{r, Fig2B, fig.path=plotDir, dev=c("png", "pdf"), fig.width=8, fig.height=6}
+
+#plot LDT stratified by Patient Clusters
+Fig2B <-
+  patMeta_cl %>%
+  #join patient meta data with clusters, to LDT dataframe
+  left_join(  dplyr::select(LDT, PatientID, doubling.time), by=c("PatientID"="PatientID")) %>%
+  dplyr::filter(!is.na(doubling.time)) %>%
+  dplyr::mutate(Cluster=as.factor(Cluster)) %>%
+  
+  ggplot(aes(x=Cluster, y=doubling.time,  group=Cluster, fill=Cluster)) +
+  geom_boxplot() +
+  geom_beeswarm() +
+  scale_fill_manual(values=colors[1:4]) +
+  scale_y_log10() +
+  guides(fill="none") +
+  ylab("LDT in years") +
+  t2 +
+  # stat_compare_means(method="kruskal.test", size=6, label.x = 1.3, label.y=2.1)+
+  stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=6, label.x = 1.3, label.y=2.1)
+
+
+Fig2B
+
+
+# 
+# #run t test to compare clusters 3 and 4
+# patMeta_cl %>%
+#   left_join(  dplyr::select(LDT, PatientID, doubling.time), by=c("PatientID"="PatientID")) %>%
+#   dplyr::filter(!is.na(doubling.time)) %>%
+#   dplyr::mutate(Cluster=as.factor(Cluster)) %>% 
+#   dplyr::filter(Cluster %in% c(3,4)) %>% 
+#   mutate(doubling.time=log10(doubling.time)) %>% 
+#   
+#   t.test(doubling.time~Cluster, . )
+
+
+```
+
+
+## Figure 2C
+   
+Here we plot KM curves to show TTT stratified by cluster. Clinical follow-up information  to calculate OS was available for all 192 patients. For 188 patients treatment information after sample collection was available.
+```{r arrangeSurvivalData2}
+######Arrange data######
+clusters.surv <- left_join(clusters, survT, by = "PatientID")
+
+#Add meta data to heatmap clusters
+clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
+
+```
+
+Univariate Cox Proportional Hazards  
+Cluster 1 as reference
+```{r, fig.width=8, fig.height=6}
+coxph_summ <- clusters.surv%>%
+  mutate(Cluster=factor(Cluster))%>%
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 1),  data=.) %>% 
+    summary()
+coxph_summ$coefficients %>% round(5)
+C1vsC2_p <- coxph_summ$coefficients[1,5] %>% round(3)
+C1vsC2_p
+```
+
+Cluster 4 as reference
+```{r, fig.width=8, fig.height=6}
+coxph_summ <- clusters.surv%>%
+  mutate(Cluster=factor(Cluster))%>%
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 4),  data=.) %>% 
+  summary()
+coxph_summ$coefficients %>% round(5)
+C3vsC4_p<-coxph_summ$coefficients[3,5] %>% round(3)
+C3vsC4_p
+```
+
+Multivariate Cox Proportional Hazards  
+Cluster 1 as reference
+```{r }
+coxph_summ <- clusters.surv%>%
+  mutate(Cluster=factor(Cluster))%>%
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 1)+IGHV.status+trisomy12+TP53,  data=.) %>% 
+  summary()
+coxph_summ$coefficients
+C1vsC2_p_mv<-coxph_summ$coefficients[1,5] %>% round(3)
+C1vsC2_p_mv
+```
+
+Cluster 4 as reference
+```{r }
+coxph_summ <- clusters.surv%>%
+  mutate(Cluster=factor(Cluster))%>%
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 4)+IGHV.status+trisomy12+TP53,  data=.) %>%
+  summary()
+coxph_summ$coefficients
+C3vsC4_p_mv<-coxph_summ$coefficients[3,5] %>% round(3)
+C3vsC4_p_mv
+
+
+
+```
+
+
+Plot figure
+```{r, Fig2C, fig.path=plotDir, dev=c("png", "pdf"), fig.width=8, fig.height=6}
+
+##Run survfit on TTT
+fit <- survfit(Surv(TTT, treatedAfter)~Cluster, clusters.surv)
+
+
+t_plot<-  t2+theme(plot.title=element_blank(), axis.title.x=element_blank(), legend.key = element_blank())
+t_table<- t2+theme(plot.title=element_blank(), panel.grid.major.x = element_blank())
+
+Fig2_KM_surv <- 
+  ggsurvplot(fit,
+             surv.median.line = "hv", # Add medians survival
+             legend.title = "Cluster",# Change legends: title & labels
+             legend.labs = c("1", "2","3","4"),
+             pval = FALSE,
+             risk.table = TRUE,
+             palette = c(colors[1], colors[2], colors[3], colors[4]),
+             ggtheme = t_plot,
+             tables.theme = t_table,
+             legend = "bottom",
+             xlab="Time in years",
+             ylab="Time to next treatment (probability)",
+             break.time.by=1, 
+             xlim=c(0,6.8))
+
+Fig2_KM_surv_plot <-
+  Fig2_KM_surv$plot +
+  annotate(geom="text", x=6.2, y=0.5,    label=C3vsC4_p, color="black", size=6) +
+  geom_segment(x = 5.7, xend = 5.7, y = 0.72, yend = 0.28, color="black") +
+  geom_segment(x = 5.6, xend = 5.7, y = 0.72, yend = 0.72, color="black") +
+  geom_segment(x = 5.6, xend = 5.7, y = 0.281, yend = 0.281, color="black") +
+  annotate(geom="text", x=6.8, y=0.23, label=C1vsC2_p, color="black", size=6) +
+  geom_segment(x = 6.3, xend = 6.3, y = 0.33, yend = 0.13, color="black") +
+  geom_segment(x = 6.2, xend = 6.3, y = 0.33, yend = 0.33, color="black") +
+  geom_segment(x = 6.2, xend = 6.3, y = 0.131, yend = 0.131, color="black")
+
+
+Fig2C <- wrap_elements(Fig2_KM_surv_plot + Fig2_KM_surv$table + plot_layout(ncol=1, heights = c(0.8,0.2)))
+
+Fig2C
+
+```
+
+
+
+## Figure 2D
+Genetic predictors of cluster assignment.    
+Here we use a multinomial linear model with L1-penalty, implemented in the `cvglmnet` package. As the dependent variable, the cluster assignment for each patient was used. As input to the model, genetic features with more than 20% missing values were excluded, and only patients with complete annotation are included in the model (n=137). As predictors, the genetic mutations and CNVs (p=39) and IGHV status (coded as 0-1) are used,  using 3-fold cross-validation. Misclassification error is used as loss for cross- validation.   
+Prepare feature matrix
+```{r FeatureMatrix2}
+#Generate Matrix
+#select features from patient meta file
+geneMatrix <- 
+  dplyr::select(patMeta,
+                -c(gender:treatment)) %>%
+  
+  #adjust IGHV.status levels  U and M to numeric 1 and 0 
+  mutate(IGHV = ifelse(is.na(IGHV.status), NA,
+                       ifelse(IGHV.status == "M", 1, 0)), 
+         #remove old columns and remove Methylation Cluster
+         IGHV.status=NULL, Methylation_Cluster=NULL ) %>%
+  
+  #convert factors to numeric
+  mutate_if(is.factor, as.character) %>%
+  mutate_at(vars(-PatientID), as.numeric) %>%
+
+  #convert to matrix format, with patient IDs as rownames
+  data.frame() %>% 
+  column_to_rownames("PatientID") %>% 
+  as.matrix()
+
+
+#Tidy matrix for use in glmnet function
+
+#Remove genes with higher than 20% missing values
+geneMatrix <- geneMatrix[,colSums(is.na(geneMatrix))/nrow(geneMatrix) <= 0.2]
+
+#Filter for patients with complete data
+geneMatrix.complete <- geneMatrix[complete.cases(geneMatrix),]
+
+
+#Combine KRAS, NRAS and BRAF mutations into a single column
+#set up empty matrix
+Ras_Raf <- matrix(NA, 
+                  nrow = nrow(geneMatrix.complete), 
+                  ncol = 1)
+
+colnames(Ras_Raf) <- "RAS/RAF"
+
+#add RAS/RAF column to matrix
+geneMatrix.complete <- cbind(geneMatrix.complete, Ras_Raf)
+
+#Annotate RAS_RAF where where any of KRAS, NRAS or BRAF are mutated
+geneMatrix.complete[,"RAS/RAF"] <- ifelse(geneMatrix.complete[,"KRAS"]==1,1,
+		                                        ifelse(geneMatrix.complete[,"BRAF"]==1,1,
+	                	                          ifelse(geneMatrix.complete[,"NRAS"]==1, 1, 0)))
+
+
+#remove KRAS, NRAS and BRAF columns
+geneMatrix.complete <- 
+  geneMatrix.complete[, colnames(geneMatrix.complete) != "KRAS"]
+
+geneMatrix.complete <- 
+  geneMatrix.complete[, colnames(geneMatrix.complete) != "BRAF"]
+
+geneMatrix.complete <- 
+  geneMatrix.complete[, colnames(geneMatrix.complete) != "NRAS"]
+
+
+```
+
+Prepare response matrix 
+```{r responseMatrix2}
+#get Clusters and Patients
+y <- 
+  dplyr::select(patMeta_cl, PatientID, Cluster) %>% 
+  column_to_rownames("PatientID")
+
+#Cluster column as.numeric
+y$Cluster <- as.numeric(as.character(y$Cluster))
+
+#transform matrix
+y <- t(y)
+
+#Match response matrix and feature matrix
+y <- y[,rownames(geneMatrix.complete)]
+
+```
+
+Run multinomial regression
+```{r runGlmnet2}
+
+X <- geneMatrix.complete
+y <- y
+
+res <- runGlm.multi(X, y, method = "lasso", repeats = 50, folds = 3)
+
+```
+
+Prepare table of coefficients for plot
+```{r extractCoefficients2}
+
+coefList <- res$coefMat
+
+#Filter for features whose coefficients meet the frequency and minimum value thresholds
+coefTab <- lapply(names(coefList), function(d) {
+   coefMat <- coefList[[d]]
+   coefTab <- sumCoef(coefMat=coefMat, freqCut = 0.6, coefCut = 0.35) %>%
+     mutate(cluster = d)
+}) %>% bind_rows()
+
+
+
+```
+
+Plot Figure 2D:   
+Coefficients (feature importance) for each cluster
+```{r, Fig2D, fig.path=plotDir, dev=c("png", "pdf"), fig.height=7, fig.width=5}
+#average remaining coefficients in dataframe for plotting
+#ie show all sig features, the cluster they predict, and the average coefficient 
+plotTab <-
+  coefTab %>%
+  dplyr::group_by(feature, cluster) %>% 
+  dplyr::summarise(meanCoef = mean(coef),
+                   sdCoef = sd(coef)) %>%
+  dplyr::arrange(desc(meanCoef)) %>% 
+  ungroup()
+
+#update labelling 
+plotTab <- plotTab %>% mutate(feature = ifelse(feature == "IGHV", "IGHV status", 
+                                   ifelse(feature == "trisomy12", "trisomy 12", 
+                                      ifelse(feature == "gain8q", "gain(8q)", feature))))
+
+plotTab$feature <- factor(plotTab$feature,
+                          levels=c("IGHV status", 
+                                   "trisomy 12",
+                                   "SF3B1", 
+                                   "POT1",
+                                   "ATM", 
+                                   "TP53",
+                                   "RAS/RAF",
+                                   "gain(8q)"))
+
+
+Cluster.labs <- c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4")
+names(Cluster.labs) <- c(1, 2, 3, 4)
+ 
+
+Fig2D <- 
+    ggplot(plotTab, aes(x=feature, y=meanCoef))+ 
+    geom_bar(stat= "identity", aes(fill = cluster))+
+    geom_errorbar(aes(ymin = meanCoef - sdCoef, 
+                      ymax = meanCoef + sdCoef))+
+    ggtitle("") +
+    coord_cartesian(ylim=c(-1.5, 1.75))+
+    geom_hline(yintercept=0)+
+    ylab("Depleted / Enriched\n")+
+    xlab("")+
+    scale_fill_manual(values=colors[1:4])+
+    t1+
+   t.leg+
+
+   theme(strip.text = element_text(size = fontsize),
+         axis.text.x= element_text(size=fontsize+4, angle=45, vjust=1))+
+    facet_wrap(~cluster, 
+               nrow=4, 
+               strip.position = "right", 
+               labeller = labeller(cluster = Cluster.labs))+
+   guides(fill = "none")
+
+Fig2D
+
+```
+
+
+## Figure 2E
+GSEA of differentially expressed genes between clusters.    
+Here, for the n=49 patient samples for which we have viability data and RNA–Seq data for matching samples, we search for associations of these two data types. Using `DESeq2` we regress RNA-Seq count data on the patient clusters C3, C4 (design formula `~ IGHV.status + Cluster`). Genes are ranked by their test statistics and Gene Set Enrichment Analysis (GSEA) implementing the fgsea algorithm with the `clusterProfiler` package is applied to the ranked lists with the Hallmark pathway gene sets from the MSigDB database.     
+
+Prepare RNA count data 
+```{r rnaPrep2}
+cytSeq <- dds_smp
+
+#Filter out IGHV genes
+cytSeq <- cytSeq[!grepl("IG_", rowData(cytSeq)$biotype),] 
+
+#split into 3,4
+cytSeq.34 <- cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(3,4)]
+
+#remove patients where IGHV is unknown
+cytSeq.34 <- cytSeq.34[,colData(cytSeq.34)[,"IGHV.status"] %in% c("U","M")]
+
+#set order of factors
+cytSeq.34$Cluster <- factor(cytSeq.34$Cluster, 
+                            levels = c("3","4"))
+
+cytSeq.34$IGHV.status <- factor(cytSeq.34$IGHV.status, 
+                                levels = c("U","M"))
+
+design(cytSeq.34) <- ~ IGHV.status + Cluster
+
+```
+
+Run DESeq
+```{r RunDeseq2}
+
+cytSeq.34 <- DESeq(cytSeq.34)
+
+```
+
+
+Extract results for 3 versus 4
+```{r  deseqResults2}
+
+res.ds <- 
+  results(cytSeq.34, contrast = c("Cluster", 3, 4), tidy = TRUE) %>%
+  dplyr::rename(Symbol = "row") %>% 
+  dplyr::arrange(pvalue) 
+
+```
+
+Add Entrez IDs and readable gene names to results table
+```{r}
+#get ensembl ids to Entrez dataframe
+ens2entrez <- 
+  rowData(cytSeq.34)[c("entrezgene", "symbol")] %>% 
+  as.data.frame() %>% 
+  rownames_to_column("ENSEMBL") %>%  
+  tibble::as_tibble()
+
+
+#Join 
+res.ds <- left_join(res.ds, ens2entrez, by=c("Symbol"="ENSEMBL"))
+
+
+```
+
+Get ranks dataframes to feed to fgsea
+```{r getRanks2}
+
+d <- 
+  dplyr::select(res.ds, entrezgene, stat) %>%
+  na.omit() %>% 
+  dplyr::group_by(entrezgene) %>% 
+  dplyr::summarize(stat=mean(stat)) 
+
+## feature 1: numeric vector
+geneList <- d$stat
+
+## feature 2: named vector
+names(geneList) <- as.character(d$entrezgene)
+
+## feature 3: decreasing order
+geneList <- sort(geneList, decreasing = TRUE)
+
+
+```
+
+```{r getTERM2GENE2}
+
+
+hm2gene <- 
+  msigdbr(species = "Homo sapiens", category = "H") %>% 
+  dplyr::select(gs_name, entrez_gene)
+head(hm2gene)
+
+
+#tidy up terms
+hm2gene$gs_name <- gsub("HALLMARK_", "",hm2gene$gs_name)
+hm2gene$gs_name <- gsub("_", " ",hm2gene$gs_name)
+hm2gene$gs_name <-gsub("MTORC1 SIGNALING"	,"MTORC1 Signaling",hm2gene$gs_name)
+hm2gene$gs_name <-gsub("MYC TARGETS V1",	"MYC Targets V1"	,hm2gene$gs_name)
+hm2gene$gs_name <-gsub("OXIDATIVE PHOSPHORYLATION",	"Oxidative Phosphorylation",hm2gene$gs_name)
+hm2gene$gs_name <-gsub("TNFA SIGNALING VIA NFKB",	"TNFa Signalling via NFKB"	,hm2gene$gs_name)
+hm2gene$gs_name <-gsub("UNFOLDED PROTEIN RESPONSE",	"Unfolded Protein Response"	,hm2gene$gs_name)	
+hm2gene$gs_name <-gsub("UV RESPONSE UP",	"UV Response Up",hm2gene$gs_name)
+hm2gene$gs_name <-gsub("INTERFERON GAMMA RESPONSE",	"Interferon Gamma Response"	,hm2gene$gs_name)
+hm2gene$gs_name <-gsub("G2M CHECKPOINT",	"G2M Checkpoint",hm2gene$gs_name)	
+hm2gene$gs_name <-gsub("E2F TARGETS", "E2F Targets"	,hm2gene$gs_name)
+hm2gene$gs_name <-gsub("P53 PATHWAY",	"P53 Pathway",hm2gene$gs_name)
+
+ 
+```
+
+```{r runGSEA2, warning = FALSE, message=FALSE}
+#run GSEA
+set.seed(1996)
+gsea.res <- GSEA(geneList, TERM2GENE = hm2gene, by = "fgsea", seed = TRUE)
+
+#make readable with gene names
+gsea.res <- setReadable(gsea.res, org.Hs.eg.db, keyType = "ENTREZID")
+
+
+```
+
+Show top 10 pathways
+```{r Fig2E, fig.path=plotDir,  dev=c("png", "pdf"), fig.height=7, fig.width=10}
+
+#get dataframe of results
+gsea.df <- fortify(gsea.res, 
+              showCategory = 10, #how many levels to show
+              split=NULL)
+
+#order by NES
+gsea.df <- dplyr::mutate(gsea.df, "NES" = eval(parse(text="NES")))
+idx <- order(gsea.df[["NES"]], decreasing = TRUE)
+gsea.df$Description <- factor(gsea.df$Description, levels=rev(unique(gsea.df$Description[idx])))
+    
+  
+gsea.df$pos <- 0
+
+  Fig2E <-
+   ggplot(gsea.df,
+         aes_string(x="NES", 
+                    y="Description", 
+                    fill="p.adjust")) +
+    geom_bar(stat = "identity") +
+    scale_fill_continuous(low=palreds[7],
+                         high=palreds[2], 
+                         name = "Adjusted p value",
+                         guide=guide_colorbar(reverse=TRUE)) +
+    
+  ylab("Hallmark Pathway\n\n") + 
+  xlab("Normalised Enrichment Score") +
+  ggtitle("Upregulation of gene sets in C3 versus C4") +  
+  t2 + 
+  scale_size(range=c(3, 8)) + 
+  geom_text(aes(label=Description, x = pos), nudge_x = 0.1, hjust = 0,  size = 6, color = "white") +
+  theme(legend.position=c(0.9, 0.2),
+        legend.background = element_blank(),
+        legend.box.background = element_rect(size = 0.5),
+        legend.title = element_text(face='bold',
+                                    hjust = 1, size=11),
+        legend.key = element_blank(),
+        legend.text = element_text(size=12),
+        axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank()) 
+  
+
+Fig2E
+
+
+
+```
+
+
+
+
+# Arrange plots
+```{r, Fig2, fig.path=plotDir,  dev=c("png", "pdf"), fig.width=16, fig.height=23, eval = TRUE, warning = FALSE}
+
+design1<-"
+11
+23
+45
+"
+
+tp<-ggplot2::theme(plot.tag=element_text(size = 30))
+
+
+Figure2 <-
+  wrap_elements(arrangeGrob(Fig2A[[4]])) +tp+
+  wrap_elements(Fig2B) + tp+
+  Fig2C + tp+
+  wrap_elements(Fig2D) + tp+
+  wrap_elements(Fig2E) + tp+
+  
+  plot_layout(design=design1, 
+              heights = c(1.6, 1.2, 1.2) , 
+              widths = c(1,1)) +
+  
+  plot_annotation(tag_levels = "A")
+
+Figure2
+
+
+
+
+```
+
+
+# Appendix
+```{r appendix2}
+Sys.info()
+sessionInfo()
+```
+
+

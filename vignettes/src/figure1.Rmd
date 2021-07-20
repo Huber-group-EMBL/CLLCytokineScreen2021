@@ -1,0 +1,468 @@
+---
+title: 'CLL Cytokine Screen 2021: Figure 1'
+author: "Holly Giles and Peter Bruch"
+date: "`r doc_date()`"
+output:
+  BiocStyle::html_document:
+      toc: yes
+      toc_depth: 3
+      toc_float: yes
+      code_folding: "hide" 
+---
+
+In this sub-vignette we present the analysis and source code for figure 1. This sub-vignette can be built along with all other sub-vignettes by running CLLCytokineScreen2021.Rmd. 
+
+
+# Set up 
+Load libraries
+```{r loadLibraries1, cache = FALSE, message = FALSE, warning = FALSE }
+
+library(gridExtra)
+library(ggplot2)
+library(magick)
+library(patchwork)
+library(cowplot)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+
+```
+
+Set plot directory
+```{r plotDir1}
+plotDir = ifelse(exists(".standalone"), "", "../../inst/figs/")
+if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
+```
+
+
+# Load data  
+```{r loadData1}
+
+#drugs: dataframe containing meta data on all drugs used in screen 
+load( "../../data/drugs.RData")
+
+#cytokines: dataframe containing meta data on all stimuli used in screen 
+load( "../../data/cytokines.RData")
+
+#df: tibblecontaining all screening viability data
+load( "../../data/df.RData")
+
+```
+
+
+```{r loadData_fromtsv1, eval = FALSE}
+
+#from tsvs
+df <- read.table(file= "../../inst/extdata/df.txt",header = TRUE) %>% as_tibble()
+drugs <- read.delim("../../inst/extdata/Drugs.txt")
+cytokines <- read.delim("../../inst/extdata/Cytokines.txt")
+
+df$Cytokine <- factor(df$Cytokine, levels= c("No Cytokine",
+                                              "Resiquimod", 
+                                              "IL-4", 
+                                              "TGF-b1",
+                                              "IL-1b",
+                                              "Interferon gamma",
+                                              "SDF-1a",
+                                              "sCD40L" ,
+                                              "sCD40L+IL-4",
+                                              "soluble anti-IgM", 
+                                              "CpG ODN",
+                                              "IL-6",
+                                              "IL-10",
+                                              "IL-21",
+                                              "HS-5 CM", 
+                                              "IL-15",
+                                              "BAFF",
+                                              "IL-2" ))
+
+df$Drug <- factor(df$Drug, levels =c("DMSO",
+                                     "BAY-11-7085",
+                                     "Everolimus",
+                                     "Fludarabine",
+                                     "I-BET 762",
+                                     "Ibrutinib","Idelalisib",
+                                     "Luminespib",
+                                     "Nutlin-3a",
+                                     "PRT062607",
+                                     "Pyridone-6",
+                                     "Ralimetinib",
+                                     "Selumetinib"))
+
+
+```
+
+
+# Define Aesthetics
+```{r defineAesthetics1}
+
+source("../../R/themes_colors.R")
+
+```
+
+# Plot figures
+## Fig 1A     
+Plot graphic of screen overview
+```{r Fig1A, fig.width=5, fig.height=5}
+
+#plot pdf file
+Fig1A  <- magick::image_read_pdf("../../inst/images/Fig1A.pdf", pages = 1, density = 100)
+
+Fig1A <- ggdraw() + draw_image(Fig1A, 
+                               scale = 1)
+
+Fig1A
+```
+
+
+## Fig 1B
+Overview of cytokine pathways
+```{r Fig1B, fig.width=8, fig.height = 5}
+
+#plot pdf file
+Fig1B  <- magick::image_read_pdf("../../inst/images/Fig1B.pdf", pages = 1, density = 100)
+
+Fig1B <- ggdraw() + draw_image(Fig1B, 
+                               scale = 1)
+Fig1B
+
+```
+
+## Fig 1C
+Overview of drug pathways and approval status
+```{r Fig1C, fig.path=plotDir, dev=c("png", "pdf"), fig.width=4, fig.height=3.5}
+
+#set table theme
+ttable <- ttheme_minimal(
+  core=list(fg_params=list(col = darkergrey,fontface=3)),
+  
+  colhead=list(fg_params=list(col="black", fontface=4L),
+               bg_params = list(fill= colors[1])))
+#make table
+Fig1C<-
+  drugs %>% 
+  dplyr::select(`Name`, `main_targets`, `target_category`) %>%
+  dplyr::rename(Drug=`Name`, Target=`main_targets`, Category=`target_category`) %>% 
+  dplyr::arrange(Category) %>% 
+  gridExtra::tableGrob(theme = ttable, rows=NULL) 
+
+
+wrap_elements(Fig1C)
+
+```
+
+
+## Fig 1D
+Forrest plot of top 8 drug - drug Pearson Correlation Coefficients    
+Generate drug-only viability matrix 
+```{r drugViabMatrix1}
+
+#Select high conc drug data and generate drug-only viability matrix
+Drug_mat <- 
+  df %>%
+  dplyr::filter(Drug != "DMSO", Drug_Concentration == "High", Cytokine== "No Cytokine") %>%
+  
+  #Get log(viability) values for all drugs, for each patient         
+  dplyr::select(PatientID, Drug, Log) %>% 
+  spread(Drug, Log) %>%
+  dplyr::select(-"PatientID")%>%
+  as.matrix()
+
+```
+
+Calculate Pearson Coefficients for all drug-drug combinations
+```{r drugPearsonCoefficients1}
+
+# Pearson Coefficients for all drug-drug combinations
+
+#get a list of all drug -drug combinations 
+drug.comb <- 
+  combn(colnames(Drug_mat), 2) %>% 
+  t() %>% 
+  as.data.frame()  %>% 
+  mutate(comb = paste(V1, V2, sep = ":"))
+
+#set up list of dataframes to store outputs of cor.test, for each drug -drug combination
+drug.corr <- vector("list", length = nrow(drug.comb))
+#set names as drug - drug combinations
+names(drug.corr)  <- drug.comb$comb
+
+
+#calculate Correlations and confidence intervals for every drug - drug combination
+for(drug1 in colnames(Drug_mat)){
+  for(drug2 in colnames(Drug_mat)){
+    
+    #subset drug viability matrix for each drug of interest
+    x <- Drug_mat[,drug1]
+    y <- Drug_mat[,drug2]
+    
+    #define drug - drug combination
+    comb <-paste(drug1, drug2, sep=":")
+    
+    #only run cor.test if this combination is not rendundant
+    if(comb%in% names(drug.corr)){
+    
+    #run correlation test
+    cor <- cor.test(x, y, conf.level = 0.95, method = c("pearson"))
+    
+    #convert to table
+    cor.df <- unlist(cor) %>% as.data.frame()
+    colnames(cor.df) <- comb
+    
+    #add corr.test output to drug.corr dataframe
+    drug.corr[[comb]] <- cor.df
+    }
+  }
+}
+
+#bind list of dataframes into single dataframe
+drug.corr <- do.call(cbind, drug.corr)
+
+
+
+```
+
+Arrange data for plotting
+```{r arrangeDataFig1D}
+
+#transform dataframe
+drug.corr <- 
+  drug.corr %>% 
+  rownames_to_column("feature") %>% 
+  t() %>% 
+  as.data.frame()
+
+#tidy up drug.corr dataframe
+colnames(drug.corr) <- drug.corr[1,]
+drug.corr <- drug.corr[-1,]
+drug.corr <- 
+  drug.corr %>% 
+  rownames_to_column("Combination")
+
+#sort out class types
+drug.corr$estimate.cor <- as.numeric(drug.corr$estimate.cor)
+drug.corr$conf.int1 <- as.numeric(drug.corr$conf.int1)
+drug.corr$conf.int2 <- as.numeric(drug.corr$conf.int2)
+
+#get top 8 correlations with highest R
+sig.drug <- 
+  drug.corr %>%
+  dplyr::filter(estimate.cor<1) %>%
+  top_n(8, estimate.cor)
+
+#Make drug combinations readable
+sig.drug$Combination <- gsub(':', ' and ', sig.drug$Combination)
+
+#Get order in which to plot
+order.drug <- 
+  sig.drug %>%
+  dplyr::arrange(estimate.cor) %>%
+  dplyr::select(Combination) %>%
+  unlist()
+  
+sig.drug$Combination <- factor(sig.drug$Combination, levels=order.drug)
+
+```
+
+```{r Fig1D, fig.path=plotDir, dev=c("png", "pdf"), fig.width=7, fig.height=5}
+
+#Plot Forest Plot
+Fig1D = 
+  ggplot(sig.drug, 
+         #PLot 8 drug-drug combinationns, against Pearson Coeffiecnet and show confidence intervals 
+         aes(x = Combination, y = estimate.cor, ymin = conf.int1, ymax = conf.int2 )) +
+  geom_pointrange(color = drugpal[1])+
+  geom_errorbar(aes(ymin=conf.int1, ymax=conf.int2), width=0.5, cex=1, color = drugpal[1])+
+  coord_flip()+
+  scale_y_continuous(limits=c(-0.1,1), 
+                     breaks=c(0,0.25,0.5,0.75,1),
+                     labels=c("0","0.25","0.50","0.75","1"))+
+  scale_x_discrete(position = "top") + 
+  ylab("Pearson Coefficient")+
+  xlab("")+
+  t2+
+  theme(axis.line.y = element_blank())+
+  guides(color="none") 
+
+Fig1D
+   
+  
+```
+
+## Fig 1E
+Forrest plot of top 8 cytokine - cytokine Pearson Correlation Coefficients   
+Generate Cytokine only viability matrix
+```{r  cytokineViabilityMatrix1}
+
+##Select cytokine data and generate viability matrix
+Cytokine_mat <- 
+  df %>%
+  dplyr::filter(Drug =="DMSO", Cytokine !="No Cytokine") %>%
+  #Get log(viability) values for all cytokines, for each patient
+  dplyr::select(PatientID, Cytokine, Log) %>%
+  spread(Cytokine, Log) %>%
+  dplyr::select(-"PatientID") %>%
+  as.matrix()
+
+
+```
+
+Calculate Pearson Coefficients for all cytokine-cytokine combinations
+```{r cytokinePearsonCoefficients1}
+
+#Pearson Coefficients for all cytokine-cytokine combinations
+#get a list of all combinations of stimuli
+cyt.comb <- 
+  combn(colnames(Cytokine_mat), 2) %>% 
+  t() %>% 
+  as.data.frame()  %>% 
+  mutate(comb = paste(V1, V2, sep = ":"))
+
+
+#set up list of dataframes to store outputs of cor.test, for each cytokine - cytokine combination
+cyt.corr <- vector("list", length = nrow(cyt.comb))
+
+#set names as cytokine - cytokine combinations
+names(cyt.corr)  <- cyt.comb$comb
+
+
+#calculate Correlations and confidence intervals for every combination
+for(cyt1 in colnames(Cytokine_mat)){
+  for(cyt2 in colnames(Cytokine_mat)){
+    
+    #subset cytokine viability matrix for each cytokine of interest
+    x <- Cytokine_mat[,cyt1]
+    y <- Cytokine_mat[,cyt2]
+    
+    #define combination
+    comb <-paste(cyt1, cyt2, sep=":")
+    
+    #only run if this combinationn is not redundant
+    if(comb %in% names(cyt.corr)){
+    
+    #run correlation test
+    cor <- cor.test(x, y, conf.level = 0.95, method = c("pearson"))
+    
+    #convert to table
+    cor.df <- unlist(cor) %>% as.data.frame()
+    colnames(cor.df) <- comb
+    
+    #add to results dataframe
+    cyt.corr[[comb]] <- cor.df
+    }
+   
+  }
+}
+
+
+
+cyt.corr <- do.call(cbind, cyt.corr)
+
+
+
+
+```
+
+Arrange data for plotting
+```{r arrangeDataFig1E}
+
+#Cytokine Forest plot
+#transform dataframe
+cyt.corr <- 
+  cyt.corr %>% 
+  rownames_to_column("feature") %>% 
+  t() %>% 
+  as.data.frame()
+
+#tidy up cyt.corr dataframe
+colnames(cyt.corr) <- cyt.corr[1,]
+cyt.corr <- cyt.corr[-1,]
+cyt.corr <- cyt.corr %>% rownames_to_column("Combination")
+
+#sort out class types
+cyt.corr$estimate.cor <- as.numeric(cyt.corr$estimate.cor)
+cyt.corr$conf.int1 <- as.numeric(cyt.corr$conf.int1)
+cyt.corr$conf.int2 <- as.numeric(cyt.corr$conf.int2)
+
+#get top 8 highest correlations
+sig.cyt <- 
+  cyt.corr %>%
+  dplyr::filter(Combination %in% c("IL-4:sCD40L+IL-4", 
+                                   "Resiquimod:CpG ODN",  
+                                   "sCD40L:BAFF", 
+                                   "IL-1b:soluble anti-IgM", 
+                                   "Resiquimod:IL-4", 
+                                   "IL-6:IL-4", 
+                                   "IL-6:IL-10", 
+                                   "Interferon gamma:IL-10")) 
+  
+
+#Make cytokine combinations readable
+sig.cyt$Combination <- gsub(':', ' and ', sig.cyt$Combination)
+
+#set plotting order
+order.cyt <- sig.cyt %>%
+            dplyr::arrange(estimate.cor) %>%
+            dplyr::select(Combination) %>%
+            unlist()
+  
+sig.cyt$Combination <- factor(sig.cyt$Combination, levels=order.cyt)
+
+```
+
+
+```{r Fig1E, fig.path=plotDir, dev=c("png", "pdf"), fig.width=7, fig.height=5, message=FALSE, warning=FALSE}
+
+#Plot Forest Plot
+Fig1E = 
+  ggplot(sig.cyt, 
+         aes(x = Combination, y = estimate.cor, ymin = conf.int1, ymax = conf.int2 ))+
+  geom_pointrange(color = cytpal[1])+
+  geom_errorbar(aes(ymin=conf.int1, ymax=conf.int2),width=0.5,cex=1, color = cytpal[1])+
+  coord_flip()+
+  scale_y_continuous(limits=c(-0.1,1), 
+                     breaks=c(0,0.25,0.5,0.75,1),
+                     labels=c("0","0.25","0.50","0.75","1"))+
+  ylab("Pearson Coefficient")+
+  xlab("")+
+  scale_x_discrete(position = "top", labels=c("IL-4 and sCD40L+IL-4"="IL4 and sCD40L + IL4","IL-1b and soluble anti-IgM"="IL1\u03B2 and soluble anti-IgM","Resiquimod and IL-4"="Resiquimod and IL4", "IL-6 and IL-10"="IL6 and IL10" ,"Interferon gamma and IL-10"="Interferon \u03B3 and IL10"))+
+  t2 +
+  theme(axis.line.y = element_blank()) +
+  guides(color="none")
+  
+Fig1E
+```
+
+
+# Assemble Figure
+```{r, Fig1, fig.height=11, fig.width=18, fig.path=plotDir, dev=c("png", "pdf"), message=FALSE, warning=FALSE}
+
+tp <- theme(plot.tag=element_text(size = 30, face="plain"))
+
+design1 <-"
+  ABBC
+  DDEE
+"
+
+patchwork_plot <-
+  
+  Fig1A + tp+
+  Fig1B + tp+
+  wrap_elements(Fig1C ) + tp+
+  wrap_elements(Fig1D) + tp+
+  wrap_elements(Fig1E) + tp+
+  
+  plot_annotation(tag_levels = "A") +
+  plot_layout(design = design1, heights = c(0.7,1), width=c(1,0.8,0.8,1))
+
+
+patchwork_plot
+
+```
+
+
+# Appendix
+```{r appendix1}
+Sys.info()
+sessionInfo()
+```

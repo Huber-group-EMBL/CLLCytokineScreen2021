@@ -1,0 +1,138 @@
+---
+title: "CLLCytokineScreen2021 - Complete Analysis"
+vignette: >
+  %\VignetteIndexEntry{CLLCytokineScreen2021}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+output:
+  BiocStyle::html_document
+---
+
+# Introduction
+
+In this vignette we present the complete analysis of the 2021 Drug-Cytokine Combinatorial Screen project and source code for the paper:
+
+<br />
+
+**Mapping drug-microenvironment-genetic interplay in CLL reveals trisomy 12 as a modulator of microenvironmental signals**
+
+_Peter-Martin Bruch\*, Holly A. R. Giles\*, Carolin Kolb, Sophie A. Herbst, Tina Becirovic, Tobias Roider, Junyan Lu, Sebastian Scheinost, Lena Wagner, Jennifer Huellein, Ivan Berest, Mark Kriegsmann, Katharina Kriegsmann, Christiane Zgorzelski, Peter Dreger, Judith B. Zaugg, Carsten Müller-Tidow, Thorsten Zenz, Wolfgang Huber\*, Sascha Dietrich\*_
+<br />
+
+The presented analysis was performed by Holly Giles and Peter-Martin Bruch, building on scripts from Sascha Dietrich, Wolfgang Huber, Junyan Lu, Malgorzata Oles, Frederik Ziebell, Sophie Herbst and Ivan Berest. This vignette was assembled by Holly Giles.   
+
+This vignette produces all seven figures of the paper. The vignette builds from the sub-vignettes, which are separated by horizontal lines. Each subvignette can also be built separately. 
+
+
+```{r echo=FALSE}
+.standalone=FALSE
+```
+
+```{r echo = FALSE}
+knitr::opts_chunk$set(cache = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE, include=!.standalone, cache = FALSE}
+
+#load all libraries
+library(plyr)
+library(Hmisc)
+library(gridExtra)
+library(ggplot2)
+library(magick)
+library(patchwork)
+library(cowplot)
+library(RColorBrewer)
+library(ggrepel)
+library(ggbeeswarm)
+library(magrittr)
+library(pheatmap)
+library(ggfortify)
+library(DESeq2)
+library(survival)
+library(survminer)
+library(glmnet)
+library(ConsensusClusterPlus)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(msigdbr)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(ChIPseeker)
+library(genomation)
+library(ggpubr)
+library(gtable)
+library(scales)
+library(broom)
+library(formattable)
+library(plyr)
+library(png)
+library(cowplot)
+library(data.table)
+library(maxstat)
+library(rlang)
+library(tidyr)
+library(tidyverse)
+library(dplyr)
+
+
+```
+
+***
+
+<!-- **Figure1** -->
+
+```{r Figure1, child = 'src/figure1.Rmd'}
+```
+
+***
+
+<!-- **Figure2** -->
+
+```{r Figure2, child = 'src/figure2.Rmd'}
+```
+
+***
+
+<!-- **Figure3** -->
+
+```{r Figure3, child = 'src/figure3.Rmd'}
+```
+
+***
+
+<!-- **Figure4**-->
+
+```{r Figure4, child = 'src/figure4.Rmd'}
+```
+
+***
+
+<!-- **Figure5** -->
+
+```{r Figure5, child = 'src/figure5.Rmd'}
+```
+
+***
+
+<!-- **Figure6** -->
+
+```{r Figure6, child = 'src/figure6.Rmd'}
+```
+
+
+***
+
+***
+
+<!-- **Figure7** -->
+
+```{r Figure7, child = 'src/figure7.Rmd'}
+```
+
+
+***
+# Appendix
+
+```{r}
+sessionInfo()
+```

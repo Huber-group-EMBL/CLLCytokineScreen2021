@@ -1,0 +1,812 @@
+---
+title: 'CLL Cytokine Screen 2021: Figure 3'
+author: "Holly Giles and Peter Bruch"
+date: "`r doc_date()`"
+output:
+  BiocStyle::html_document:
+      toc: yes
+      toc_depth: 3
+      toc_float: yes
+      code_folding: "hide" 
+---
+
+In this sub-vignette we present the analysis and source code for Figure 3. This sub-vignette can be built along with all others by running CLLCytokineScreen2021.Rmd. 
+
+# Set up 
+```{r setup3}
+set.seed(1996)
+```
+
+Load libraries
+```{r loadLibraries3, cache =FALSE, message = FALSE, warning = FALSE}
+
+library(clusterProfiler)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(ChIPseeker)
+library(genomation)
+library(DESeq2)
+library(ggbeeswarm)
+library(ggpubr)
+library(ggplot2)
+library(magrittr)
+library(gtable)
+library(glmnet)
+library(patchwork)
+library(scales)
+library(gridExtra)
+library(ggrepel)
+library(broom)
+library(plyr)
+library(dplyr)
+library(tidyverse)
+
+```
+
+Set plot directory
+```{r plotDir3}
+plotDir = ifelse(exists(".standalone"), "", "../../inst/figs/")
+if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
+```
+
+
+# Load data
+Load raw files
+```{r loadData3}
+
+#df : tibble containing all screening data
+load( "../../data/df.RData")
+
+#patMeta : tibble containing all patient genetic data
+load( "../../data/patMeta.RData")
+
+```
+
+```{r loadData_fromtsvs3, eval = FALSE}
+
+#From tsvs
+#df: tibble containing all screening data
+df <- read.table(file= "../../inst/extdata/df.txt",header = TRUE) %>% as_tibble()
+
+#patMeta: tibble containing genetic data for patient samples in screen 
+patMeta <- read.table(file= "../../inst/extdata/patMeta.txt",header = TRUE) %>% as_tibble()
+
+
+
+#Arrange data for analysis
+#screening data
+df$Cytokine <- factor(df$Cytokine, levels= c("No Cytokine",
+                                              "Resiquimod", 
+                                              "IL-4", 
+                                              "TGF-b1",
+                                              "IL-1b",
+                                              "Interferon gamma",
+                                              "SDF-1a",
+                                              "sCD40L" ,
+                                              "sCD40L+IL-4",
+                                              "soluble anti-IgM", 
+                                              "CpG ODN",
+                                              "IL-6",
+                                              "IL-10",
+                                              "IL-21",
+                                              "HS-5 CM", 
+                                              "IL-15",
+                                              "BAFF",
+                                              "IL-2" ))
+
+
+#patMeta
+patMeta %>%mutate_at(vars(-PatientID), as.factor)
+
+
+```
+
+
+Process files
+```{r processData3, cache = FALSE}  
+
+#filter for stimuli - only treatments
+df <- dplyr::filter(df, 
+                    Drug == "DMSO", 
+                    Cytokine != "No Cytokine")
+
+patMeta$treatment <- as.factor(patMeta$treatment)
+   
+```
+
+
+# Define Aesthetics
+```{r defineAesthetics3}
+source("../../R/themes_colors.R")
+```
+
+
+# Define functions
+*runGlm*: to run  multi-variant regression. This function takes a feature matrix `X` and a continuous response matrix `y`, to run lasso or ridge regularised regression. The function will run the `cv.glmnet` function for the chosen number of `repeats`,  applying cross-fold validation using chosen number of `folds`. 
+```{r runGlm3 }
+#select lasso or ridge 
+runGlm <- function(X, y, method = "lasso", repeats=30, folds = 3) {
+  
+  #set up objects
+  modelList <- list()
+  lambdaList <- c()
+  varExplain <- c()
+  
+  #set up a matrix for values of coefficients, with a row for each feature, and a column for each repeat
+  coefMat <- matrix(NA, ncol(X), repeats)
+  
+  #make row names = genetic features
+  rownames(coefMat) <- colnames(X)
+
+  #set alpha according to selected method
+  if (method == "lasso"){
+    alpha = 1
+  } else if (method == "ridge") {
+    alpha = 0
+  }
+  
+  #Run cv.glmnet for chosen number of repeats 
+  for (i in seq(repeats)) {
+    
+    #if there are more than two features, fit a glm
+    if (ncol(X) > 2) {
+      
+      res <- cv.glmnet(X,y, type.measure = "mse", family="gaussian", 
+                       nfolds = folds, alpha = alpha, standardize = FALSE)
+      
+      #add lambda min from this repeat to the list of lambdas
+      lambdaList <- c(lambdaList, res$lambda.min)
+      
+      #put the res object (with lambdas) into the list of models
+      modelList[[i]] <- res
+      
+      #extract the coefficients for each feature, for lambda.min
+      coefModel <- coef(res, s = "lambda.min")[-1] #remove intercept row
+      
+      #put these coefficients into  column of coefMatrix corresponding to the repeat
+      coefMat[,i] <- coefModel
+      
+      #calculate variance explained
+      y.pred <- predict(res, s = "lambda.min", newx = X)
+      varExp <- cor(as.vector(y),as.vector(y.pred))^2
+      varExplain[i] <- ifelse(is.na(varExp), 0, varExp) 
+      
+     
+      
+    } else {
+      #if there are only two features, fit a linear model
+      fitlm<-lm(y~., data.frame(X))
+      varExp <- summary(fitlm)$r.squared
+      varExplain <- c(varExplain, varExp)
+      
+    }
+
+  }
+  #gather all lists
+  list(modelList = modelList, lambdaList = lambdaList, varExplain = varExplain, coefMat = coefMat)
+}
+
+
+```
+
+*makelegends*:  to make legends for heatmap plot. Accepts`legendFor`, a vector of names of what the legend should show (I (IGHV status), M (Methylation Cluster), G (Gene Mutation)), and `colors`, a vector of colours corresponding to the elements of `legendFor`.
+```{r makelegends3}
+
+makelegends <- function (legendFor, colors) {
+
+    x = NULL
+    y = NULL
+    colors = colors[names(colors) %in% legendFor]
+    nleg = length(colors)
+    
+    #set up gtable
+    wdths = c(0.4,2,2,2,1.5)
+    hghts = c(2)
+    
+    gtl = gtable(widths=unit(wdths, "in"), heights=unit(hghts, "in"))
+    n = 2
+    
+    #legend for Methylation Cluster
+    if ("M" %in% names(colors)) {
+        Mgg = ggplot(data = data.frame(x = 1, 
+                                       y = factor(c("LP", "IP", "HP"), 
+                                                  levels = c("LP", "IP", "HP"))), 
+                     aes(x = x, y = y, fill = y)) + 
+              geom_tile() + 
+              scale_fill_manual(name = "Methylation cluster", 
+                                values = setNames(colors[["M"]], 
+                                                  nm = c("LP", "IP","HP"))) + 
+              theme(legend.title = element_text(size = 12), 
+                    legend.text = element_text(size = 12))
+        
+        gtl = gtable_add_grob(gtl, gtable_filter(ggplotGrob(Mgg), "guide-box"), 1, n)
+        n = n + 1
+    }
+    
+    #Legend for IGHV status
+    if ("I" %in% names(colors)) {
+        Igg = ggplot(data = data.frame(x = 1, y = factor(c("Unmutated", 
+            "Mutated"), levels = c("Unmutated", "Mutated"))), 
+            aes(x = x, y = y, fill = y)) + geom_tile() + scale_fill_manual(name = "IGHV", 
+            values = setNames(colors[["I"]], nm = c("Unmutated", "Mutated"))) + 
+            theme(legend.title = element_text(size = 12), 
+                  legend.text = element_text(size = 12))
+        gtl = gtable_add_grob(gtl, gtable_filter(ggplotGrob(Igg), 
+            "guide-box"), 1, n)
+        n = n + 1
+    }
+    
+    #legend for gene mutations
+    if ("G" %in% names(colors)) {
+        Ggg = ggplot(data = data.frame(x = 1, y = factor(c("Wild Type", 
+            "Mutated"), levels = c("Wild Type", "Mutated"))), 
+            aes(x = x, y = y, fill = y)) + geom_tile() + scale_fill_manual(name = "Gene", 
+            values = setNames(colors[["G"]], nm = c("Wild Type", "Mutated"))) + 
+            theme(legend.title = element_text(size = 12), 
+                  legend.text = element_text(size = 12))
+        gtl = gtable_add_grob(gtl, gtable_filter(ggplotGrob(Ggg), 
+            "guide-box"), 1, n)
+        n = n + 1
+    }
+    
+    return(list(plot = gtl, width = sum(wdths), height = sum(hghts)))
+}
+
+
+```
+
+*lassoPlot*: to generate predictor profiles using output of `runGlm` function. Accepts `lassoOut`, a list of objects generated by `runGlm`, `geneMatrix` a feature matrix containing numeric data of mutation status for various genes, `viabMatrix`, a response matrix containing viability data for corresponding samples to those in `geneMatrix`, `freqCut`, the proportion of times a coefficient should be selected to be displayed in the plot, and `coefCut`, the minimum size of coefficients to display in the plot.  
+```{r lassoPlot3}
+
+
+lassoPlot <- function(lassoOut, geneMatrix, viabMatrix, freqCut = 1, coefCut = 0.01) {
+  
+  plotList <- list()
+  
+  for (seaName in names(lassoOut)) { 
+    ###FOR THE BAR PLOT
+    #extract coefMat for each stimulus
+    barValue <- rowMeans(lassoOut[[seaName]]$coefMat)
+    #extract proportion of repeats for which each coefficient is significant
+    freqValue <- rowMeans(abs(sign(lassoOut[[seaName]]$coefMat)))
+    #filter out coefficients that don't meet freqCut and coefCut thresholds
+    barValue <- barValue[abs(barValue) >= coefCut & freqValue >= freqCut] 
+    #arrange the bar values in numerical order
+    barValue <- barValue[order(barValue)]
+    #if there are no sig coefficients, don't plot
+    if(length(barValue) == 0) {
+      plotList[[seaName]] <- NA
+      next
+    }
+
+    ###FOR THE HEATMAP AND SCATTER PLOT
+    #get feature matrix and response matrix to plot
+    allData <- geneMatrix
+    viabValue <- unlist(viabMatrix[seaName,])
+    
+    #get feature matrix for sig coefficients only
+    tabValue <- allData[, names(barValue),drop=FALSE]
+    ord <- order(viabValue)
+    viabValue <- viabValue[ord]
+    tabValue <- tabValue[ord, ,drop=FALSE]
+    sampleIDs <- rownames(tabValue)
+    tabValue <- as_tibble(tabValue)
+    tabValue$Sample <- sampleIDs
+    
+    
+    #annotate mutations by mutation, methylation or IGHV
+    matValue <- gather(tabValue, key = "Var",value = "Value", -Sample)
+    matValue$Type <- "mut"
+    
+    #for Methylation Cluster
+    matValue$Type[grep("Methylation",matValue$Var)] <- "meth"
+    
+    #for IGHV status
+    matValue$Type[grep("IGHV",matValue$Var)] <- "ighv"
+    
+    #change the scale of the value so that IGHV, Methylation and Mutation do not overlap
+    matValue[matValue$Type == "mut",]$Value = matValue[matValue$Type == "mut",]$Value + 10
+    matValue[matValue$Type == "meth",]$Value = matValue[matValue$Type == "meth",]$Value + 20
+    matValue[matValue$Type == "ighv",]$Value = matValue[matValue$Type == "ighv",]$Value + 30
+    
+    #change continuous to categorical
+    matValue$Value <- factor(matValue$Value,levels = sort(unique(matValue$Value)))
+    
+    #arrange order of heatmap
+    matValue$Var <- factor(matValue$Var, levels = names(barValue))
+    matValue$Sample <- factor(matValue$Sample, levels = names(viabValue))
+    
+    #change labels if mutation is a Doehner mutation 
+    matValue$Var <- revalue(matValue$Var, c("del11q" = "del(11q)", "del13q" = "del(13q)", "del17p" = "del(17p)", "trisomy12" = "trisomy 12")) 
+    
+
+   
+     #plot the heatmap 
+      #title
+    if(seaName=="TGF-b1"){
+      thetitle <- "TGF-\u03B21"     
+      } else {
+        if(seaName=='IL-4'){ 
+          thetitle <- "IL4"  
+          } else {
+            thetitle <- seaName
+          }
+        }
+    
+      p1 <- ggplot(matValue, aes(x=Sample, y=Var)) + 
+            geom_tile(aes(fill=Value), color = "white") + #ghost white
+            theme_bw()+
+            scale_y_discrete(expand=c(0,0)) + 
+            theme(axis.title.y = element_text( size=14),
+                  axis.title.x = element_text( size=14),
+                  axis.text.x=element_text(hjust=0, size=11),
+                  axis.text.y=element_text(hjust=0.1, size=11),
+                  axis.ticks=element_blank(),
+                  panel.border=element_rect(colour="gainsboro"),  
+                  plot.title=element_text(face="bold", size = 18, margin = margin(t = -5, b = 1)), 
+                  panel.background=element_blank(),
+                  panel.grid.major=element_blank(), 
+                  panel.grid.minor=element_blank()) + 
+            xlab("Mutation status for each patient") + 
+            ylab("") + 
+            scale_fill_manual(name="Mutated", 
+                              values=c(`10`= offwhite,  #WT
+                                       `11`="#373A36", #Mutant
+                                       `20`= offwhite, #LP
+                                       `20.5`= "#707372", #IP
+                                       `21` = "#A8A99E", #HP
+                                       `30` = offwhite, #IGHV-U
+                                       `31` = "#707372"), #IGHV-M
+                                       guide="none") + 
+            ggtitle(thetitle)
+        
+
+         
+    #Plot the bar plot on the left of the heatmap 
+    barDF = data.frame(barValue, nm=factor(names(barValue),levels=names(barValue)))
+    
+    p2 <- ggplot(data=barDF, aes(x=nm, y=barValue)) + 
+      geom_bar(stat="identity", 
+               fill=ifelse(barValue<0,
+                           palblues[6],palreds[8]), 
+               colour="black", 
+               size=0.3) + 
+      scale_x_discrete(expand=c(0,0.5)) + 
+      scale_y_continuous(expand=c(0,0)) + 
+      coord_flip(ylim=c(-0.3,0.35)) + #changed from min(barValue) and max(barValue)
+      theme(panel.grid.major=element_blank(), 
+            panel.background=element_blank(), 
+            axis.ticks.y = element_blank(),
+            panel.grid.minor = element_blank(), 
+            axis.text=element_text(size=11, angle = 45, hjust = 1, vjust = 1),
+                axis.title = element_text(size=14), 
+            panel.border=element_blank()) +
+      ylab("Size of predictor") + 
+      geom_vline(xintercept=c(0.5), 
+                 color="black", 
+                 size=0.6)
+    
+    #Plot the scatter plot under the heatmap
+    scatterDF = data.frame(X=factor(names(viabValue), 
+                                    levels=names(viabValue)), 
+                           Y=unlist(viabValue))
+    
+    p3 <- 
+      ggplot(scatterDF, aes(x=X, y=Y)) + 
+      geom_point(shape=21, 
+                     fill="dimgrey", 
+                     colour="#707372", #dark grey
+                     size=1.2) + 
+      theme_bw() +
+      theme(panel.grid.minor=element_blank(), 
+                panel.grid.major.x=element_blank(), 
+                #axis.title.x=element_blank(), 
+                axis.ticks.x=element_blank(), 
+                axis.text.y=element_text(size=11), 
+                axis.title.x=element_text(size=14), 
+                panel.border=element_rect(colour="dimgrey", size=0.1),
+                panel.background=element_rect(fill="white")) +
+      xlab("Log(Viability) for each sample")
+    
+    
+    #Assemble all the plots togehter
+
+    # construct the gtable
+    wdths = c(0.2, 1.5, 0.2, 1.3*ncol(matValue), 1.5, 0.2)
+    hghts = c(0.2, 0.2, 0.0020*nrow(matValue), 0.3, 1, 0.2)
+    gt = gtable(widths=unit(wdths, "in"), heights=unit(hghts, "in"))
+    
+    ## make grobs
+    gg1 = ggplotGrob(p1)
+    gg2 = ggplotGrob(p2)
+    gg3 = ggplotGrob(p3)
+
+    ## fill in the gtable
+   
+    #HEATMAP
+    #5:1 = "PREDICTORS"
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "panel"), 3, 4) # add heatmap
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "panel"), 3, 4) #add legend
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "title"), 1, 4) #add title to plot
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "axis-l"), 3, 5) # variable names
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "xlab-b"), 2, 4) # axis title
+    
+    #BARPLOT
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "panel"), 3, 2) # add barplot
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "axis-b"), 4, 2) # y axis for barplot
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "xlab-b"), 2, 2) # y lab for barplot
+
+    
+    #SCATTER PLOT
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "panel"), 5, 4) # add scatterplot
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "xlab-b"), 6, 4) # x label for scatter plot
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "axis-l"), 5, 3) #  axis for scatter plot
+    
+   
+
+    
+    #plot
+    #grid.draw(gt)
+    plotList[[seaName]] <- gt
+  }
+  return(plotList)
+}
+
+
+```
+
+
+# Plot Figures
+
+## Figure 3A
+Overview of t test p values to identify genetic features that affect responses to stimuli.     
+Here we test for associations between stimulus viability assay results and genomic features by Student’s t-tests (two-sided, with equal variance). We test somatic mutations (aggregated at the gene level), copy number aberrations and IGHV status. We restrict the analysis to features that are present in at least 3 patient samples (63 features). p-values are adjusted for multiple testing by applying the Benjamini-Hochberg procedure.     
+
+Run t tests and extract p values
+```{r, Fig3A, fig.path=plotDir, dev=c("png", "pdf"), fig.height = 8, fig.width = 9.5, message = FALSE, warning = FALSE}
+
+
+##################### List of mutations with >2 postive cases #############################
+selected_mutations <- 
+  patMeta %>% 
+  mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
+  dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+  dplyr::select( -gender, 
+                 -diagnosis, 
+                 ) %>%
+  pivot_longer(-PatientID, 
+               names_to="Genetic_Alteration", 
+               values_to = "alteration_value") %>% 
+  dplyr::filter(alteration_value %in% c(1, "U")) %>% 
+  dplyr::group_by(Genetic_Alteration) %>% 
+  dplyr::count() %>% 
+  dplyr::filter(n>2) %>% 
+  dplyr::select(Genetic_Alteration) %>% 
+  unlist()
+
+
+##################### t tests and p-value adjustment ###############################  
+p_values <-
+  ## Select columns from screening data 
+  dplyr::select(df, PatientID, Log, Cytokine) %>% 
+  
+  ## Join Screening data with metadata
+  left_join(patMeta, by = "PatientID") %>%
+  
+  ## Add Ras/Raf column, remove single columns
+  mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
+  dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+
+## remove unused columns from metadata
+  dplyr::select( -gender, 
+                 -diagnosis, 
+                 -treatment) %>% 
+  
+  ## transform data to long format
+  pivot_longer(cols=c(-PatientID, -Log, -Cytokine), 
+               names_to = "Genetic_alt", 
+               values_to="alt_value") %>% 
+  
+  ## filter to selected mutations (see above)
+  dplyr::filter(Genetic_alt%in%selected_mutations) %>% 
+  
+  
+  ## group by Cytokine and Genetic alteration  
+  dplyr::group_by(Cytokine, Genetic_alt) %>% 
+  
+  ## Perform t.test on every combination of Cytokine and genetic alteration
+  do(tidy(t.test(Log ~ alt_value, data = ., var.equal = T))) %>% 
+  
+  ## ungroup before adjusting p-value
+  ungroup() %>% 
+  
+  ## adjust p-values to multiple testing using BH method 
+  mutate(adj.p.value=p.adjust(p.value, method = "BH"))
+  
+
+################################## Order of cytokines by descending significance ############################
+Cytokine_order <-
+  p_values %>% 
+  dplyr::group_by(Cytokine) %>% 
+  dplyr::arrange(adj.p.value) %>% 
+  dplyr::filter(row_number()==1) %>% 
+  ungroup() %>% 
+  dplyr::arrange(adj.p.value) %>% 
+  dplyr::select(Cytokine) %>% 
+  unlist()
+
+Genetic_alt_order <-
+  p_values %>% 
+  dplyr::group_by(Genetic_alt) %>% 
+  dplyr::arrange(adj.p.value) %>% 
+  dplyr::filter(row_number()==1) %>% 
+  ungroup() %>% 
+  dplyr::arrange(adj.p.value) %>% 
+  dplyr::select(Genetic_alt) %>% 
+  unlist()
+
+############################# Define FDR cutoff #################################
+fdr = 0.1
+  
+
+############################################ Plot ########################################
+p_values %<>% 
+  mutate(Cytokine=factor(Cytokine, levels = Cytokine_order)) %>% 
+  mutate(Genetic_alt=factor(Genetic_alt, levels = Genetic_alt_order))
+  
+Fig3A <- 
+  ggplot(dplyr::filter(p_values, adj.p.value>fdr), 
+         aes(x = Cytokine, y = -log10(adj.p.value))) +
+  geom_point(color = "lightgrey", size=3) +
+  geom_beeswarm(data = dplyr::filter(p_values, adj.p.value<=fdr), 
+                aes( color=Genetic_alt), size=5, cex=1.7) +
+  ##FDR line  
+  geom_hline(yintercept = -log10(fdr),linetype="dashed", size=0.3)+
+  
+  ##Main Theme
+  t1 +
+  
+  theme(axis.text.x = element_text(angle=45, 
+                                   size=18, 
+                                   face="bold",
+                                   hjust=1, 
+                                   vjust=1),
+        axis.title.x=element_blank()) +
+  ##Legend Theme
+  theme(legend.position="bottom", 
+        legend.title = element_text(face='bold', hjust = 0, size=18), 
+        legend.key = element_blank(),  
+        legend.text = element_text(size=18)) +
+  guides(colour = guide_legend(nrow=3, title = "Mutations"), 
+         shape = guide_legend(ncol = 1)) +
+  scale_color_manual(name = "Mutations", values = colors, labels=c("IGHV.status"="IGHV status", "del9p"="del(9p)", "trisomy12"="trisomy 12", "gain17q"="gain(17q)", "gain2p"="gain(2p)","gain19p"="gain(19p)","gain19q"="gain(19q)", "del7q"="del(7q)","del9q"="del(9q)", "del4p"= "del(4p)", "SPEN"="SPEN", "del11q"="del(11q)", "del1q" = "del(1q)")) +
+  scale_y_continuous(expression("BH-adjusted  "* italic(p)*"-value"), 
+                     breaks=seq(0,10,5),
+                     labels=math_format(expr=10^.x)(-seq(0,10,5)))+
+  scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))
+
+Fig3A
+
+```
+
+Print significant p-values for text reference. 
+```{r arrange_pvals3}
+
+pvals <-
+  p_values %>%
+  dplyr::rename(cyt=Cytokine, mutation=Genetic_alt)
+
+p_values %>% 
+  dplyr::filter(adj.p.value<0.1) %>% 
+  dplyr::select(Cytokine, Genetic_alt, adj.p.value) %>% 
+  dplyr::arrange(adj.p.value) %>% 
+  DT::datatable()
+
+
+```
+
+## Figure 3B
+Lasso plots to represent genetic predictors of response to stimuli, calculated by lasso-regularised regression     
+Here we use a Gaussian linear model with L1-penalty. As the dependent variable, the normalised viability value is used for all stimuli. The genetic feature matrix consists of mutations and CNVs  (p=39), IGHV status (encoded as M = 1 and U = 0) and Methylation Cluster(encoded as 0, 0.5, 1). As a measure of explained variance the reduction in cross-validated mean squared error relative to the null model is calculated.     
+Set up genetic feature matrix  
+```{r FeatureMatrix3}
+#Generate Matrix
+
+#select features from patient meta file
+geneMatrix <- 
+  dplyr::select(patMeta,
+                -c(gender:treatment)) %>%
+  
+  #adjust IGHV.status levels  U and M to numeric 1 and 0 
+  mutate(IGHV = ifelse(is.na(IGHV.status), NA,
+                       ifelse(IGHV.status == "M", 1, 0)), 
+         #adjust Methylation_Cluster levels  LP, IP, HP to 0, 0.5, 1
+         Methylation = ifelse(is.na(Methylation_Cluster), NA,
+                              ifelse(Methylation_Cluster == "LP", 0,
+                                     ifelse(Methylation_Cluster == "IP", 0.5, 1))),
+         #remove old columns
+         IGHV.status=NULL, Methylation_Cluster=NULL ) %>%
+  
+  #rename columns for labelling
+
+  #rename("del(11q)" = del11q) %>%
+  #rename("del(13q)" = del13q) %>%
+  #rename("del(17p)" = del17p) %>%
+  #rename("trisomy 12" = trisomy12) %>%
+  
+  #convert factors to numeric
+  mutate_if(is.factor, as.character) %>%
+  mutate_at(vars(-PatientID), as.numeric) %>%
+  
+  #convert to matrix format, with patient IDs as rownames
+  data.frame() %>% 
+  column_to_rownames("PatientID") %>% 
+  as.matrix()
+
+
+#Tidy matrix for use in glmnet function
+
+#Remove genes with higher than 20% missing values
+geneMatrix <- geneMatrix[,colSums(is.na(geneMatrix))/nrow(geneMatrix) <= 0.2]
+
+#Filter for patients with complete data
+geneMatrix.complete <- geneMatrix[complete.cases(geneMatrix),]
+
+
+#Combine KRAS, NRAS and BRAF mutations into a single column
+#set up empty matrix
+Ras_Raf <- matrix(NA, 
+                  nrow = nrow(geneMatrix.complete), 
+                  ncol = 1)
+
+colnames(Ras_Raf) <- "RAS/RAF"
+
+#add RAS/RAF column to matrix
+geneMatrix.complete <- cbind(geneMatrix.complete, Ras_Raf)
+
+#Annotate RAS_RAF where where any of KRAS, NRAS or BRAF are mutated
+geneMatrix.complete[,"RAS/RAF"] <- ifelse(geneMatrix.complete[,"KRAS"]==1,1,
+		                                        ifelse(geneMatrix.complete[,"BRAF"]==1,1,
+	                	                          ifelse(geneMatrix.complete[,"NRAS"]==1, 1, 0)))
+
+
+#remove KRAS, NRAS and BRAF columns
+geneMatrix.complete <- 
+  geneMatrix.complete[, colnames(geneMatrix.complete) != "KRAS"]
+
+geneMatrix.complete <- 
+  geneMatrix.complete[, colnames(geneMatrix.complete) != "BRAF"]
+
+geneMatrix.complete <- 
+  geneMatrix.complete[, colnames(geneMatrix.complete) != "NRAS"]
+
+
+```
+
+Set up viability response matrix
+```{r responseMatrix3}
+
+viabMatrix <- 
+  #select patients with complete meta data 
+  dplyr::filter(df,
+                PatientID %in% row.names(geneMatrix.complete)) %>%
+  #select cytokine, patient and log(viability values only)
+  dplyr::select(Cytokine, 
+                Log, 
+                PatientID) %>% 
+  #reshape data
+  spread(key = PatientID, value = Log) %>% 
+  data.frame() %>% 
+  #make Cytokine the row names
+  remove_rownames() %>%
+  column_to_rownames("Cytokine")
+
+#make sample order same as in geneMatrix
+viabMatrix <- viabMatrix[,rownames(geneMatrix.complete)]
+
+```
+
+
+Run lasso regression
+``` {r RunLasso3, warning = FALSE}
+
+#set object to hold model outputs
+dataResult <- list()
+
+#fit model for each stimulus
+for (i in rownames(viabMatrix)){  
+  
+    #prepare input and response matrices
+    y <- unlist(viabMatrix[i,]) # viability for each patient with given condition
+    X <- geneMatrix.complete #genetic features for each patient
+
+    #fit the model
+    cvglmfit <- runGlm(X, y, method="lasso", repeats=30, folds=3)
+    
+    #collect the results for each stimulus in one object
+    dataResult[[i]] <- cvglmfit
+
+}
+
+```
+
+Get predictor profiles for stimuli of interest
+```{r plotLasso3, message = FALSE, warning = FALSE}
+
+heatMaps_cyt <- lassoPlot(dataResult[c("IL-4","CpG ODN", "TGF-b1")] , 
+                          geneMatrix.complete, #use gene matrix for heatmap 
+                          viabMatrix, #use viab matrix for scatter plot
+                          freqCut = 0.75, #coefficients should be selected in <75% of bootstrapped model files
+                          coefCut = 0.00) #no minimum value for coefficients 
+
+
+```
+
+Assemble legend for heatmaps
+```{r, Fig3BLegends, fig.height=2}
+
+#G = gene mutations, I = IGHV, M = Methylation Cluster
+legendFor = c("G", "I", "M")
+
+#assign colours for I, G and M
+coldef<-list()
+coldef["I"] <- list(c(offwhite,"#707372")) #U-CLL and M-CLL
+coldef["M"] <- list(c(offwhite, "#707372", "#A8A99E")) #IP, HP, LP
+coldef["G"] <- list(c(offwhite, "#373A36")) #WT and Mutated
+
+
+legends = makelegends(legendFor=c("G","I","M"),coldef)
+
+
+```
+
+Assemble figure
+```{r Fig3B, fig.path=plotDir, dev=c("png", "pdf"), fig.height=3, fig.width=8.5, message = FALSE, warning = FALSE}
+
+Fig3B_1 <- wrap_elements(grid.arrange( grobs = heatMaps_cyt[1], ncol =1))
+Fig3B_2 <- wrap_elements(grid.arrange( grobs = heatMaps_cyt[2], ncol =1))
+Fig3B_3 <- wrap_elements(grid.arrange( grobs = heatMaps_cyt[3], ncol =1))
+Fig3B_leg <- legends[["plot"]] %>% wrap_elements()
+
+```
+
+
+# Assemble Figure
+```{r, Fig3,  fig.path=plotDir, dev=c("png", "pdf"), fig.height=13, fig.width=20, message = FALSE, warning = FALSE}
+
+design1<-"
+  AB
+"
+
+blankplot <- 
+  ggplot() +
+  geom_blank() +
+  theme(panel.background = element_blank())
+
+tp <- theme(plot.tag=element_text(size = 30))
+
+Fig3 <-
+  wrap_elements(Fig3A) + tp +
+  
+   wrap_elements(Fig3B_1 +
+                Fig3B_2+
+                Fig3B_3+
+                wrap_elements(blankplot + # add a blank space before legend to align with plots above
+                                Fig3B_leg + 
+                                plot_layout(ncol=2, widths  = c(0.15,0.9))) +
+                  plot_layout(ncol=1, 
+                              heights = c(1.7,1.7,1.7,0.5)))+tp +
+                
+    
+  plot_annotation(tag_levels = "A")+
+  plot_layout(design = design1, width=c(2,1.7))
+
+Fig3
+
+
+```
+
+# Appendix
+```{r appendix3}
+Sys.info()
+sessionInfo()
+```

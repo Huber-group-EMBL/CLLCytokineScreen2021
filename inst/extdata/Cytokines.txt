@@ -1,0 +1,17 @@
+stimulus	name	company	conc	cat_no	lot_no	source	pathway	additional_pathways
+IL-4 human recombinant animal component free	IL-4	Sigma-Aldrich	10 ng/ml	SRP3093	0712AFC14	Company	JAK/STAT	PI3K
+IL-10 human Animal component free	IL-10	Sigma-Aldrich	10 ng/ml	SRP3312	1012AFC21	Company	JAK/STAT	FOXO
+IL-2 human recombinant animal component free	IL-2	Sigma-Aldrich	10 ng/ml	SRP3085	0416AFC12	Company	JAK/STAT	PI3K
+R-848 	Resiquimod	Enzo Life Siences	1000 ng/ml	ALX-420-038-M025	10211615	Company	TLR 7/8	NA
+Human IL-21	IL-21	Peprotech	10 ng/ml	200-21	414226	Company	JAK/STAT	NA
+Human BAFF	BAFF	Peprotech	250 ng/ml	310-13	0706CY194	Company	NFkB	NA
+Human IL-1beta	IL-1b	Peprotech	10 ng/ml	200-01	0606B95	Company	NFkB	MAPK
+Human sCD40 Ligand	sCD40L	Peprotech	1000 ng/ml	310-02	1214145	Company	NFkB	NA
+Goat F(AB')2 Fragment to human IgM	soluble anti-IgM	MP Biomedicals	20000 ng/ml	55055	7227	Company	BCR	NA
+Human TGF-beta1	TGF-b1	Peprotech	10 ng/ml	100-21	1117209	Company	MAPK	Cell cycle, FOXO
+Human IL-15	IL-15	Peprotech	10 ng/ml	200-15	91624	Company	JAK/STAT	NA
+Human IL-6	IL-6	Peprotech	10 ng/ml	200-06	031316-2	Company	JAK/STAT	PI3K, FOXO
+ODN 2006 (ODN 7909)	CpG ODN	Invivogen	1000 ng/ml	tlrl-2006-1	3901-09T	Company	TLR 9	NA
+Human SDF-1alpha (CXCL12)	SDF-1a	Peprotech	200 ng/ml	300-28A	101492	Company	JAK/STAT	Chemokine
+Human IFN-gamma	Interferon gamma	Peprotech	5 ng/ml	300-02	121527	Company	NFkB	JAK/STAT
+HS-5 konditioniertes Medium	HS-5 CM	self produced	20 %	NA	NA	self produced	NA	NA
