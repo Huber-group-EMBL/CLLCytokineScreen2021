@@ -458,6 +458,9 @@ patchwork_plot <-
 
 patchwork_plot
 
+
+ggsave(patchwork_plot, device = "tiff", filename = "../../inst/figs/Fig1.tiff", width = 18, height = 11, units="in")
+
 ```
 
 

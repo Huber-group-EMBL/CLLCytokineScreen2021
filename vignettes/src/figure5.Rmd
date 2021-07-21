@@ -699,7 +699,7 @@ design1 <-"
   6677
   8899
   "
-
+Fig5<-
 Fig5A + theme(plot.tag=element_text(size = 30)) +
 
 wrap_elements(Fig5B) + theme(plot.tag=element_text(size = 30)) +
@@ -724,7 +724,9 @@ plot_layout(design=design1,
 
   plot_annotation( tag_levels = "A", theme=theme(plot.title = element_text(face="plain", size=28, hjust = 0.5)))
 
+Fig5
 
+ggsave(Fig5, device = "tiff", filename = "../../inst/figs/Fig5.tiff", width = 20, height = 22, units="in")
 ```
 
 # Appendix

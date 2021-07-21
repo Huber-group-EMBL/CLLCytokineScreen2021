@@ -945,7 +945,7 @@ save(Lasso_Plots_Fig6,
 
 
 # Assemble Figure
-```{r Fig6, fig.path=plotDir, dev=c("png", "pdf"), fig.height = 24, fig.width = 22, warning=FALSE}
+```{r Fig6, fig.path=plotDir, dev=c("tiff"), fig.height = 24, fig.width = 22, warning=FALSE}
 
 #Design
 design1<-"
@@ -959,7 +959,7 @@ tp <- theme(plot.tag=element_text(size = 30))
 
 # Plot
 
-(wrap_elements(Fig6A)) + tp +
+Fig6<- (wrap_elements(Fig6A)) + tp +
 
 Fig6B + tp +
   
@@ -971,6 +971,10 @@ plot_annotation(tag_levels = "A") +
 
 plot_layout(design=design1, heights = c(0.9,1,1))
 
+
+Fig6
+
+ggsave(Fig6, device = "tiff", filename = "../../inst/figs/Fig6.tiff", width = 22, height = 24, units="in")
 
 ```
 

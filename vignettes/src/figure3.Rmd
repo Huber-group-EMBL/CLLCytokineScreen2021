@@ -802,7 +802,7 @@ Fig3 <-
 
 Fig3
 
-
+ggsave(Fig3, device = "tiff", filename = "../../inst/figs/Fig3.tiff", width = 20, height = 13, units="in")
 ```
 
 # Appendix
