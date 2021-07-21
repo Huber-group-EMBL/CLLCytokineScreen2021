@@ -1,6 +1,6 @@
 ---
 title: 'CLL Cytokine Screen 2021: Figure 6'
-author: "Cytokine Screen 2020: Holly Giles, Peter Bruch"
+author: "Holly Giles, Peter Bruch"
 date: "`r doc_date()`"
 output:
   BiocStyle::html_document:
