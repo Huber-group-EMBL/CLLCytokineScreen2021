@@ -10,7 +10,7 @@ output:
     code_folding: "hide" 
 ---
 
-In this sub-vignette we present the analysis and source code for figure 6.This sub-vignette can be built along with all other sub-vignettes by running CLLCytokineScreen2021.Rmd. 
+In this sub-vignette we present the analysis and source code for figure 6. This sub-vignette can be built along with all other sub-vignettes by running CLLCytokineScreen2021.Rmd. 
 
 # Set up
 ```{r setup6}
@@ -637,27 +637,6 @@ for (x in rownames(betaMatrix)){
 # Figures
 
 ## Figure 6A
-Predictor Profile of the size of interaction between Fludarabine and CpG ODN   
-Generate all predictor profiles
-```{r generate_predictorProfiles6, fig.width = 10, fig.height = 10, message = FALSE, warning = FALSE}
-
-#run lassoPlot function to generate predictor profiles, with no minimum coefficient value
-heatMaps <- lassoPlot(dataResult, geneMatrix.complete, betaMatrix, freqCut = 0.9, coefCut = 0.0)
-
-heatMaps <- heatMaps[!is.na(heatMaps)]
-
-```
-
-Plot predictor profile for Fludarabine + CpG ODN 
-```{r Fig6A, fig.path=plotDir, dev=c("png", "pdf"), fig.width = 10, fig.height = 10}
-
-Fig6A <- grid.arrange(grobs = heatMaps["Fludarabine + CpG ODN"], ncol = 1)
-
-Fig6A
-```
-
-
-## Figure 6B
 Heatmap of coefficients    
  
 Here we fit linear models to the viability matrix, for each drug - stimulus combination and extract interaction coefficients for each patient to generate a response matrix (n = 137). To generate the feature matrix, genetic mutations and CNVs (p= 39) and IGHV status (coded as 0-1)  are used. Genetic features with >20% missing values were excluded, and only patients with complete annotation are included in the model. We run multivariate regression using a Gaussian linear model with L1-penalty using `glmnet`, 3-fold cross-validation and misclassification error as loss.   
@@ -786,7 +765,7 @@ cyt_labels = c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL
 gene_labels = c("IGHV.status" = "IGHV status", "del11q" = "del(11q)", "del13q" = "del(13q)", "del17p" = "del(17p)", "trisomy12" = "trisomy 12", "TP53" = "TP53", "SF3B1" = "SF3B1", "ATM" = "ATM")
 
 
-Fig6B <- 
+Fig6A <- 
   coeff.long.mat.ordered %>% 
   ggplot(aes(y=Drug, x=gene)) +
   geom_tile(aes(fill=coeff),color = "white") +
@@ -819,8 +798,27 @@ Fig6B <-
   scale_x_discrete(labels = gene_labels) +
   facet_grid(Stimulus~., scales = "free_y",  space="free_y", switch = "both", labeller =labeller( Stimulus=cyt_labels))
   
-Fig6B
+Fig6A
 
+```
+## Figure 6B
+Predictor Profile of the size of interaction between Fludarabine and CpG ODN   
+Generate all predictor profiles
+```{r generate_predictorProfiles6, fig.width = 10, fig.height = 10, message = FALSE, warning = FALSE}
+
+#run lassoPlot function to generate predictor profiles, with no minimum coefficient value
+heatMaps <- lassoPlot(dataResult, geneMatrix.complete, betaMatrix, freqCut = 0.9, coefCut = 0.0)
+
+heatMaps <- heatMaps[!is.na(heatMaps)]
+
+```
+
+Plot predictor profile for Fludarabine + CpG ODN 
+```{r Fig6A, fig.path=plotDir, dev=c("png", "pdf"), fig.width = 10, fig.height = 10}
+
+Fig6B <- grid.arrange(grobs = heatMaps["Fludarabine + CpG ODN"], ncol = 1)
+
+Fig6B
 ```
 
 
@@ -952,8 +950,8 @@ save(Lasso_Plots_Fig6,
 #Design
 design1<-"
   AB
-  CB
-  DB
+  AC
+  AD
 "
 
 #Tag Theme
