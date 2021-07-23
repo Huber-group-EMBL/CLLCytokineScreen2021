@@ -974,7 +974,7 @@ Figure2 <-
 
 Figure2
 
-ggsave(Figure2, device = "tiff", filename = "../../inst/figs/Fig2.tiff", width = 16, height = 23, units="in")
+ggsave(Figure2, device = "tiff", filename = "../../inst/figs/Fig2.tiff", width = 16, height = 23, units="in", dpi="screen")
 
 
 ```

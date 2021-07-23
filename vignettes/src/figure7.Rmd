@@ -303,7 +303,7 @@ Fig7 <-
   
 Fig7
   
- ggsave(Fig7, device = "tiff", filename = "../../inst/figs/Fig7.tiff", width = 16, height = 15, units="in")
+ ggsave(Fig7, device = "tiff", filename = "../../inst/figs/Fig7.tiff", width = 16, height = 15, units="in", dpi="screen")
 
 ```
 

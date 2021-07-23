@@ -726,7 +726,7 @@ plot_layout(design=design1,
 
 Fig5
 
-ggsave(Fig5, device = "tiff", filename = "../../inst/figs/Fig5.tiff", width = 20, height = 22, units="in")
+ggsave(Fig5, device = "tiff", filename = "../../inst/figs/Fig5.tiff", width = 20, height = 22, units="in", dpi="screen")
 ```
 
 # Appendix

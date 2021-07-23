@@ -974,7 +974,7 @@ plot_layout(design=design1, heights = c(0.9,1,1))
 
 Fig6
 
-ggsave(Fig6, device = "tiff", filename = "../../inst/figs/Fig6.tiff", width = 22, height = 24, units="in")
+ggsave(Fig6, device = "tiff", filename = "../../inst/figs/Fig6.tiff", width = 22, height = 24, units="in", dpi="screen")
 
 ```
 
