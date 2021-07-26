@@ -284,7 +284,7 @@ design1 <-"
   BEH
   BFH
   "
-tp <- theme(plot.tag = element_text(size = 30, vjust = 1))
+tp <- theme(plot.tag = element_text(size = 30, vjust = 1, face="plain"))
 
 Fig7 <-
   wrap_elements(Fig7A) + tp +
@@ -299,11 +299,11 @@ Fig7 <-
   Fig7H + tp +
   
   plot_layout(design = design1, widths = c(1,0.7,1), heights =c(0.8, 1, 0.8, 1))+
-  plot_annotation(tag_levels = "A")
+  plot_annotation(tag_levels = "A", title="Figure 7", theme = theme(title=element_text(size = 20)))
   
 Fig7
   
- ggsave(Fig7, device = "tiff", filename = "../../inst/figs/Fig7.tiff", width = 16, height = 15, units="in", dpi="screen")
+ ggsave(Fig7, device = "jpeg", filename = "../../inst/figs/Fig7.jpeg", width = 16, height = 15, units="in", dpi=300)
 
 ```
 

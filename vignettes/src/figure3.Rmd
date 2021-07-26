@@ -797,12 +797,12 @@ Fig3 <-
                               heights = c(1.7,1.7,1.7,0.5)))+tp +
                 
     
-  plot_annotation(tag_levels = "A")+
+  plot_annotation(tag_levels = "A", title="Figure 3", theme = theme(title=element_text(size = 20)))+
   plot_layout(design = design1, width=c(2,1.7))
 
 Fig3
 
-ggsave(Fig3, device = "tiff", filename = "../../inst/figs/Fig3.tiff", width = 20, height = 13, units="in", dpi="screen")
+ggsave(Fig3, device = "jpeg", filename = "../../inst/figs/Fig3.jpeg", width = 20, height = 13, units="in", dpi="screen")
 ```
 
 # Appendix

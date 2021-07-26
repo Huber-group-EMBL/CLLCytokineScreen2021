@@ -722,11 +722,11 @@ plot_layout(design=design1,
             heights = c(1,0.5,0.5,0.5),
             widths = c(0.92,0.08,0.05,0.95)) +
 
-  plot_annotation( tag_levels = "A", theme=theme(plot.title = element_text(face="plain", size=28, hjust = 0.5)))
+  plot_annotation( tag_levels = "A", title="Figure 5", theme = theme(title=element_text(size = 20)))
 
 Fig5
 
-ggsave(Fig5, device = "tiff", filename = "../../inst/figs/Fig5.tiff", width = 20, height = 22, units="in", dpi="screen")
+ggsave(Fig5, device = "jpeg", filename = "../../inst/figs/Fig5.jpeg", width = 20, height = 22, units="in", dpi="screen")
 ```
 
 # Appendix

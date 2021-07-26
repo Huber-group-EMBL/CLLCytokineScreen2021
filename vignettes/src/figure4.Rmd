@@ -618,12 +618,12 @@ Fig4 <-
   Fig4C + tp +
   Fig4D + tp +
     
-  plot_annotation(tag_levels = "A")+
+  plot_annotation(tag_levels = "A", title="Figure 4", theme = theme(title=element_text(size = 20)))+
   plot_layout(design = design1, heights = c(1,0.6,0.8), width=c(0.6,1))
 
 Fig4
 
-ggsave(Fig4, device = "tiff", filename = "../../inst/figs/Fig4.tiff", width = 15, height = 13, units="in", dpi="screen")
+ggsave(Fig4, device = "jpeg", filename = "../../inst/figs/Fig4.jpeg", width = 15, height = 13, units="in", dpi="screen")
 
 ```
 

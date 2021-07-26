@@ -967,14 +967,14 @@ Fig6C+ tp +
   
 Fig6D + tp +  
   
-plot_annotation(tag_levels = "A") + 
+plot_annotation(tag_levels = "A", title="Figure 6", theme = theme(title=element_text(size = 20))) + 
 
 plot_layout(design=design1, heights = c(0.9,1,1))
 
 
 Fig6
 
-ggsave(Fig6, device = "tiff", filename = "../../inst/figs/Fig6.tiff", width = 22, height = 24, units="in", dpi="screen")
+ggsave(Fig6, device = "jpeg", filename = "../../inst/figs/Fig6.jpeg", width = 22, height = 24, units="in", dpi="screen")
 
 ```
 

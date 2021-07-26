@@ -452,14 +452,14 @@ patchwork_plot <-
   wrap_elements(Fig1D) + tp+
   wrap_elements(Fig1E) + tp+
   
-  plot_annotation(tag_levels = "A") +
+  plot_annotation(tag_levels = "A", title="Figure 1", theme = theme(title=element_text(size = 20))) +
   plot_layout(design = design1, heights = c(0.7,1), width=c(1,0.8,0.8,1))
 
 
 patchwork_plot
 
 
-ggsave(patchwork_plot, device = "tiff", filename = "../../inst/figs/Fig1.tiff", width = 18, height = 11, units="in", dpi="screen")
+ggsave(patchwork_plot, device = "jpeg", filename = "../../inst/figs/Fig1.jpeg", width = 18, height = 11, units="in", dpi="screen")
 
 ```
 
