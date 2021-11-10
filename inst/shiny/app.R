@@ -186,7 +186,7 @@ body <- dashboardBody(
                 status = "primary",
                 title = "Welcome to the Shiny App to Explore the Drug-Cytokine Combinatorial Screen Dataset",
                 helpText("Please click on the tabs on the left to interactively explore the data. 
-                This app accompanies the 2021 paper: Mapping drug-microenvironment-genetic interplay in CLL reveals trisomy 12 as a modulator of microenvironmental signals. If you use this app to support published research, please cite the paper. 
+                This app accompanies the 2021 paper: Combinatorial drug-microenvironment interaction mapping reveals cell-extrinsic drug resistance mechanisms and clinically relevant patient subgroups in CLL. If you use this app to support published research, please cite the paper. 
                 The data can also be explored manually using the online vignette."))), 
                
               fluidRow(#boxes for tabs 2 and 3
@@ -535,7 +535,7 @@ server <- function(input, output) {
     
     
     
-    df.comp3 <- plotTab4[which(plotTab4[input$omicP2]==0|plotTab4[input$omicP2]=="U"),]
+    plotTab4 <- plotTab4[which(plotTab4[input$omicP2]==0|plotTab4[input$omicP2]=="U"),]
     
                                      
     #plot
