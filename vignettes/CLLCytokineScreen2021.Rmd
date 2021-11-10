@@ -5,7 +5,11 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 output:
-  BiocStyle::html_document
+  BiocStyle::html_document:
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    code_folding: "hide" 
 ---
 
 # Introduction
@@ -14,14 +18,14 @@ In this vignette we present the complete analysis of the 2021 Drug-Cytokine Comb
 
 <br />
 
-**Mapping drug-microenvironment-genetic interplay in CLL reveals trisomy 12 as a modulator of microenvironmental signals**
+**Combinatorial drug-microenvironment interaction mapping reveals cell-extrinsic drug resistance mechanisms and clinically relevant patient subgroups in CLL**
 
 _Peter-Martin Bruch\*, Holly A. R. Giles\*, Carolin Kolb, Sophie A. Herbst, Tina Becirovic, Tobias Roider, Junyan Lu, Sebastian Scheinost, Lena Wagner, Jennifer Huellein, Ivan Berest, Mark Kriegsmann, Katharina Kriegsmann, Christiane Zgorzelski, Peter Dreger, Judith B. Zaugg, Carsten Müller-Tidow, Thorsten Zenz, Wolfgang Huber\*, Sascha Dietrich\*_
 <br />
 
 The presented analysis was performed by Holly Giles and Peter-Martin Bruch, building on scripts from Sascha Dietrich, Wolfgang Huber, Junyan Lu, Malgorzata Oles, Frederik Ziebell, Sophie Herbst and Ivan Berest. This vignette was assembled by Holly Giles.   
 
-This vignette produces all seven figures of the paper. The vignette builds from the sub-vignettes, which are separated by horizontal lines. Each subvignette can also be built separately. 
+This vignette produces all seven figures of the paper. The vignette builds from the sub-vignettes and each subvignette can also be built separately. 
 
 
 ```{r echo=FALSE}
@@ -119,9 +123,6 @@ library(dplyr)
 ```{r Figure6, child = 'src/figure6.Rmd'}
 ```
 
-
-***
-
 ***
 
 <!-- **Figure7** -->
@@ -129,8 +130,8 @@ library(dplyr)
 ```{r Figure7, child = 'src/figure7.Rmd'}
 ```
 
-
 ***
+
 # Appendix
 
 ```{r}
