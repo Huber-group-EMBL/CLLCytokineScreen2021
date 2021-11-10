@@ -10,10 +10,12 @@ output:
       code_folding: "hide" 
 ---
 
+# Figure 1
+
 In this sub-vignette we present the analysis and source code for figure 1. This sub-vignette can be built along with all other sub-vignettes by running CLLCytokineScreen2021.Rmd. 
 
 
-# Set up 
+## Set up 
 Load libraries
 ```{r loadLibraries1, cache = FALSE, message = FALSE, warning = FALSE }
 
@@ -35,7 +37,7 @@ if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
 ```
 
 
-# Load data  
+## Load data  
 ```{r loadData1}
 
 #drugs: dataframe containing meta data on all drugs used in screen 
@@ -93,15 +95,15 @@ df$Drug <- factor(df$Drug, levels =c("DMSO",
 ```
 
 
-# Define Aesthetics
+## Define Aesthetics
 ```{r defineAesthetics1}
 
 source("../../R/themes_colors.R")
 
 ```
 
-# Plot figures
-## Fig 1A     
+## Plot figures
+### Fig 1A     
 Plot graphic of screen overview
 ```{r Fig1A, fig.width=5, fig.height=5}
 
@@ -115,7 +117,7 @@ Fig1A
 ```
 
 
-## Fig 1B
+### Fig 1B
 Overview of cytokine pathways
 ```{r Fig1B, fig.width=8, fig.height = 5}
 
@@ -128,9 +130,9 @@ Fig1B
 
 ```
 
-## Fig 1C
+### Fig 1C
 Overview of drug pathways and approval status
-```{r Fig1C, fig.path=plotDir, dev=c("png", "pdf"), fig.width=4, fig.height=3.5}
+```{r Fig1C, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=4, fig.height=3.5}
 
 #set table theme
 ttable <- ttheme_minimal(
@@ -152,7 +154,7 @@ wrap_elements(Fig1C)
 ```
 
 
-## Fig 1D
+### Fig 1D
 Forrest plot of top 8 drug - drug Pearson Correlation Coefficients    
 Generate drug-only viability matrix 
 ```{r drugViabMatrix1}
@@ -264,7 +266,7 @@ sig.drug$Combination <- factor(sig.drug$Combination, levels=order.drug)
 
 ```
 
-```{r Fig1D, fig.path=plotDir, dev=c("png", "pdf"), fig.width=7, fig.height=5}
+```{r Fig1D, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=7, fig.height=5}
 
 #Plot Forest Plot
 Fig1D = 
@@ -289,8 +291,8 @@ Fig1D
   
 ```
 
-## Fig 1E
-Forrest plot of top 8 cytokine - cytokine Pearson Correlation Coefficients   
+### Fig 1E
+Forest plot of top 4 cytokine - cytokine Pearson Correlation Coefficients   
 Generate Cytokine only viability matrix
 ```{r  cytokineViabilityMatrix1}
 
@@ -384,18 +386,11 @@ cyt.corr$estimate.cor <- as.numeric(cyt.corr$estimate.cor)
 cyt.corr$conf.int1 <- as.numeric(cyt.corr$conf.int1)
 cyt.corr$conf.int2 <- as.numeric(cyt.corr$conf.int2)
 
-#get top 8 highest correlations
+#get top 4 highest correlations
 sig.cyt <- 
   cyt.corr %>%
-  dplyr::filter(Combination %in% c("IL-4:sCD40L+IL-4", 
-                                   "Resiquimod:CpG ODN",  
-                                   "sCD40L:BAFF", 
-                                   "IL-1b:soluble anti-IgM", 
-                                   "Resiquimod:IL-4", 
-                                   "IL-6:IL-4", 
-                                   "IL-6:IL-10", 
-                                   "Interferon gamma:IL-10")) 
-  
+  dplyr::filter(estimate.cor<1) %>%
+  top_n(4, estimate.cor)
 
 #Make cytokine combinations readable
 sig.cyt$Combination <- gsub(':', ' and ', sig.cyt$Combination)
@@ -408,10 +403,11 @@ order.cyt <- sig.cyt %>%
   
 sig.cyt$Combination <- factor(sig.cyt$Combination, levels=order.cyt)
 
+
 ```
 
 
-```{r Fig1E, fig.path=plotDir, dev=c("png", "pdf"), fig.width=7, fig.height=5, message=FALSE, warning=FALSE}
+```{r Fig1E, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=7, fig.height=5, message=FALSE, warning=FALSE}
 
 #Plot Forest Plot
 Fig1E = 
@@ -433,38 +429,83 @@ Fig1E =
 Fig1E
 ```
 
+### Fig 1F
+Forest plot of selected cytokine - cytokine Pearson Correlation Coefficients 
+```{r Fig1F, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=7, fig.height=5, message=FALSE, warning=FALSE}
 
-# Assemble Figure
-```{r, Fig1, fig.height=11, fig.width=18, fig.path=plotDir, dev=c("png", "pdf"), message=FALSE, warning=FALSE}
+#get selected correlations
+sig.cyt <- 
+  cyt.corr %>%
+  dplyr::filter(Combination %in% c("Interferon gamma:IL-6",
+                                   "IL-1b:sCD40L",
+                                   "IL-4:IL-6"))
+    
+  
+
+#Make cytokine combinations readable
+sig.cyt$Combination <- gsub(':', ' and ', sig.cyt$Combination)
+
+#set plotting order
+order.cyt <- sig.cyt %>%
+            dplyr::arrange(estimate.cor) %>%
+            dplyr::select(Combination) %>%
+            unlist()
+  
+sig.cyt$Combination <- factor(sig.cyt$Combination, levels=order.cyt)
+
+
+#Plot Forest Plot
+Fig1F = 
+  ggplot(sig.cyt, 
+         aes(x = Combination, y = estimate.cor, ymin = conf.int1, ymax = conf.int2 ))+
+  geom_pointrange(color = cytpal[1])+
+  geom_errorbar(aes(ymin=conf.int1, ymax=conf.int2),width=0.5,cex=1, color = cytpal[1])+
+  coord_flip()+
+  scale_y_continuous(limits=c(-0.1,1), 
+                     breaks=c(0,0.25,0.5,0.75,1),
+                     labels=c("0","0.25","0.50","0.75","1"))+
+  ylab("Pearson Coefficient")+
+  xlab("")+
+  scale_x_discrete(position = "top", labels=c("IL-1b and sCD40L"="IL1\u03B2 and sCD40L", "IL-4 and IL-6"="IL4 and IL6" ,"Interferon gamma and IL-6"="Interferon \u03B3 and IL6          "))+
+  t2 +
+  theme(axis.line.y = element_blank()) +
+  guides(color="none")
+  
+Fig1F
+```
+
+
+## Assemble Figure
+```{r, Fig1, fig.height=11, fig.width=18, fig.path=plotDir, dev=c("png", "cairo_pdf"), message=FALSE, warning=FALSE}
 
 tp <- theme(plot.tag=element_text(size = 30, face="plain"))
 
 design1 <-"
   ABBC
   DDEE
+  DDFF
 "
 
-patchwork_plot <-
+Figure1 <-
   
   Fig1A + tp+
   Fig1B + tp+
   wrap_elements(Fig1C ) + tp+
   wrap_elements(Fig1D) + tp+
   wrap_elements(Fig1E) + tp+
+  wrap_elements(Fig1F) + tp+
   
   plot_annotation(tag_levels = "A", title="Figure 1", theme = theme(title=element_text(size = 20))) +
-  plot_layout(design = design1, heights = c(0.7,1), width=c(1,0.8,0.8,1))
+  plot_layout(design = design1, heights = c(0.7,0.55,0.45), width=c(1,0.8,0.8,1))
 
 
-patchwork_plot
+Figure1
 
-
-ggsave(patchwork_plot, device = "jpeg", filename = "../../inst/figs/Fig1.jpeg", width = 18, height = 11, units="in", dpi="screen")
 
 ```
 
 
-# Appendix
+## Appendix
 ```{r appendix1}
 Sys.info()
 sessionInfo()
