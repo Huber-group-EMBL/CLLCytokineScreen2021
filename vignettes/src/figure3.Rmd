@@ -10,9 +10,10 @@ output:
       code_folding: "hide" 
 ---
 
+# Figure 3 
 In this sub-vignette we present the analysis and source code for Figure 3. This sub-vignette can be built along with all others by running CLLCytokineScreen2021.Rmd. 
 
-# Set up 
+## Set up 
 ```{r setup3}
 set.seed(1996)
 ```
@@ -49,7 +50,7 @@ if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
 ```
 
 
-# Load data
+## Load data
 Load raw files
 ```{r loadData3}
 
@@ -114,13 +115,13 @@ patMeta$treatment <- as.factor(patMeta$treatment)
 ```
 
 
-# Define Aesthetics
+## Define Aesthetics
 ```{r defineAesthetics3}
 source("../../R/themes_colors.R")
 ```
 
 
-# Define functions
+## Define functions
 *runGlm*: to run  multi-variant regression. This function takes a feature matrix `X` and a continuous response matrix `y`, to run lasso or ridge regularised regression. The function will run the `cv.glmnet` function for the chosen number of `repeats`,  applying cross-fold validation using chosen number of `folds`. 
 ```{r runGlm3 }
 #select lasso or ridge 
@@ -455,14 +456,14 @@ lassoPlot <- function(lassoOut, geneMatrix, viabMatrix, freqCut = 1, coefCut = 0
 ```
 
 
-# Plot Figures
+## Plot Figures
 
-## Figure 3A
+### Figure 3A
 Overview of t test p values to identify genetic features that affect responses to stimuli.     
 Here we test for associations between stimulus viability assay results and genomic features by Student’s t-tests (two-sided, with equal variance). We test somatic mutations (aggregated at the gene level), copy number aberrations and IGHV status. We restrict the analysis to features that are present in at least 3 patient samples (63 features). p-values are adjusted for multiple testing by applying the Benjamini-Hochberg procedure.     
 
 Run t tests and extract p values
-```{r, Fig3A, fig.path=plotDir, dev=c("png", "pdf"), fig.height = 8, fig.width = 9.5, message = FALSE, warning = FALSE}
+```{r, Fig3A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 8, fig.width = 9.5, message = FALSE, warning = FALSE}
 
 
 ##################### List of mutations with >2 postive cases #############################
@@ -604,7 +605,7 @@ p_values %>%
 
 ```
 
-## Figure 3B
+### Figure 3B
 Lasso plots to represent genetic predictors of response to stimuli, calculated by lasso-regularised regression     
 Here we use a Gaussian linear model with L1-penalty. As the dependent variable, the normalised viability value is used for all stimuli. The genetic feature matrix consists of mutations and CNVs  (p=39), IGHV status (encoded as M = 1 and U = 0) and Methylation Cluster(encoded as 0, 0.5, 1). As a measure of explained variance the reduction in cross-validated mean squared error relative to the null model is calculated.     
 Set up genetic feature matrix  
@@ -760,7 +761,7 @@ legends = makelegends(legendFor=c("G","I","M"),coldef)
 ```
 
 Assemble figure
-```{r Fig3B, fig.path=plotDir, dev=c("png", "pdf"), fig.height=3, fig.width=8.5, message = FALSE, warning = FALSE}
+```{r Fig3B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=3, fig.width=8.5, message = FALSE, warning = FALSE}
 
 Fig3B_1 <- wrap_elements(grid.arrange( grobs = heatMaps_cyt[1], ncol =1))
 Fig3B_2 <- wrap_elements(grid.arrange( grobs = heatMaps_cyt[2], ncol =1))
@@ -770,8 +771,8 @@ Fig3B_leg <- legends[["plot"]] %>% wrap_elements()
 ```
 
 
-# Assemble Figure
-```{r, Fig3,  fig.path=plotDir, dev=c("png", "pdf"), fig.height=13, fig.width=20, message = FALSE, warning = FALSE}
+## Assemble Figure
+```{r, Fig3,  fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=13, fig.width=20, message = FALSE, warning = FALSE}
 
 design1<-"
   AB
@@ -802,10 +803,12 @@ Fig3 <-
 
 Fig3
 
-ggsave(Fig3, device = "jpeg", filename = "../../inst/figs/Fig3.jpeg", width = 20, height = 13, units="in", dpi="screen")
+ggsave(Fig3, device = cairo_pdf, filename = "../../inst/figs/Fig3.pdf", width = 20, height = 13, units="in", dpi="screen")
+
+
 ```
 
-# Appendix
+## Appendix
 ```{r appendix3}
 Sys.info()
 sessionInfo()
