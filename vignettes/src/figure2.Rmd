@@ -10,9 +10,11 @@ output:
       code_folding: "hide" 
 ---
 
-In this sub-vignette we present the analysis and source code for Figure 2. This sub-vignette can be built along with all others, to generate all  figures, by running CLLCytokineScreen2021.Rmd. 
+# Figure 2
 
-# Set up
+In this sub-vignette we present the analysis and source code for Figure 2. This sub-vignette can be built along with all others, to generate all figures, by running CLLCytokineScreen2021.Rmd. 
+
+## Set up
 Load libraries
 ```{r loadLibraries2, cache = FALSE, message = FALSE, warning = FALSE}
 
@@ -47,7 +49,7 @@ if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
 
 ```
 
-# Load data
+## Load data
 Raw
 ```{r loadData2}
 
@@ -135,7 +137,7 @@ df <- dplyr::filter(df, Drug == "DMSO", Cytokine != "No Cytokine")
 ```
 
 
-# Define Aesthetics
+## Define Aesthetics
 ```{r defineAesthetics2}
 
 source("../../R/themes_colors.R")
@@ -143,7 +145,7 @@ source("../../R/themes_colors.R")
 ```
 
 
-# Define additional functions
+## Define additional functions
 *deckel function:*  to  set limits of scaling factor. Accepts a number `x`, and two numeric limits, `lower` and `upper`.
 ```{r deckelFunction2}
 deckel <- function(x, lower = -Inf, upper = +Inf) ifelse(x<lower, lower, ifelse(x>upper, upper, x))
@@ -265,10 +267,10 @@ sumCoef <- function(coefMat, coefCut = 0, freqCut =1) {
 ```
 
 
-# Plot Figures 
-##  Figure 2A
+## Plot Figures 
+###  Figure 2A
 Heatmap of all scaled log(viability) values, for all patient samples and stimuli.      
-In the code below, the viability data is  normalised to DMSO controls and each row is scaled according to MAD. Limits are applied to scaling factor for optimal visualisation. The heatmap is plotted using pheatmap: the ordering of the columns (patient samples) is obtained from the dendrogram that results from runninng ConsensusClusterPlus using hierarchical clustering with the Euclidean metric. The rows are globally ordered using the dendrogram order produced by hclust with default branch arrangement.
+In the code below, the viability data is  normalised to DMSO controls and each row is scaled according to MAD. Limits are applied to scaling factor for optimal visualisation. The heatmap is plotted using pheatmap: the ordering of the columns (patient samples) is obtained from the dendrogram that results from running ConsensusClusterPlus using hierarchical clustering with the Euclidean metric. The rows are globally ordered using the dendrogram order produced by hclust with default branch arrangement.
 ```{r prepMatrix2}
 
 ########### Viability matrix ################
@@ -425,7 +427,7 @@ breaks <- c(seq(-3, 3, length.out = 101)) %>% `names<-`(
 ```
 
 Plot Figure
-```{r Fig2A, fig.path=plotDir, dev=c("png", "pdf"), fig.width=16, fig.height=8, warning = FALSE}
+```{r Fig2A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=8, warning = FALSE}
 
 #Plot heatmap
 Fig2A <- 
@@ -455,8 +457,9 @@ Fig2A
 ```
 
 
-## Figure 2B
-```{r, Fig2B, fig.path=plotDir, dev=c("png", "pdf"), fig.width=8, fig.height=6}
+### Figure 2B
+Lymphoctye doubling times (LDT) stratified by patient clusters
+```{r, Fig2B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=8, fig.height=6}
 
 #plot LDT stratified by Patient Clusters
 Fig2B <-
@@ -474,30 +477,18 @@ Fig2B <-
   guides(fill="none") +
   ylab("LDT in years") +
   t2 +
-  # stat_compare_means(method="kruskal.test", size=6, label.x = 1.3, label.y=2.1)+
   stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=6, label.x = 1.3, label.y=2.1)
 
 
 Fig2B
 
 
-# 
-# #run t test to compare clusters 3 and 4
-# patMeta_cl %>%
-#   left_join(  dplyr::select(LDT, PatientID, doubling.time), by=c("PatientID"="PatientID")) %>%
-#   dplyr::filter(!is.na(doubling.time)) %>%
-#   dplyr::mutate(Cluster=as.factor(Cluster)) %>% 
-#   dplyr::filter(Cluster %in% c(3,4)) %>% 
-#   mutate(doubling.time=log10(doubling.time)) %>% 
-#   
-#   t.test(doubling.time~Cluster, . )
-
 
 ```
 
 
-## Figure 2C
-   
+### Figure 2C
+  
 Here we plot KM curves to show TTT stratified by cluster. Clinical follow-up information  to calculate OS was available for all 192 patients. For 188 patients treatment information after sample collection was available.
 ```{r arrangeSurvivalData2}
 ######Arrange data######
@@ -559,7 +550,7 @@ C3vsC4_p_mv
 
 
 Plot figure
-```{r, Fig2C, fig.path=plotDir, dev=c("png", "pdf"), fig.width=8, fig.height=6}
+```{r, Fig2C, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=8, fig.height=6}
 
 ##Run survfit on TTT
 fit <- survfit(Surv(TTT, treatedAfter)~Cluster, clusters.surv)
@@ -604,9 +595,9 @@ Fig2C
 
 
 
-## Figure 2D
+### Figure 2D
 Genetic predictors of cluster assignment.    
-Here we use a multinomial linear model with L1-penalty, implemented in the `cvglmnet` package. As the dependent variable, the cluster assignment for each patient was used. As input to the model, genetic features with more than 20% missing values were excluded, and only patients with complete annotation are included in the model (n=137). As predictors, the genetic mutations and CNVs (p=39) and IGHV status (coded as 0-1) are used,  using 3-fold cross-validation. Misclassification error is used as loss for cross- validation.   
+Here we use a multinomial linear model with L1-penalty, implemented in the `cvglmnet` package. As the dependent variable, the cluster assignment for each patient was used. As input to the model, genetic features with more than 20% missing values were excluded, and only patients with complete annotation are included in the model (n=137). As predictors, the genetic mutations and CNVs (p=39) and IGHV status (coded as 0-1) are used, using 3-fold cross-validation. Misclassification error is used as loss for cross- validation.   
 Prepare feature matrix
 ```{r FeatureMatrix2}
 #Generate Matrix
@@ -716,7 +707,7 @@ coefTab <- lapply(names(coefList), function(d) {
 
 Plot Figure 2D:   
 Coefficients (feature importance) for each cluster
-```{r, Fig2D, fig.path=plotDir, dev=c("png", "pdf"), fig.height=7, fig.width=5}
+```{r, Fig2D, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=7, fig.width=5}
 #average remaining coefficients in dataframe for plotting
 #ie show all sig features, the cluster they predict, and the average coefficient 
 plotTab <-
@@ -774,7 +765,7 @@ Fig2D
 ```
 
 
-## Figure 2E
+### Figure 2E
 GSEA of differentially expressed genes between clusters.    
 Here, for the n=49 patient samples for which we have viability data and RNA–Seq data for matching samples, we search for associations of these two data types. Using `DESeq2` we regress RNA-Seq count data on the patient clusters C3, C4 (design formula `~ IGHV.status + Cluster`). Genes are ranked by their test statistics and Gene Set Enrichment Analysis (GSEA) implementing the fgsea algorithm with the `clusterProfiler` package is applied to the ranked lists with the Hallmark pathway gene sets from the MSigDB database.     
 
@@ -872,7 +863,7 @@ hm2gene$gs_name <- gsub("_", " ",hm2gene$gs_name)
 hm2gene$gs_name <-gsub("MTORC1 SIGNALING"	,"MTORC1 Signaling",hm2gene$gs_name)
 hm2gene$gs_name <-gsub("MYC TARGETS V1",	"MYC Targets V1"	,hm2gene$gs_name)
 hm2gene$gs_name <-gsub("OXIDATIVE PHOSPHORYLATION",	"Oxidative Phosphorylation",hm2gene$gs_name)
-hm2gene$gs_name <-gsub("TNFA SIGNALING VIA NFKB",	"TNFa Signalling via NFKB"	,hm2gene$gs_name)
+hm2gene$gs_name <-gsub("TNFA SIGNALING VIA NFKB",	"TNFa Signaling via NFKB"	,hm2gene$gs_name)
 hm2gene$gs_name <-gsub("UNFOLDED PROTEIN RESPONSE",	"Unfolded Protein Response"	,hm2gene$gs_name)	
 hm2gene$gs_name <-gsub("UV RESPONSE UP",	"UV Response Up",hm2gene$gs_name)
 hm2gene$gs_name <-gsub("INTERFERON GAMMA RESPONSE",	"Interferon Gamma Response"	,hm2gene$gs_name)
@@ -895,7 +886,7 @@ gsea.res <- setReadable(gsea.res, org.Hs.eg.db, keyType = "ENTREZID")
 ```
 
 Show top 10 pathways
-```{r Fig2E, fig.path=plotDir,  dev=c("png", "pdf"), fig.height=7, fig.width=10}
+```{r Fig2E, fig.path=plotDir,  dev=c("png", "cairo_pdf"), fig.height=7, fig.width=10}
 
 #get dataframe of results
 gsea.df <- fortify(gsea.res, 
@@ -947,8 +938,8 @@ Fig2E
 
 
 
-# Arrange plots
-```{r, Fig2, fig.path=plotDir,  dev=c("png", "pdf"), fig.width=16, fig.height=23, eval = TRUE, warning = FALSE}
+## Arrange plots
+```{r, Fig2, fig.path=plotDir,  dev=c("png", "cairo_pdf"), fig.width=16, fig.height=23, eval = TRUE, warning = FALSE}
 
 design1<-"
 11
@@ -974,13 +965,13 @@ Figure2 <-
 
 Figure2
 
-ggsave(Figure2, device = "jpeg", filename = "../../inst/figs/Fig2.jpeg", width = 16, height = 23, units="in", dpi="screen")
+ggsave(Figure2, device = cairo_pdf, filename = "../../inst/figs/Fig2.pdf", width = 16, height = 23, units="in", dpi="screen")
 
 
 ```
 
 
-# Appendix
+## Appendix
 ```{r appendix2}
 Sys.info()
 sessionInfo()
