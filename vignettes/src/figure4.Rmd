@@ -10,10 +10,11 @@ output:
       code_folding: "hide" 
 ---
 
+# Figure 4
+In this sub-vignette we present the analysis and source code for figure 5.  This sub-vignette can be built along with all other sub-vignettes, by running CLLCytokineScreen2021.Rmd. 
 
-In this sub-vignette we present the analysis and source code for Figure 4. This sub-vignette can be built along with all others, to generate all paper figures, by running CLLCytokineScreen2021.Rmd. 
 
-# Set up 
+## Set up 
 ```{r setup4}
 
 set.seed(1996)
@@ -23,7 +24,6 @@ set.seed(1996)
 Load libraries
 ```{r loadLibraries4, cache = FALSE, message = FALSE, warning = FALSE}
 
-library(formattable)
 library(plyr)
 library(clusterProfiler)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
@@ -38,29 +38,35 @@ library(png)
 library(cowplot)
 library(tidyverse)
 library(Hmisc)
+library(pheatmap)
+library(RColorBrewer)
+library(org.Hs.eg.db)
 
 ```
 
 Set plot directory
-```{r plotDir4}
+```{r plotDir4, message=FALSE}
 plotDir = ifelse(exists(".standalone"), "", "../../inst/figs/")
 if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
 ```
 
 
-# Load data
+## Load data
 Load raw files
-```{r loadData4}
+```{r loadData4, message=FALSE}
 
-#df: tibblecontaining all screening viability data
+#df: tibble containing all screening viability data
 load( "../../data/df.RData")
 
 #patMeta: tibble containing all patient genetic data
 load( "../../data/patMeta.RData")
 
 
-#diffTF_large: tibble containing diffTF weighted mean difference values for 636 TFs, for trisomy 12 versus non-trisomy 12 CLL ATACseq data
+#diffTF_large: tibble containing diffTF weighted mean difference values  for trisomy 12 versus non-trisomy 12 CLL ATACseq data
 load( "../../data/diffTF_large.RData")
+
+#diffTF_ibet: tibble containing diffTF weighted mean difference values  for 4 ibet versus 4 control treated CLL ATACseq samples
+load( "../../data/diffTF_ibet.RData")
 
 
 #ChIPseq data for SPIB and PU1 binding in OCILY3 cell line (downloaded from GEO)
@@ -81,11 +87,21 @@ downloadGSMbedFiles(gsm_pu1, destDir="../../inst/extdata/")
 peak.spib <-  genomation ::readBed("../../inst/extdata/GSM1370276_OCILY3_SPIB_GEM_events.bed.gz", track.line = "auto")
 peak.pu1 <-  genomation ::readBed( "../../inst/extdata/GSM1370275_OCILY3_PU1_GEM_events.bed.gz", track.line = "auto")
 
+## dds_smp_full: DeSeqDataset containing RNA seq data for all available samples
+load( "../../data/dds_smp_full.RData")
 
-#SPIB_KD_Cellcounts: a tibble containing Normalized Cell Counts for Cell Lines infected with shRNA against SPIB and PU1
-load( "../../data/SPIB_KD_Cellcounts.RData")
+## diffTF conversion tables: 
+#HOCOMOCO IDs for trisomy 12 versus non-trisomy 12 diffTF run 
+tri12_TFs <- read.table(file= "../../inst/extdata/translationTable_hg19.csv",header = TRUE) %>% as_tibble()
+
+#HOCOMOCO IDs for IBET-762 versus control diffTF run 
+ibet_TFs <- read.table(file= "../../inst/extdata/translationTable_hg38.csv",header = TRUE) %>% as_tibble()
+
+
 
 ```
+
+
 ```{r loadData_fromtsv, eval= FALSE}
 
 #df: tibble containing all screening viability data
@@ -98,6 +114,8 @@ patMeta <- read.table(file= "../../inst/extdata/patMeta.txt",header = TRUE) %>% 
 #diffTF_large: tibble containing diffTF weighted mean difference values for 636 TFs, for trisomy 12 versus non-trisomy 12 CLL ATACseq data
 diffTF_large <- read_tsv("../../inst/extdata/BIGCLL52.permutations.summary.tsv.gz")
 
+#diffTF_IBET: tibble containing diffTF weighted mean difference values for 636 TFs, for trisomy 12 versus non-trisomy 12 CLL ATACseq data
+diffTF_ibet <- read_tsv("../../inst/extdata/IBETvsCTRL.summary.tsv.gz")
 
 #ChIPseq data for SPIB and PU1 binding in OCILY3 cell line (downloaded from GEO)
 #get info on dataset of interest
@@ -114,10 +132,6 @@ downloadGSMbedFiles(gsm_pu1, destDir="../../inst/extdata/")
 #read the data
 peak.spib <-  genomation ::readBed("../../inst/extdata/GSM1370276_OCILY3_SPIB_GEM_events.bed.gz", track.line = "auto")
 peak.pu1 <-  genomation ::readBed( "../../inst/extdata/GSM1370275_OCILY3_PU1_GEM_events.bed.gz", track.line = "auto")
-
-
-#SPIB_KD_Cellcounts: a tibble containing Normalized Cell Counts for Cell Lines infected with shRNA against SPIB and PU1
-SPIB_KD_Cellcounts <- read.table(file= "../../inst/extdata/SPIB_KD_Cellcounts.txt",header = TRUE) %>% as_tibble()
 
 
 
@@ -148,10 +162,10 @@ patMeta <- patMeta %>%mutate_at(vars(-PatientID), as.factor)
 
 ```
 
-
-
 Process files
 ```{r processData4}  
+
+df_complete <- df
 
 #get Cytokine only data
 df <- dplyr::filter(df, 
@@ -161,7 +175,7 @@ df <- dplyr::filter(df,
 ```
 
 
-# Define Aesthetics
+## Define Aesthetics
 ```{r defineAesthetics4}
 
 source("../../R/themes_colors.R")
@@ -169,17 +183,13 @@ source("../../R/themes_colors.R")
 ```
 
 
-# Plot Figures
+## Plot Figures
+### Figure 4A
+TLR Response stratified by IGHV and trisomy 12
+```{r, Fig4A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 5.5, fig.width = 6}
 
-## Figure 4A
-Boxplot showing response to TLR agonist Resiquimod, stratified by IGHV status and Trisomy 12
-```{r Fig4A, fig.path=plotDir, dev=c("png", "pdf"), fig.height=5.5, fig.width=6}
-
-#add genetic data to viability dataframe
-df_patmeta <- left_join(df, patMeta, by = "PatientID")
-
-#filter for Resiquimod-only treatment, only show patients who are annoyated for IGHV and Trisomy12
-plotTab <- df_patmeta %>% 
+#filter for Resiquimod-only treatment, only show patients who are annotated for IGHV and Trisomy12
+plotTab <- left_join(df, patMeta, by = "PatientID") %>% 
   dplyr::filter(Cytokine=="Resiquimod",
                 !is.na(trisomy12),
                 !is.na(IGHV.status))
@@ -188,21 +198,21 @@ Fig4A =
  
   plotTab %>%
          
-  ggplot(aes(x=interaction(IGHV.status, trisomy12),
+  ggplot(aes(x=interaction(trisomy12, IGHV.status),
                     y=Log,
-                    color=(trisomy12)))+
+                    color=(IGHV.status)))+
   geom_hline(yintercept = 0)+
   geom_boxplot()+
   geom_beeswarm(cex=1.5) +
   guides(color="none", shape="none")+
-  scale_x_discrete(labels=c("M.0"="IGHV-M\n WT",
-                            "U.0"="IGHV-U\n WT",
-                            "M.1"="IGHV-M\n trisomy 12",
-                            "U.1"="IGHV-U\n trisomy 12"))+
+  scale_x_discrete(labels=c("0.M"="IGHV-M\n WT",
+                            "0.U"="IGHV-U\n WT",
+                            "1.M"="IGHV-M\n trisomy 12",
+                            "1.U"="IGHV-U\n trisomy 12"))+
   stat_compare_means(method = "t.test",
                      label.x.npc = "center", 
-                     comparisons = list( c(1,2), c(3,4), c(1,3)),
-                     size=7)+
+                     comparisons = list(c(3,4),c(1,3),c(1,2)),
+                     size=5)+
   xlab("") +
   ylab("Log(Viability)") +
   ggtitle("Resiquimod") +
@@ -219,10 +229,286 @@ Fig4A
 
 ```
 
+### Figure 4B
+Ibrutinib Response stratified by IGHV and trisomy 12
+```{r  Fig4B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 5.5, fig.width = 6}
 
-## Figure 4B
-TF activity in trisomy 12 and non-trisomy12 samples
-```{r, Fig4B, fig.path=plotDir, dev=c("png", "pdf"), fig.height=6, fig.width=15}
+#filter for Resiquimod-only treatment, only show patients who are annoyated for IGHV and Trisomy12
+plotTab <- left_join(df_complete, patMeta, by = "PatientID") %>% 
+  dplyr::filter(Cytokine=="No Cytokine", Drug=="Ibrutinib", Drug_Concentration=="High",
+                !is.na(trisomy12),
+                !is.na(IGHV.status))
+
+Fig4B =
+ 
+  plotTab %>%
+         
+  ggplot(aes(x=interaction(trisomy12, IGHV.status),
+                    y=Log,
+                    color=(IGHV.status)))+
+  geom_hline(yintercept = 0)+
+  geom_boxplot()+
+  geom_beeswarm(cex=1.5) +
+  guides(color="none", shape="none")+
+  scale_x_discrete(labels=c("0.M"="IGHV-M\n WT",
+                            "0.U"="IGHV-U\n WT",
+                            "1.M"="IGHV-M\n trisomy 12",
+                            "1.U"="IGHV-U\n trisomy 12"))+
+  stat_compare_means(method = "t.test",
+                     label.x.npc = "center", 
+                     comparisons = list(c(3,4),c(1,3),c(1,2)),
+                     size=5)+
+  xlab("") +
+  ylab("Log(Viability)") +
+  ggtitle("Ibrutinib") +
+  scale_color_manual(values=c(palblues[3], palreds[8])) + 
+  # coord_cartesian(ylim = c(-1.5, 3.1), clip="off") +
+  t1+
+  theme(axis.text.x = element_text(angle = 45, vjust =1))
+
+
+rm(plotTab)
+
+Fig4B
+
+
+```
+
+### Figure 4C
+```{r,  message=FALSE}
+
+
+dds_smp <- dds_smp_full
+#filter for trisomy 12 aamples
+dds_smp <- dds_smp[,dds_smp$trisomy12 %in% c("0","1")]
+
+#remove genes without gene symbol annotations
+dds_smp <- dds_smp[!is.na(rowData(dds_smp)$symbol),]
+dds_smp <- dds_smp[rowData(dds_smp)$symbol != "",]
+
+#only keep genes that have counts higher than 10 in any sample
+keep <- apply(counts(dds_smp), 1, function(x) any(x >= 10)) 
+dds_smp <- dds_smp[keep,]
+
+#Remove transcripts that  do not show variance across samples
+dds_smp <- estimateSizeFactors(dds_smp)
+sds <- rowSds(counts(dds_smp, normalized = TRUE))
+sh <- genefilter::shorth(sds)
+dds_smp <- dds_smp[sds >= sh,]
+
+#variance stabilisation
+dds_smp.norm <- varianceStabilizingTransformation(dds_smp, blind=TRUE)
+
+#how many genes left
+# dim(dds_smp)
+
+#Set design
+design(dds_smp) <- ~ trisomy12
+
+dds_smp <- DESeq(dds_smp)
+
+
+DEres <- results(dds_smp)
+
+```
+
+
+
+```{r,  Fig4C, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 6, fig.width = 9, message=FALSE}
+
+hm2gene <- 
+  msigdbr(species = "Homo sapiens", category = "H") %>% 
+  dplyr::select(gs_name, entrez_gene)
+
+res.tidy <- 
+  results(dds_smp, tidy = TRUE) %>%
+  dplyr::rename(Symbol = "row") %>% 
+  dplyr::arrange(pvalue) 
+
+#get ensembl ids to Entrez dataframe
+ens2entrez <- 
+  rowData(dds_smp)[c("entrezgene", "symbol")] %>% 
+  as.data.frame() %>% 
+  rownames_to_column("ENSEMBL") %>%  
+  tibble::as_tibble()
+#Join 
+res.tidy <- left_join(res.tidy, ens2entrez, by=c("Symbol"="ENSEMBL"))
+
+#Get ranks dataframes to feed to fgsea
+
+d <- 
+  dplyr::select(res.tidy, entrezgene, stat) %>%
+  na.omit() %>% 
+  dplyr::group_by(entrezgene) %>% 
+  dplyr::summarize(stat=mean(stat)) 
+
+## feature 1: numeric vector
+geneList <- d$stat
+
+## feature 2: named vector
+names(geneList) <- as.character(d$entrezgene)
+
+## feature 3: decreasing order
+geneList <- sort(geneList, decreasing = TRUE)
+
+#run GSEA
+gsea.res <- GSEA(geneList, TERM2GENE = hm2gene, by = "fgsea", seed = TRUE)
+
+#make readable with gene names
+gsea.res <- setReadable(gsea.res, org.Hs.eg.db, keyType = "ENTREZID")
+
+
+#get dataframe of results
+gsea.df <- fortify(gsea.res, 
+              showCategory = 15, #how many levels to show
+              split=NULL)
+#order by NES
+gsea.df <- dplyr::mutate(gsea.df, "NES" = eval(parse(text="NES")))
+idx <- order(gsea.df[["NES"]], decreasing = TRUE)
+gsea.df$Description <- factor(gsea.df$Description, levels=rev(unique(gsea.df$Description[idx])))
+
+gsea.df$pos <- 0
+
+
+Fig4C <-
+  ggplot(gsea.df, 
+         aes_string(x="NES", 
+                    y="Description", 
+                    fill="p.adjust")) +
+    geom_bar(stat = "identity") +
+    scale_fill_continuous(low=palreds[7],
+                         high=palreds[2], 
+                         name = "Adjusted p value",
+                         guide=guide_colorbar(reverse=TRUE),
+                         limits=c(0,0.05)) +
+    
+  ylab("Pathway\n\n") + 
+  xlab("Normalised Enrichment Score") +
+  ggtitle("GSEA for Trisomy 12 versus WT CLL") +  
+  t2 + 
+  scale_size(range=c(3, 8)) + 
+  geom_text(aes(label=Description, x =ifelse(NES>0,0.1,-2)), hjust = 0,  size = 5, color ="white") +
+    guides(fill="none")+
+  theme(legend.position="right",
+        # legend.background = element_blank(),
+        # legend.box.background = element_rect(size = 0.5),
+        legend.title = element_text(face='bold',
+                                    hjust = 1, size=11),
+        legend.key = element_blank(),
+        legend.text = element_text(size=12),
+        axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank()) 
+  
+Fig4C
+```
+
+### Figure 4D
+List of genes for selected testing in Figure 4D:
+```{r,  Fig4D,  fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 4, fig.width = 9, message=FALSE}
+
+kegg2gene <-
+  msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP:KEGG") %>%
+  dplyr::select(gs_name, entrez_gene) %>%
+  filter(gs_name%in%c("KEGG_B_CELL_RECEPTOR_SIGNALING_PATHWAY",
+                      "KEGG_CHEMOKINE_SIGNALING_PATHWAY",
+                      "KEGG_CYTOKINE_CYTOKINE_RECEPTOR_INTERACTION",
+                      "KEGG_JAK_STAT_SIGNALING_PATHWAY",
+                      "KEGG_MTOR_SIGNALING_PATHWAY",
+                      "KEGG_NOTCH_SIGNALING_PATHWAY",
+                      "KEGG_T_CELL_RECEPTOR_SIGNALING_PATHWAY",
+                      "KEGG_TGF_BETA_SIGNALING_PATHWAY",
+                      "KEGG_TOLL_LIKE_RECEPTOR_SIGNALING_PATHWAY",
+                      "KEGG_VEGF_SIGNALING_PATHWAY",
+                      "KEGG_WNT_SIGNALING_PATHWAY"
+                      ))
+
+
+unique(kegg2gene$gs_name)
+
+res.tidy <- 
+  results(dds_smp, tidy = TRUE) %>%
+  dplyr::rename(Symbol = "row") %>% 
+  dplyr::arrange(pvalue) 
+
+#get ensembl ids to Entrez dataframe
+ens2entrez <- 
+  rowData(dds_smp)[c("entrezgene", "symbol")] %>% 
+  as.data.frame() %>% 
+  rownames_to_column("ENSEMBL") %>%  
+  tibble::as_tibble()
+#Join 
+res.tidy <- left_join(res.tidy, ens2entrez, by=c("Symbol"="ENSEMBL"))
+
+#Get ranks dataframes to feed to fgsea
+
+d <- 
+  dplyr::select(res.tidy, entrezgene, stat) %>%
+  na.omit() %>% 
+  dplyr::group_by(entrezgene) %>% 
+  dplyr::summarize(stat=mean(stat)) 
+
+## feature 1: numeric vector
+geneList <- d$stat
+
+## feature 2: named vector
+names(geneList) <- as.character(d$entrezgene)
+
+## feature 3: decreasing order
+geneList <- sort(geneList, decreasing = TRUE)
+
+#run GSEA
+gsea.res <- GSEA(geneList, TERM2GENE = kegg2gene, by = "fgsea", seed = TRUE)
+
+#make readable with gene names
+gsea.res <- setReadable(gsea.res, org.Hs.eg.db, keyType = "ENTREZID")
+
+
+#get dataframe of results
+gsea.df <- fortify(gsea.res, 
+              showCategory = 15, #how many levels to show
+              split=NULL)
+#order by NES
+gsea.df <- dplyr::mutate(gsea.df, "NES" = eval(parse(text="NES")))
+idx <- order(gsea.df[["NES"]], decreasing = TRUE)
+gsea.df$Description <- factor(gsea.df$Description, levels=rev(unique(gsea.df$Description[idx])))
+
+gsea.df$pos <- 0
+
+
+Fig4D <-
+   ggplot(gsea.df, 
+         aes_string(x="NES", 
+                    y="Description", 
+                    fill="p.adjust")) +
+    geom_bar(stat = "identity") +
+    scale_fill_continuous(low=palreds[7],
+                         high=palreds[2], 
+                         name = "Adjusted p value",
+                         guide=guide_colorbar(reverse=TRUE),
+                         limits=c(0,0.05)) +
+    
+  ylab("Pathway\n\n") + 
+  xlab("Normalised Enrichment Score") +
+  t2 + 
+  scale_size(range=c(3, 8)) + 
+  geom_text(aes(label=Description, x =ifelse(NES>0,0.1,-2)), hjust = 0,  size = 5, color = "white") +
+  theme(legend.position="bottom",
+        legend.title = element_text(face='bold',
+                                    hjust = 1, size=11),
+        legend.key = element_blank(),
+        legend.text = element_text(size=12),
+        axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(),
+        legend.key.width = unit(3, "cm")) 
+  
+Fig4D
+
+```
+
+### Figure 4E
+Trisomy 12 versus WT ATACseq
+Comparison of TF binding site accessibility shows that SPIB and other TFs show higher accessibility of their binding sites in trisomy 12 in 2 independent datasets.
+```{r, Fig4E, fig.path = plotDir, dev = c("png", "cairo_pdf"), fig.height = 6, fig.width=15}
 
 #Get all TFs that show differential activity
 plotTab.diffTF <- dplyr::filter(diffTF_large, pvalueAdj < 0.05)
@@ -236,89 +522,76 @@ plotTab.diffTF$TF <- factor(plotTab.diffTF$TF,levels=rev(unique(plotTab.diffTF$T
 
 
 #plot figure
-Fig4B <-
+Fig4E <-
   ggplot(plotTab.diffTF,
          aes(x=weighted_meanDifference,
              y=TF,
-             fill= ifelse(weighted_meanDifference>0, 
+             fill= ifelse(weighted_meanDifference>0,
                           palreds[5], palblues[1]))) +
   geom_bar(stat = "identity", width = 0.75) +
   xlim(c(-0.2, 0.175)) +
-  
+
   #colours and theme
   scale_fill_manual(values = c(palblues[1], palreds[8]), guide = "none") +
-  t1 + 
+  t1 +
   theme(axis.text.x = element_text(angle = 45, vjust =1))+
-  
+
   #Labels
-  ylab("") + 
-  xlab("Change in TF activity") +
-  ggtitle("Diffential TF activity in trisomy 12 CLL") + 
-  
+  ylab("") +
+  xlab("Change in inferred TF activity") +
+  ggtitle("Diffential TF binding site accessibility in trisomy 12 CLL") +
+
   #Add annotations
   #arrow 1
-  annotate("segment", x = -0.15, xend = -0.15, y = 8.4, yend = 0.75, 
-           colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) + 
+  annotate("segment", x = -0.15, xend = -0.15, y = 8.4, yend = 0.75,
+           colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) +
   #arrow 2
-  annotate("segment", x = -0.15, xend = -0.15, y = 8.6, yend = 17, 
-           colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) + 
- 
+  annotate("segment", x = -0.15, xend = -0.15, y = 8.6, yend = 17,
+           colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) +
+
    #2 arrow labels
-  annotate("text", x = c(-0.185,-0.185), y = c(4.8,12.5), 
-          label = c("Lower activity in trisomy 12 CLL", 
-                    "Higher activity in trisomy 12 CLL") , 
-          color="black", 
+  annotate("text", x = c(-0.185,-0.185), y = c(4.8,12.5),
+          label = c("Lower in trisomy 12 CLL",
+                    "Higher in trisomy 12 CLL") ,
+          color="black",
           size=5 , fontface="bold") +
 
   #flip plot
-  coord_flip() 
-  
+  coord_flip()
 
-  
 
-Fig4B
+
+
+Fig4E
+
 
 
 ```
 
+### Figure 4F
+Here, for Spi-B  ChIP peaks in an OCILY3 DLBCL cell line, we use the `clusterProfiler` package to annotate the nearest gene for each significant ChIPpeak (q<0.05). We filter the resulting gene list for those with a peak within ±1kb of the TSS and tested for over-representation of selected KEGG and Reactome pathways.     
 
-## Figure 4C
-SPIB and PU1  ChIPseq analysis and enrichment of cytokine signalling genes near to SPIB and PU1 binding site    
-Here, for Spi-B and PU1 ChIP peaks in an OCILY3 DLBCL cell line, we use the `clusterProfiler` package to annotate the nearest gene for each significant ChIPpeak (q<0.05). We filter the resulting gene list for those with a peak within ±1kb of the TSS and tested for over-representation of selected KEGG and Reactome pathways.     
 
-Get significant peaks
-```{R sigPeaks4}
+```{R, Fig4F,  fig.path = plotDir, dev = c("png", "cairo_pdf"), fig.width=15, fig.height=2, message=FALSE }
+# Get significant peaks
 #filter ChipSeq data for peaks with significant score -log10(Qscore)>1.3
 #if q < 0.05, then Qlog >1.3
 spib.filtered <- peak.spib[(elementMetadata(peak.spib)[,1] > 1.3)]
-pu1.filtered <- peak.pu1[(elementMetadata(peak.pu1)[,1] > 1.3)]
 
-```
 
-Annotate ChIP peaks
-```{R annotatePeaks4}
-
+# Annotate ChIP peaks
 # Annotate peaks with meta data
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 
 peakAnno.spib <- annotatePeak(spib.filtered, 
                               tssRegion = c(-3000, 3000),
                               TxDb = txdb, 
-                              annoDb = "org.Hs.eg.db")
-
-peakAnno.pu1 <- annotatePeak(pu1.filtered, 
-                             tssRegion = c(-3000, 3000),
-                             TxDb = txdb, 
-                             annoDb = "org.Hs.eg.db")
-
+                              annoDb = "org.Hs.eg.db",
+                              verbose=FALSE)
 
 #Filter for genes within ±1kb
 peakAnno.spib.1kb <- as.data.frame(peakAnno.spib) %>% dplyr::filter(abs(distanceToTSS) <1000)
-peakAnno.pu1.1kb <- as.data.frame(peakAnno.pu1) %>% dplyr::filter(abs(distanceToTSS) <1000)
 
-```
-Download KEGG and Reactome pathways of interest for running overrepresentation tests
-```{r getPathways4}
 
 #get  KEGG pathways from msigdbr database
 kegg <- 
@@ -346,7 +619,6 @@ kegg <-
          ))
 
 colnames(kegg) <- c("term", "gene")
-
 
 #tidy up terms - remove KEGG, underscore and put in lower cases
 kegg$term <- gsub("KEGG_", "",kegg$term )
@@ -448,10 +720,7 @@ reactome$term <- gsub("INTERFERON GAMMA SIGNALING",
 #annotate which database these pathways come from 
 reactome$genesetDatabase <- "Reactome"
 
-```
 
-Run over-representation test forSPIB
-```{r runOverrepresentation_SPIB4}
 
 #generate TERM2GENE dataframe to use in overrepresetation test
 #join kegg and reactome gene sets together - this defines the list of pathways we are interested in, and select term and gene columns
@@ -488,71 +757,33 @@ resTab.spib <-
   dplyr::select(ID, Description, pvalue, Count, genesetSize)
 
 colnames(resTab.spib) <- c("ID", "genesetDatabase", "pvalue_SPIB","count_SPIB", "genesetSize")
-```
-
-Run over-representation test for PU1
-```{r overrepresentation_PU14}
-
-##PU1
-#run overepresentation test, and extract all results and pvalues (ie use p value and q value cutoff at 1) 
-#NB not all results are shown because for some genesets there is no overlap between pu1 targets and geneset
-pu1Res <- enricher(unique(as.data.frame(peakAnno.pu1.1kb)$geneId), 
-                    TERM2GENE=term2gene, 
-                    TERM2NAME = term2genesetdatabase, 
-                    minGSSize = 0,
-                    maxGSSize = 10000,
-                    pvalueCutoff = 1, 
-                    qvalueCutoff = 1)
 
 
-#get dataframe of results
-pu1Res.df <- fortify(pu1Res, 
-              showCategory = length(unique(term2gene$term)), #show all pathways tested 
-              split=NULL)
+resTab <- resTab.spib
 
-
-resTab.pu1 <-  mutate(pu1Res.df, genesetSize = BgRatio*length(unique(term2gene$gene))) %>%  #multiply BgRatio by total genes tested to get number of genes in set
-  dplyr::select(ID, Description, pvalue, Count, genesetSize)
-
-colnames(resTab.pu1) <- c("ID", "genesetDatabase", "pvalue_PU1","count_PU1", "genesetSize")
-
-```
-
-Join results and make figure 
-```{r Fig4C, fig.path=plotDir, dev=c("png", "pdf"), fig.width=15, fig.height=2}
-
-
-#join results for SPIB and PU1 together to show in one table
-resTab <- full_join(resTab.spib, resTab.pu1)
-
-#where count and p value is NA, put a 0 / 1 (ie there were no PU1/SPIB target genes in the set)
-resTab$count_PU1[is.na(resTab$count_PU1)] <- 0
+#where count and p value is NA, put a 0 / 1 (ie there were no SPIB target genes in the set)
 resTab$count_SPIB[is.na(resTab$count_SPIB)] <- 0
 
 resTab$pvalue_SPIB[is.na(resTab$pvalue_SPIB)] <- 1
-resTab$pvalue_PU1[is.na(resTab$pvalue_PU1)] <- 1
 
 #select columns of interest to show in figure
-resTab <- dplyr::select(resTab, ID, genesetDatabase, genesetSize,  count_SPIB, pvalue_SPIB,count_PU1, pvalue_PU1)
+resTab <- dplyr::select(resTab, ID, genesetDatabase, genesetSize,  count_SPIB, pvalue_SPIB)
 
 #adjust decimal places of p values
 resTab$pvalue_SPIB <- round(resTab$pvalue_SPIB, digits = 3)
-resTab$pvalue_PU1 <- round(resTab$pvalue_PU1, digits = 3)
 
 #get significant results
-resTab <- dplyr::filter(resTab, pvalue_SPIB<0.01|pvalue_PU1<0.01)
+resTab <- dplyr::filter(resTab, pvalue_SPIB<0.01)
 
 colnames(resTab) <- c("Pathway",
-                      "Geneset Database" , 
-                      "Geneset Size",  
+                      "Geneset\nDatabase" , 
+                      "Geneset\nSize",  
+                      
                       #show the total number of SPIB targets in ChIPseq data 
-                      paste("Spi-B targets (/" ,length(unique(as.data.frame(peakAnno.spib.1kb)$geneId)),")", sep= ""), 
-                      "SPIB p-value", 
-                      #show the total number of PU1 targets in ChIPseq data  
-                      paste("PU.1 targets (/" ,length(unique(as.data.frame(peakAnno.pu1.1kb)$geneId)),")",sep= ""), 
-                      "PU1 p-value")
+                      paste("Spi-B targets\n(/" ,length(unique(as.data.frame(peakAnno.spib.1kb)$geneId)),")", sep= ""), 
+                      "SPIB\np-value")
 
-Fig4C<- 
+Fig4F <- 
 ggtexttable(resTab, rows = NULL, 
            theme = ttheme(
              colnames.style = colnames_style(color = "white", fill = palreds[7], size = 16),
@@ -561,74 +792,166 @@ ggtexttable(resTab, rows = NULL,
 )
 
 
-Fig4C
+Fig4F
+
+```
+
+### Figure 4G
+IBET-762 response stratified by trisomy 12
+```{r, Fig4G, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 5, fig.width = 5}
+
+Fig4G <- 
+  left_join(df_complete, patMeta, by = "PatientID") %>% 
+  dplyr::filter(Drug=="I-BET 762", Drug_Concentration == "High", Cytokine == "No Cytokine") %>%
+      filter(!is.na(trisomy12)) %>%
+         
+  ggplot(aes(x = trisomy12, y = Log, color = (trisomy12)))+
+  geom_hline(yintercept = 0)+
+  geom_boxplot()+
+  geom_beeswarm(cex=1.5) +
+  guides(color="none", shape="none")+
+  stat_compare_means(method = "t.test",
+                     label.x.npc = "center", 
+                     size=5,
+                     comparisons = list(c(1,2)))+
+  ylab("Log(Viability)") +
+  ggtitle("IBET-762") +
+  scale_color_manual(values=c(colors[1], colors[2])) + 
+  coord_cartesian(ylim = c(-1.25, 0.6), clip="off") +
+
+  t2+
+  scale_x_discrete(labels=c("0"="WT",
+                            "1"="trisomy 12"))+
+  xlab("")
+
+Fig4G
 
 ```
 
 
-## Figure 4D
-```{r, Fig4D_1, fig.path=plotDir, dev=c("png", "pdf"), fig.height=5, fig.width=15}
+### Figure 4H
+Comparison of TF binding site accessibility in trisomy 12 vs non-trisomy 12 samples and in IBET vs control treated samples  
+
+```{r, Fig4H, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 12, fig.height=10}
+
+colnames(ibet_TFs) <- c("Symbol", "ENSEMBL", "TF")
+
+#add ensembl IDs to diffTF_ibet
+diffTF.ibet <- left_join(diffTF.ibet, ibet_TFs[2:3], by = "TF")
+colnames(diffTF.ibet)[1] <- "TF_original"
+
+#add TF names from tri12 run to diffTF_ibet
+colnames(tri12_TFs)[3] <- "TF"
+diffTF.ibet <- left_join(diffTF.ibet, tri12_TFs[2:3], by = "ENSEMBL")
+
+#change to name of TF quoted in text
+diffTF.ibet$TF <- gsub("SPI1", "PU1", diffTF.ibet$TF)
+
+#filter for tri 12 signature TFs
+plotTab.diffTF.ibet <- diffTF.ibet %>% filter(TF %in%  plotTab.diffTF$TF)
+
+#order by weighted mean difference
+idx <- order(plotTab.diffTF.ibet[["weighted_meanDifference"]], decreasing = TRUE)
+plotTab.diffTF.ibet$TF <- factor(plotTab.diffTF.ibet$TF,levels=rev(unique(plotTab.diffTF.ibet$TF[idx])))
 
 
+#make plotting table 
+ibet_plot <- plotTab.diffTF.ibet %>% select(TF, weighted_meanDifference)
+colnames(ibet_plot) <- c("TF", "ibet")
+untreated <- plotTab.diffTF %>% select(TF, weighted_meanDifference)
+colnames(untreated) <- c("TF", "tri12")
 
 
-Fig4D <-
-  SPIB_KD_Cellcounts %>% 
-  # filter(Experiment=="Single_KD") %>% 
-  dplyr::filter(treatment%in%c("scr_shRNA", "PU.1-KD","SpiB-KD", "Double-KD")) %>% 
-  mutate(treatment=factor(treatment, levels = c("scr_shRNA", "PU.1-KD", "SpiB-KD", "Double-KD"))) %>% 
+plotTab <- left_join(untreated, ibet_plot, by = "TF")
+plotTab %<>% pivot_longer(c("ibet", "tri12"))
+colnames(plotTab) <- c("TF", "condition", "WMD")
+
+#plot figure
+Fig4H <-
+  ggplot(plotTab,
+         aes(x=WMD,
+             y=TF,
+             fill=condition)) +
+  geom_bar(position = "dodge", stat = "identity", width = 0.75) +
+  xlim(c(-0.2, 0.175)) +
   
+  #colours and theme
+  scale_fill_manual(values = c(colors[1], colors[3]), labels = c("tri12"="Trisomy 12 versus WT", "ibet"="IBET-762 versus Control")) +
+  t1 + 
+  theme(axis.text.x = element_text(angle = 45, vjust =1))+
+   theme(legend.position="bottom",
+        legend.title = element_text(face='bold', hjust = 1, size=14),
+        legend.key = element_blank(),
+        legend.text = element_text(size=15)
+        )+
   
+  #Labels
+  ylab("") + 
+  xlab("Change in inferred TF activity") +
+  ggtitle("Diffential TF binding site accessibility in trisomy 12 CLL and after IBET-762 treatment") + 
   
-  ggplot(aes(x=Day, y=NormalizedCellCount, color=treatment, group=interaction( treatment)))+
+  #Add annotations
+  #arrow 1
+  annotate("segment", x = -0.15, xend = -0.15, y = 8.4, yend = 0.75, 
+           colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) + 
+  #arrow 2
+  annotate("segment", x = -0.15, xend = -0.15, y = 8.6, yend = 17, 
+           colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) + 
+ 
+   #2 arrow labels
+  annotate("text", x = c(-0.185,-0.185), y = c(4.8,12.5), 
+          label = c("Lower in trisomy 12 CLL / \nHigher after IBET-762 treatment", 
+                    "Higher in trisomy 12 CLL / \nLower after IBET-762 treatment") , 
+          color="black", 
+          size=5 , fontface="bold") + theme(legend.title = element_text(face = "bold"))+
 
-  stat_summary(fun = mean,geom='line',aes(color=treatment), size=1) +
+  #flip plot
+  coord_flip() +
+  theme(legend.position="bottom")+
+  guides(fill=guide_legend(title="diffTF comparison"))
+  
 
-  stat_summary(fun=mean,geom='point', size=2) +
-  stat_summary(fun.data=mean_cl_boot,geom='errorbar',width=0.2, size=0.5) +
-  facet_wrap(~Cellline, scales="fixed")+
-  scale_y_log10()+
-  labs(y="Relative Cellcount")+
- t2+
-  theme(legend.position = "bottom", legend.key = element_blank(), legend.title = element_text(face='bold', size=fontsize+4),  legend.text = element_text(size=fontsize+2), strip.background = element_blank(), strip.text = element_text(size=18, face="bold"))+
-      scale_color_manual(name = "Condition", values = c("darkgrey", colors[c(1,3,4)]), labels=c("scr_shRNA"="Control","PU.1-KD"="PU.1-Knockdown","SpiB-KD"="Spi-B-Knockdown","Double-KD"="Spi-B + PU.1 Double Knockdown" ))
 
-Fig4D
+Fig4H
+
+rm(plotTab)
 
 ```
 
-
-
-
-# Assemble Figure 4
-```{r Fig4, fig.path=plotDir, dev=c("png", "pdf"), fig.height=13, fig.width=15}
+## Assemble Figure 4
+```{r Fig4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=18, fig.width=19, eval = TRUE}
 
 design1<-"
-  AB
-  CC
-  DD
+  ABC
+  ABD
+  EED
+  EEF
+  GHH
 "
 
 tp <- theme(plot.tag=element_text(size = 30, face="plain"))
 
 Fig4 <-
 
-  Fig4A + tp +  
-  Fig4B + tp + 
-  Fig4C + tp +
-  Fig4D + tp +
+
+ wrap_elements( Fig4A )+ tp +
+ wrap_elements( Fig4B )+ tp +
+ wrap_elements( Fig4C )+ tp + 
+ wrap_elements( Fig4D )+ tp + 
+ wrap_elements( Fig4E )+ tp +  
+ wrap_elements( Fig4F )+ tp +
+ wrap_elements( Fig4G )+ tp+
+ wrap_elements( Fig4H )+ tp+
     
   plot_annotation(tag_levels = "A", title="Figure 4", theme = theme(title=element_text(size = 20)))+
-  plot_layout(design = design1, heights = c(1,0.6,0.8), width=c(0.6,1))
+  plot_layout(design = design1, heights = c(0.64,.26,.18,.4,1,1), width=c(1.5,1.5,3))
 
 Fig4
 
-ggsave(Fig4, device = "jpeg", filename = "../../inst/figs/Fig4.jpeg", width = 15, height = 13, units="in", dpi="screen")
 
 ```
 
-
-# Appendix
+## Appendix
 ```{r appendix4}
 Sys.info()
 sessionInfo()
