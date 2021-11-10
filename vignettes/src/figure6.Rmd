@@ -10,15 +10,18 @@ output:
     code_folding: "hide" 
 ---
 
+# Figure 6
+
 In this sub-vignette we present the analysis and source code for figure 6. This sub-vignette can be built along with all other sub-vignettes by running CLLCytokineScreen2021.Rmd. 
 
-# Set up
+## Set up
 ```{r setup6}
 set.seed(1996)
 ```
 
 Load libraries
 ```{r, loadLibraries6, cache = FALSE, message = FALSE, warning = FALSE}
+
 library(plyr)
 library(dplyr)
 library(ggpubr)
@@ -44,7 +47,7 @@ if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
 ```
 
 
-# Load data
+## Load data
 Load raw files
 ```{r LoadData6}
 
@@ -137,7 +140,7 @@ thedrugs <- unique(df$treatment_drug) %>% setdiff("DMSO")
 ```
 
 
-# Define aesthetics
+## Define aesthetics
 ```{r defineAesthetics6}
 
 source("../../R/themes_colors.R")
@@ -145,7 +148,7 @@ source("../../R/themes_colors.R")
 ```
 
 
-# Define Functions
+## Define Functions
 *Run Glmnet function:*  This function takes a feature matrix `X`  of patient genetic features and a continuous response matrix `y`, containing the interaction coefficients for a given drug : stimulus combination, for each patient. The function runs lasso or ridge regularised regression, in order to identify genetic predictors of the size of an interaction between a drug and stimulus. The function will run the `cv.glmnet` function for the chosen number of `repeats`,  applying cross-fold validation using chosen number of `folds`. 
 ```{r runGlm6 }
 
@@ -456,7 +459,7 @@ makelegends <- function (legendFor, colors)
 ```
 
 
-# Prework
+## Prework
 
 ## Define Feature matrix
 ```{r featureMatrix6}
@@ -634,9 +637,9 @@ for (x in rownames(betaMatrix)){
 ```
 
 
-# Figures
+## Figures
 
-## Figure 6A
+### Figure 6A
 Heatmap of coefficients    
  
 Here we fit linear models to the viability matrix, for each drug - stimulus combination and extract interaction coefficients for each patient to generate a response matrix (n = 137). To generate the feature matrix, genetic mutations and CNVs (p= 39) and IGHV status (coded as 0-1)  are used. Genetic features with >20% missing values were excluded, and only patients with complete annotation are included in the model. We run multivariate regression using a Gaussian linear model with L1-penalty using `glmnet`, 3-fold cross-validation and misclassification error as loss.   
@@ -727,7 +730,7 @@ coeff.long.mat %>%
 
 ```
 
-```{r Fig6B, fig.path=plotDir, dev=c("png", "pdf"), fig.width = 9, fig.height = 18, warning=FALSE}
+```{r Fig6B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 9, fig.height = 18, warning=FALSE}
 
 #Plot heatmap
 coeff.long.mat.ordered <-  
@@ -801,7 +804,9 @@ Fig6A <-
 Fig6A
 
 ```
-## Figure 6B
+
+
+### Figure 6B
 Predictor Profile of the size of interaction between Fludarabine and CpG ODN   
 Generate all predictor profiles
 ```{r generate_predictorProfiles6, fig.width = 10, fig.height = 10, message = FALSE, warning = FALSE}
@@ -814,7 +819,7 @@ heatMaps <- heatMaps[!is.na(heatMaps)]
 ```
 
 Plot predictor profile for Fludarabine + CpG ODN 
-```{r Fig6A, fig.path=plotDir, dev=c("png", "pdf"), fig.width = 10, fig.height = 10}
+```{r Fig6A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 10, fig.height = 10}
 
 Fig6B <- grid.arrange(grobs = heatMaps["Fludarabine + CpG ODN"], ncol = 1)
 
@@ -822,9 +827,9 @@ Fig6B
 ```
 
 
-## Figure 6C
+### Figure 6C
 Fludarabine + CpG ODN  viability values, faceted by  IGHV status and trisomy 12 status
-```{r, Fig6C, fig.path=plotDir, dev=c("png", "pdf"),  fig.width=9, fig.height=9}
+```{r, Fig6C, fig.path=plotDir, dev=c("png", "cairo_pdf"),  fig.width=9, fig.height=9}
 
 #set facet labels 
 tri12.labs <- c("0" = "Non-\ntrisomy 12", "1" = "trisomy 12")
@@ -879,9 +884,9 @@ Fig6C
 ```
 
 
-## Figure 6D
+### Figure 6D
 
-```{r, Fig6D, fig.path=plotDir, dev=c("png", "pdf"),  fig.width=9, fig.height=9}
+```{r, Fig6D, fig.path=plotDir, dev=c("png", "cairo_pdf"),  fig.width=9, fig.height=9}
 
 Fig6D <-
 
@@ -930,7 +935,7 @@ Fig6D
 
 ```
 
-# Save data 
+## Save data 
 Save for use in supplementary script 
 ```{r saveData6}
 
@@ -944,8 +949,8 @@ save(Lasso_Plots_Fig6,
 ```
 
 
-# Assemble Figure
-```{r Fig6, fig.path=plotDir, dev=c("tiff"), fig.height = 24, fig.width = 22, warning=FALSE}
+## Assemble Figure
+```{r Fig6, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 24, fig.width = 22, warning=FALSE}
 
 #Design
 design1<-"
@@ -972,13 +977,19 @@ plot_annotation(tag_levels = "A", title="Figure 6", theme = theme(title=element_
 plot_layout(design=design1, heights = c(0.9,1,1))
 
 
+
+
+ggsave(Fig6, device = cairo_pdf, filename = "../../inst/figs/Fig6.pdf", width = 22, height = 24, units="in", dpi="screen")
+
+
+
 Fig6
 
-ggsave(Fig6, device = "jpeg", filename = "../../inst/figs/Fig6.jpeg", width = 22, height = 24, units="in", dpi="screen")
+
 
 ```
 
-# Appendix
+## Appendix
 ```{r appendix6}
 Sys.info()
 sessionInfo()
