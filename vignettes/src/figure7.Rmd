@@ -10,10 +10,10 @@ output:
       code_folding: "hide" 
 ---
 
-
+# Figure 7 
 In this sub-vignette we present the analysis and source code for figure 7. This sub-vignette can be built along with all other sub-vignettes by running CLLCytokineScreen2021.Rmd. 
 
-# Set up
+## Set up
 Load libraries 
 ```{r loadLibraries7, cache = FALSE, message = FALSE, warning = FALSE}
 
@@ -35,7 +35,7 @@ if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
 ```
 
 
-# Load data
+## Load data
 Raw
 ```{r loadData7}
 
@@ -69,7 +69,7 @@ ihc_patient_data$Stain <- factor(ihc_patient_data$Stain, levels = c("pSTAT6", "S
 ```
 
 
-# Set aesthetics
+## Set aesthetics
 ```{r defineAesthetics7}
 
 source("../../R/themes_colors.R")
@@ -77,11 +77,10 @@ source("../../R/themes_colors.R")
 ```
 
 
-# Plot Figures
-
-## Figure 7A
+## Plot Figures
+### Figure 7A
 Beeswarm-boxplot of mean staining intensities of pSTAT6, for healthy and CLL LN samples
-```{r, Fig7A, fig.path=plotDir, dev=c("png", "pdf"), fig.width=7, fig.height=7}
+```{r, Fig7A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=5, fig.height=7}
 
 Fig7A <-
   ihc_patient_data %>%
@@ -106,9 +105,9 @@ Fig7A
 
 ```
 
-## Figure 7B
+### Figure 7B
 Beeswarm-boxplot of mean staining intensities of pIRAK4, for healthy and CLL LN samples
-```{r Fig7B, fig.path=plotDir, dev=c("png", "pdf"), fig.width=7, fig.height=7}
+```{r Fig7B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=7, fig.height=7}
 
 Fig7B <-
   ihc_patient_data %>%
@@ -135,9 +134,9 @@ Fig7B
 
 ```
 
-## Figure 7C
+### Figure 7C
 Image of IHC cross-section of CLL-infiltrated LN stained for pSTAT6
-```{r Fig7C, fig.path=plotDir, dev=c("png", "pdf"), fig.width=6, fig.height=4}
+```{r Fig7C, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=6, fig.height=4}
 
 Fig7C <-cowplot::ggdraw() +
   cowplot::draw_image( "../../inst/images/CLL1_I3_pSTAT6.png", scale = 1)
@@ -148,9 +147,9 @@ Fig7C
 
 
 
-## Figure 7D
+### Figure 7D
 Image of IHC cross-section of healthy LN stained for pSTAT6
-```{r Fig7D, fig.path=plotDir, dev=c("png", "pdf"), fig.width=6, fig.height=4}
+```{r Fig7D, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=6, fig.height=4}
 
 ##read image
 Fig7D <- cowplot::ggdraw() + 
@@ -160,9 +159,9 @@ Fig7D
 
 ```
 
-## Figure 7E
+### Figure 7E
 Image of IHC cross-section of CLL-infiltrated LN stained for pIRAK4
-```{r Fig7E, fig.path=plotDir, dev=c("png", "pdf"), fig.width=6, fig.height=4}
+```{r Fig7E, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=6, fig.height=4}
 
 Fig7E <- cowplot::ggdraw() + 
   cowplot::draw_image( "../../inst/images/CLL1_I3_pIRAK4.png", scale = 1)
@@ -172,9 +171,9 @@ Fig7E
 ```
 
 
-## Figure 7F
+### Figure 7F
 Image of IHC cross-section of healthy LN stained for pIRAK4
-```{r Fig7F, fig.path=plotDir, dev=c("png", "pdf"), fig.width=6, fig.height=4}
+```{r Fig7F, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=6, fig.height=4}
 
 
 Fig7F <- cowplot::ggdraw() + 
@@ -184,7 +183,7 @@ Fig7F
 ```
 
 
-## Figure 7G
+### Figure 7G
 Kaplan-Meier curve to show associations of pSTAT6 levels with treatment free survival.     
 In Figures 7G and 7H the two pSTAT6 and pIRAK4 groups (high /low) were defined by  mean staining intensities dichotomised using maximally selected rank statistics. The same 64 CLL lymph node samples were used for both Kaplan-Meier plots. 50 patient samples were in the high pSTAT6 group, and 52 in the high pIRAK4 group.       
 
@@ -236,14 +235,14 @@ stats <- lapply(stains, function(stn){
                        risk.table = TRUE, legend.title = "", 
                        ggtheme = t2, 
                        legend.labs =list(c("High", "Low"),c("High", "Low")),  
-                       xlab="Time in years", ylab="\nTreatment free survival", title= "", legend = "bottom")
+                       xlab="Time in years", ylab="\nTime to next treatment (probability)", title= "", legend = "bottom")
 
   
 
 ```
 
 
-```{r, Fig7G, fig.path=plotDir, dev=c("png", "pdf"), fig.width=16, fig.height=7}
+```{r, Fig7G, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=7}
 
 #get plot for pSTAT6 stain
  Fig7G <-
@@ -258,9 +257,9 @@ Fig7G
 ```
 
 
-## Figure 7H
+### Figure 7H
 Kaplan-Meier curve to show associations of pSTAT6 levels with treatment free survival.   
-```{r Fig7H, fig.path=plotDir, dev=c("png", "pdf"), fig.width=16, fig.height=7}
+```{r Fig7H, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=7}
 
 #get plot for pIRAK4 stain 
 Fig7H <- wrap_elements(gg$pIRAK4$plot+ 
@@ -275,7 +274,7 @@ Fig7H
 ```
 
 
-# Assemble Figure
+## Assemble Figure
 ```{r, Fig7, fig.path=plotDir, dev=c("png", "pdf"),fig.height=15, fig.width=16}
 
 design1 <-"
@@ -305,10 +304,11 @@ Fig7
   
  ggsave(Fig7, device = "jpeg", filename = "../../inst/figs/Fig7.jpeg", width = 16, height = 15, units="in", dpi=300)
 
+ 
 ```
 
 
-# Count tables
+## Count tables
 ```{r countTables}
 
 ihc_surv_data %>% 
@@ -319,7 +319,7 @@ ihc_surv_data %>%
 
 ```
 
-# Appendix
+## Appendix
 ```{r appendix7}
 Sys.info()
 
