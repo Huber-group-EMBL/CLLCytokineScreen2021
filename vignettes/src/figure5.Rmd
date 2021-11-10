@@ -10,9 +10,11 @@ output:
     code_folding: "hide" 
 ---
 
+# Figure 5 
+
 In this sub-vignette we present the analysis and source code for figure 5.  This sub-vignette can be built along with all other sub-vignettes, by running CLLCytokineScreen2021.Rmd. 
 
-# Set up  
+## Set up  
 Load Libraries 
 ```{r loadLibraries5, cache = FALSE, message = FALSE, warning = FALSE}
 
@@ -33,7 +35,7 @@ if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
 ```
 
 
-# Load data
+## Load data
 Raw
 ```{r loadData5}
 
@@ -125,14 +127,14 @@ df <-
 ```
 
 
-# Set aesthetics
+## Set aesthetics
 ```{r defineAesthetics5}
 
 source("../../R/themes_colors.R")
 
 ```
 
-# Pre - work
+## Pre - work
 Fit the linear model
 ```{r linearModel5, message=FALSE}
 
@@ -155,7 +157,7 @@ fit <- lm(Viability ~ treatment_drug * treatment_cytokine, df)
 ```
 
 Extract p values
-```{r getPvalues5}
+```{r getPvalues5, warning = FALSE}
 
 #extract p values
 
@@ -195,11 +197,9 @@ colnames(pvaldf) <- c("pvalue","drug", "Cytokine")
 ```
 
 
-# Plot Figures
-
-## Fig 5A
-Dummy plots
-```{r, Fig5A,  fig.path=plotDir, dev=c("png", "pdf"), fig.width=8, fig.height=8}
+## Plot Figures
+### Fig 5A
+```{r, Fig5A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=8, fig.height=8, warning = FALSE}
 
 dummydata <-
   as.data.frame(list(c(1,2,3,4),
@@ -223,75 +223,43 @@ dummydata <-
   mutate(x.value = factor(x.value, levels = c("coord1", "coord2", "coord3", "coord4", "expected", "measured"))) %>% 
   
   #add annotation of interaction type
-  mutate(Plot = factor(Plot, 
-                       labels = c("stimulus inhibits drug", 
-                                  "drug inhibits stimulus", 
-                                  "synergistic pro-survival effect", 
-                                  "synergistic toxicity")))
+  mutate(Nature=if_else(Plot%in%c(1,2),"Antagonistic", "Synergistic"),
+         Nature=factor(Nature, levels = c("Antagonistic", "Synergistic")),
+         Direction=if_else(Plot%in%c(1,3), "Positive \u03B2 int", "Negative \u03B2 int"),
+         Direction=factor(Direction, levels = c("Positive \u03B2 int", "Negative \u03B2 int")),
+         Annotation=case_when(Plot==1~"I",
+                              Plot==2~"II",
+                              Plot==3~"III",
+                              Plot==4~"IV"),
+         Plot=as.character(Plot)
 
+         )
 
-
-
-
-gg_dummy =
-  #for each interaction type, make a dummy plot
-  lapply(unique(dummydata$Plot), function(i){
-    
-    tmp <- dplyr::filter(dummydata, Plot==i )
-    
-    #get value for interaction
-    interaction = 
-      unlist(dplyr::select(dplyr::filter(tmp, x.value=="measured"), y.value)) - 
-      unlist(dplyr::select(dplyr::filter(tmp,x.value=="expected"), y.value))
-    
-    #plot dummy plot
-    gg_dummy <- 
-      ggplot(dplyr::filter(tmp, grepl('coord', x.value)), 
-             aes(x=x.value, y=y.value, group=Plot))+
+Fig5A <-
+      ggplot(dplyr::filter(dummydata, !x.value%in%c("expected", "measured")), 
+             aes(x=x.value, y=y.value, group=Plot, color=Plot))+
   
   geom_hline(yintercept = 0, linetype=2, color="black")+
-  geom_point(colour=ifelse(interaction > 0, "#A6093D","#003DA5"), size=1)+
-  geom_line(colour=ifelse(interaction > 0, "#A6093D","#003DA5"), size=1)+
-  
-  geom_segment(data=dplyr::filter(tmp, grepl('expected', x.value)), aes(x = 3.5, y = y.value, xend = 4.5, yend = y.value), color="blue", size=2) +
-  geom_segment(data=dplyr::filter(tmp, grepl('measured', x.value)), aes(x = 3.5, y = y.value, xend = 4.5, yend = y.value), color="black", size=2)+
+  geom_point(size=1)+
+  geom_line(size=1)+
+  geom_text(aes(label=Annotation), x=1, y=.8,  size=7)+ 
+  scale_color_manual(values = c("#A6093D","#003DA5","#A6093D","#003DA5"))+
+  guides(color="none")+      
+
+  geom_segment(data=dplyr::filter(dummydata, grepl('expected', x.value)), aes(x = 3.5, y = y.value, xend = 4.5, yend = y.value), color="blue", size=2) +
+  geom_segment(data=dplyr::filter(dummydata, grepl('measured', x.value)), aes(x = 3.5, y = y.value, xend = 4.5, yend = y.value), color="black", size=2)+
   
   theme_bw() +
   t1 +
-  xlab("") + 
-  ylab("") +
+  xlab("") +
+  ylab("Log(Viability)") +
   coord_cartesian(ylim = c(-1, 1)) +
-  scale_x_discrete(labels=c( "coord1"="DMSO", "coord2"="Drug","coord3"="Stimulus","coord4"="Drug +\nStimulus")) +
+  scale_y_continuous(n.breaks=3)+
+  scale_x_discrete(labels=c( "coord1"="DMSO","coord2"="Drug","coord3"="Stimulus","coord4"="Drug +\nStimulus")) +
     theme(axis.ticks.x= element_blank(),axis.ticks.y = element_blank(),
           plot.tag=element_text(size = 20)) +
-      
-  scale_y_continuous(breaks = c(-1,0,1), sec.axis = 
-                       sec_axis(trans=~exp(1)^.*100, 
-                                breaks=c(50,100,200), 
-                                labels=c("50%", "100%", "200%")))
+        facet_grid(Nature~Direction)
 
-})
-
-
-#construct plot
-
-Fig5A <- wrap_elements(
-  
-  gg_dummy[[1]] + 
-  labs(title=expression(paste("Positive ", beta["int"] ))) +
-  ylab("Antagonism")+
-
-  gg_dummy[[2]] +
-  labs(title=expression(paste("Negative ", beta["int"] )))+
-
-  gg_dummy[[3]] +
-  ylab("Synergism") +
-    
-  gg_dummy[[4]]+
-  
-  plot_layout(nrow=2) +
-  plot_annotation(tag_levels = "I")
-)
 
 Fig5A
 
@@ -299,9 +267,9 @@ Fig5A
 
 
 
-## Fig 5B
+### Fig 5B
 Barplot quantifying interaction types 
-```{r, Fig5B,  fig.path=plotDir, dev=c("png", "pdf"),fig.width=3, fig.height=6}
+```{r, Fig5B,  fig.path=plotDir, dev=c("png", "cairo_pdf"),fig.width = 3, fig.height = 6}
 
 
 fit_as_df <- 
@@ -376,7 +344,7 @@ Fig5B
 ```
 
 
-## Fig 5C
+### Fig 5C
 Heatmap of significant drug : stimulus interaction coefficients    
 Get interaction coefficients matrix for plotting heatmap 
 ```{R getBeta5}
@@ -413,7 +381,7 @@ colnames(betadf) <- c("betavalue","drug", "Cytokine")
 ```
 
 
-```{r Fig5C,  fig.path=plotDir, dev=c("png", "pdf"), fig.width=12, fig.height = 8, warning=FALSE}
+```{r Fig5C,  fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=7.5, fig.height = 7, warning=FALSE}
 
 #set significance
 a <- 0.05
@@ -423,8 +391,8 @@ pvalmat <- xtabs(pvalue~drug+Cytokine, data=pvaldf)
 bvalmat <- xtabs(betavalue~drug+Cytokine, data=betadf)
 
 #check in same order
-bvalmat[,colnames(pvalmat)] 
-bvalmat[rownames(pvalmat),]
+# bvalmat[,colnames(pvalmat)] 
+# bvalmat[rownames(pvalmat),]
 
 bvalmat[pvalmat >= a] = 0
 
@@ -477,7 +445,7 @@ Fig5C
 
 ```
 
-## Fig 5D - I
+### Fig 5D - G
 
 Preparation: Line plots of examples of drug and stimulus combinations that show an interaction
 ```{r FigD-1}
@@ -539,12 +507,6 @@ lapply(names(gg), function(i){
 
     ## predicted double treatment value (based only on single effects)
     predicted_double <- baseline + single_1 + single_2
-
-
-    #prepare labels and aesthetics for plotting
-    # y_label <- case_when(cyt=="Interferon gamma"~"Interferon\ngamma",
-    #                      cyt=="soluble anti-IgM"~"soluble\nanti-IgM",
-    #                      TRUE~cyt)
 
     xlabels <- c("DMSO", drug, 
                  case_when(cyt=="IL-4"~"IL4",
@@ -649,49 +611,49 @@ names(plotList) <- names(gg)
 ```
 
 
-## Fig 5D
-```{r Fig5D,  fig.path=plotDir, dev=c("png", "pdf"), warning=FALSE}
+#### Fig 5D
+```{r Fig5D,  fig.path=plotDir, dev=c("png", "cairo_pdf"), warning=FALSE}
 
 wrap_plots(plotList$`treatment_drug:Ibrutinib:treatment_cytokine:IL-4`)
 
 ```
 
-## Fig 5E
-```{r Fig5E,  fig.path=plotDir, dev=c("png", "pdf"), warning=FALSE}
+#### Fig 5E
+```{r Fig5E,  fig.path=plotDir, dev=c("png", "cairo_pdf"), warning=FALSE}
 
 wrap_plots(plotList$`treatment_drug:Ibrutinib:treatment_cytokine:Interferon gamma`)
   
 ```
 
-## Fig 5F
-```{r Fig5F,  fig.path=plotDir, dev=c("png", "pdf"), warning=FALSE}
+#### Fig 5F
+```{r Fig5F,  fig.path=plotDir, dev=c("png", "cairo_pdf"), warning=FALSE}
   
 wrap_plots(plotList$`treatment_drug:Pyridone-6:treatment_cytokine:sCD40L+IL-4`)
 
 ```
 
-## Fig 5G
-```{r Fig5G,  fig.path=plotDir, dev=c("png", "pdf"), warning=FALSE}
+#### Fig 5G
+```{r Fig5G,  fig.path=plotDir, dev=c("png", "cairo_pdf"), warning=FALSE}
 
 wrap_plots(plotList$`treatment_drug:Ralimetinib:treatment_cytokine:Interferon gamma`)
 
 ```
 
-## Fig 5H
-```{r Fig5H,  fig.path=plotDir, dev=c("png", "pdf"), warning=FALSE}
+#### Fig 5H
+```{r Fig5H,  fig.path=plotDir, dev=c("png", "cairo_pdf"), warning=FALSE}
 
 wrap_plots(plotList$`treatment_drug:Ibrutinib:treatment_cytokine:CpG ODN`)
 ```
 
-## Fig 5G
-```{r Fig5I,  fig.path=plotDir, dev=c("png", "pdf"), warning=FALSE}
+#### Fig 5G
+```{r Fig5I,  fig.path=plotDir, dev=c("png", "cairo_pdf"), warning=FALSE}
 
 wrap_plots(plotList$`treatment_drug:Luminespib:treatment_cytokine:soluble anti-IgM`)
 
 ```
 
-# Arrange plots
-```{r,Fig5, fig.path=plotDir, dev=c("png", "pdf"),  fig.width=20, fig.height=22, warning=FALSE}
+## Arrange plots
+```{r, Fig5, fig.path=plotDir, dev=c("png", "cairo_pdf"),  fig.width=20, fig.height=22, warning=FALSE}
 
 design1 <-"
   1223
@@ -700,7 +662,7 @@ design1 <-"
   8899
   "
 Fig5<-
-Fig5A + theme(plot.tag=element_text(size = 30)) +
+wrap_elements(Fig5A) + theme(plot.tag=element_text(size = 30)) +
 
 wrap_elements(Fig5B) + theme(plot.tag=element_text(size = 30)) +
   
@@ -726,10 +688,13 @@ plot_layout(design=design1,
 
 Fig5
 
-ggsave(Fig5, device = "jpeg", filename = "../../inst/figs/Fig5.jpeg", width = 20, height = 22, units="in", dpi="screen")
+
+
+
+
 ```
 
-# Appendix
+## Appendix
 ```{r appendix5}
 Sys.info()
 sessionInfo()
