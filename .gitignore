@@ -39,6 +39,7 @@ vignettes/*.pdf
 inst/figs/*.png
 inst/figs/*.pdf
 inst/shiny/data_for_shiny/
+inst/figs/
 
 #Specific Files#
 ################
