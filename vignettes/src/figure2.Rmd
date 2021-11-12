@@ -939,7 +939,7 @@ Fig2E
 
 
 ## Arrange plots
-```{r, Fig2, fig.path=plotDir,  dev=c("png", "cairo_pdf"), fig.width=16, fig.height=23, eval = TRUE, warning = FALSE}
+```{r, Figure2, fig.path=plotDir,  dev=c("png", "cairo_pdf"), fig.width=16, fig.height=23, eval = TRUE, warning = FALSE}
 
 design1<-"
 11
@@ -964,9 +964,6 @@ Figure2 <-
   plot_annotation(tag_levels = "A", title="Figure 2", theme = theme(title=element_text(size = 20)))
 
 Figure2
-
-ggsave(Figure2, device = cairo_pdf, filename = "../../inst/figs/Fig2.pdf", width = 16, height = 23, units="in", dpi="screen")
-
 
 ```
 

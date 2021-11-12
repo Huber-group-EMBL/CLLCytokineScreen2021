@@ -275,7 +275,7 @@ Fig7H
 
 
 ## Assemble Figure
-```{r, Fig7, fig.path=plotDir, dev=c("png", "pdf"),fig.height=15, fig.width=16}
+```{r, Figure7, fig.path=plotDir, dev=c("png", "pdf", "jpeg"),fig.height=15, fig.width=16, dpi=300}
 
 design1 <-"
   ACG
@@ -301,10 +301,7 @@ Fig7 <-
   plot_annotation(tag_levels = "A", title="Figure 7", theme = theme(title=element_text(size = 20)))
   
 Fig7
-  
- ggsave(Fig7, device = "jpeg", filename = "../../inst/figs/Fig7.jpeg", width = 16, height = 15, units="in", dpi=300)
 
- 
 ```
 
 

@@ -476,7 +476,7 @@ Fig1F
 
 
 ## Assemble Figure
-```{r, Fig1, fig.height=11, fig.width=18, fig.path=plotDir, dev=c("png", "cairo_pdf"), message=FALSE, warning=FALSE}
+```{r, Figure1, fig.height=11, fig.width=18, fig.path=plotDir, dev=c("png", "cairo_pdf"), message=FALSE, warning=FALSE}
 
 tp <- theme(plot.tag=element_text(size = 30, face="plain"))
 

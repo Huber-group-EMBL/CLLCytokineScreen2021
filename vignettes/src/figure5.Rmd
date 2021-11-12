@@ -653,7 +653,7 @@ wrap_plots(plotList$`treatment_drug:Luminespib:treatment_cytokine:soluble anti-I
 ```
 
 ## Arrange plots
-```{r, Fig5, fig.path=plotDir, dev=c("png", "cairo_pdf"),  fig.width=20, fig.height=22, warning=FALSE}
+```{r, Figure5, fig.path=plotDir, dev=c("png", "cairo_pdf"),  fig.width=20, fig.height=22, warning=FALSE}
 
 design1 <-"
   1223
@@ -687,10 +687,6 @@ plot_layout(design=design1,
   plot_annotation( tag_levels = "A", title="Figure 5", theme = theme(title=element_text(size = 20)))
 
 Fig5
-
-
-
-
 
 ```
 

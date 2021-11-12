@@ -950,7 +950,7 @@ save(Lasso_Plots_Fig6,
 
 
 ## Assemble Figure
-```{r Fig6, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 24, fig.width = 22, warning=FALSE}
+```{r Figure6, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 24, fig.width = 22, warning=FALSE}
 
 #Design
 design1<-"
@@ -975,11 +975,6 @@ Fig6D + tp +
 plot_annotation(tag_levels = "A", title="Figure 6", theme = theme(title=element_text(size = 20))) + 
 
 plot_layout(design=design1, heights = c(0.9,1,1))
-
-
-
-
-ggsave(Fig6, device = cairo_pdf, filename = "../../inst/figs/Fig6.pdf", width = 22, height = 24, units="in", dpi="screen")
 
 
 

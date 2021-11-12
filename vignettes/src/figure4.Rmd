@@ -919,7 +919,7 @@ rm(plotTab)
 ```
 
 ## Assemble Figure 4
-```{r Fig4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=18, fig.width=19, eval = TRUE}
+```{r Figure4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=18, fig.width=19, eval = TRUE}
 
 design1<-"
   ABC

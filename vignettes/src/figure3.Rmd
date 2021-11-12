@@ -772,7 +772,7 @@ Fig3B_leg <- legends[["plot"]] %>% wrap_elements()
 
 
 ## Assemble Figure
-```{r, Fig3,  fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=13, fig.width=20, message = FALSE, warning = FALSE}
+```{r, Figure3,  fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=13, fig.width=20, message = FALSE, warning = FALSE}
 
 design1<-"
   AB
@@ -803,7 +803,7 @@ Fig3 <-
 
 Fig3
 
-ggsave(Fig3, device = cairo_pdf, filename = "../../inst/figs/Fig3.pdf", width = 20, height = 13, units="in", dpi="screen")
+# ggsave(Fig3, device = cairo_pdf, filename = "../../inst/figs/Fig3.pdf", width = 20, height = 13, units="in", dpi="screen")
 
 
 ```
