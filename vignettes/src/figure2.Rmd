@@ -511,6 +511,27 @@ C1vsC2_p <- coxph_summ$coefficients[1,5] %>% round(3)
 C1vsC2_p
 ```
 
+Cluster 3 as reference
+```{r, fig.width=8, fig.height=6}
+coxph_summ <- clusters.surv%>%
+  mutate(Cluster=factor(Cluster))%>%
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3),  data=.) %>% 
+  summary()
+coxph_summ$coefficients %>% round(5)
+
+```
+
+Cluster 3 vs C1+2
+```{r, fig.width=8, fig.height=6}
+coxph_summ <- clusters.surv%>%
+  filter(Cluster%in%c(1,2,3)) %>% 
+  dplyr::mutate(Cluster=factor(Cluster), Cluster_12vs3=ifelse(Cluster%in%c(1,2),1,0))%>%
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster_12vs3, 1),  data=.) %>% 
+  summary()
+coxph_summ$coefficients %>% round(5)
+
+```
+
 Cluster 4 as reference
 ```{r, fig.width=8, fig.height=6}
 coxph_summ <- clusters.surv%>%
@@ -522,6 +543,8 @@ C3vsC4_p<-coxph_summ$coefficients[3,5] %>% round(3)
 C3vsC4_p
 ```
 
+
+  
 Multivariate Cox Proportional Hazards  
 Cluster 1 as reference
 ```{r }
