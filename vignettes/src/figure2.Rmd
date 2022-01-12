@@ -1143,6 +1143,29 @@ Figure2
 ```
 
 
+### Additional Figure of Methylation Clusters and Microenviroenmental response
+```{r, fig.height=5}
+
+patMeta_cl %>% 
+  group_by(Cluster, Methylation_Cluster) %>% 
+  count() %>% 
+  group_by(Cluster) %>% 
+  mutate(freq = n / sum(n)) %>% 
+   plyr::ddply("Cluster", transform, label_ypos=cumsum(freq)) %>% 
+
+
+  ggplot(aes(x=Cluster, y=freq, fill=Methylation_Cluster))+
+  geom_bar(stat="identity")+
+  ylab("Relative incidence of\n methylation profiles")+
+  t2
+  
+ 
+
+  
+
+```
+
+
 ## Appendix
 ```{r appendix2}
 Sys.info()
