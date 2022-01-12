@@ -46,3 +46,9 @@ inst/figs/
 inst/doc/*.xlsx
 data/CLL.allBams.peaks.overlaps.bed
 data/sampleTable_TF.tsv
+inst/shiny/.Rhistory
+vignettes/src/.Rhistory
+vignettes/src/.Rhistory
+vignettes/src/.Rhistory
+vignettes/src/.Rhistory
+vignettes/src/.Rhistory

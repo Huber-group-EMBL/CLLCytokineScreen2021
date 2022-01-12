@@ -787,6 +787,158 @@ Fig2D
 
 ```
 
+### Alternate Figure 2D
+```{r}
+coefTab %>% 
+  group_by(feature) %>% 
+  summarize() %>% 
+  unlist()
+```
+
+
+```{r}
+
+#Annotate RAS_RAF where where any of KRAS, NRAS or BRAF are mutated
+patMeta_cl[,"RAS_RAF"] <- ifelse(patMeta_cl[,"KRAS"]==1,1,
+		                                        ifelse(patMeta_cl[,"BRAF"]==1,1,
+	                	                          ifelse(patMeta_cl[,"NRAS"]==1, 1, 0)))
+patMeta_cl %<>% mutate(Cluster=as.factor(Cluster),
+                       RAS_RAF=as.factor(RAS_RAF))
+
+
+Coef_Perc_Table<-  patMeta_cl %>%
+  filter(!is.na(IGHV.status)) %>% 
+  group_by(Cluster, IGHV.status) %>%  
+  count() %>% 
+  group_by(Cluster) %>%
+  mutate(freq = n / sum(n)) %>% 
+  mutate(Percentage=round(freq*100),0) %>% 
+  filter(IGHV.status=="M") %>% 
+  rename(IGHV.mutated=Percentage) %>% 
+  select(Cluster, IGHV.mutated)
+  
+Coef_Perc_Table<-  patMeta_cl %>%
+  filter(!is.na(trisomy12)) %>% 
+  group_by(Cluster, trisomy12) %>%  
+  count() %>% 
+  group_by(Cluster) %>%
+  mutate(freq = n / sum(n)) %>% 
+  mutate(Percentage=round(freq*100),0) %>% 
+  filter(trisomy12=="1") %>% 
+  rename(trisomy12_positive=Percentage) %>% 
+  select(Cluster, trisomy12_positive) %>% 
+  left_join(Coef_Perc_Table, ., by = "Cluster")
+
+Coef_Perc_Table<-  patMeta_cl %>%
+  filter(!is.na(SF3B1)) %>% 
+  group_by(Cluster, SF3B1) %>%  
+  count() %>% 
+  group_by(Cluster) %>%
+  mutate(freq = n / sum(n)) %>% 
+  mutate(Percentage=round(freq*100),0) %>% 
+  filter(SF3B1=="1") %>% 
+  rename(SF3B1_mut=Percentage) %>% 
+  select(Cluster, SF3B1_mut)%>% 
+  left_join(Coef_Perc_Table, ., by = "Cluster")
+
+Coef_Perc_Table<-  patMeta_cl %>%
+  filter(!is.na(POT1)) %>% 
+  group_by(Cluster, POT1, .drop=FALSE) %>%  
+  count(.drop=FALSE) %>% 
+  group_by(Cluster) %>%
+  mutate(freq = n / sum(n)) %>% 
+  mutate(Percentage=round(freq*100),0) %>% 
+  filter(POT1=="1") %>% 
+  rename(POT1_mut=Percentage) %>% 
+  select(Cluster, POT1_mut)%>% 
+  left_join(Coef_Perc_Table, ., by = "Cluster")
+
+Coef_Perc_Table<-  patMeta_cl %>%
+  filter(!is.na(ATM)) %>% 
+  group_by(Cluster, ATM) %>%  
+  count() %>% 
+  group_by(Cluster) %>%
+  mutate(freq = n / sum(n)) %>% 
+  mutate(Percentage=round(freq*100),0) %>% 
+  filter(ATM=="1") %>% 
+  rename(ATM_mut=Percentage) %>% 
+  select(Cluster, ATM_mut)%>% 
+  left_join(Coef_Perc_Table, ., by = "Cluster")
+
+Coef_Perc_Table<-  patMeta_cl %>%
+  filter(!is.na(TP53)) %>% 
+  group_by(Cluster, TP53) %>%  
+  count() %>% 
+  group_by(Cluster) %>%
+  mutate(freq = n / sum(n)) %>% 
+  mutate(Percentage=round(freq*100),0) %>% 
+  filter(TP53=="1") %>% 
+  rename(TP53_mut=Percentage) %>% 
+  select(Cluster, TP53_mut)%>% 
+  left_join(Coef_Perc_Table, ., by = "Cluster")
+
+Coef_Perc_Table<-  patMeta_cl %>%
+  filter(!is.na(RAS_RAF)) %>% 
+  group_by(Cluster, RAS_RAF, .drop=FALSE) %>%  
+  count(.drop=FALSE) %>% 
+  group_by(Cluster) %>%
+  mutate(freq = n / sum(n)) %>% 
+  mutate(Percentage=round(freq*100),0) %>% 
+  filter(RAS_RAF=="1") %>% 
+  rename(RAS_RAF_mut=Percentage) %>% 
+  select(Cluster, RAS_RAF_mut)%>% 
+  left_join(Coef_Perc_Table, ., by = "Cluster")
+
+Coef_Perc_Table<-  patMeta_cl %>%
+  filter(!is.na(gain8q)) %>% 
+  group_by(Cluster, gain8q, .drop=FALSE) %>% 
+  count(.drop = FALSE) %>% 
+  group_by(Cluster) %>%
+  mutate(freq = n / sum(n)) %>% 
+  mutate(Percentage=round(freq*100),0) %>% 
+  filter(gain8q=="1") %>% 
+  rename(gain8q_positive=Percentage) %>% 
+  select(Cluster, gain8q_positive)%>% 
+  left_join(Coef_Perc_Table, ., by = "Cluster")
+
+# Coef_Perc_Table
+
+```
+
+```{r, fig.height=7, fig.width=5}
+
+plotTab_for_Perc<- plotTab %>% 
+  mutate(feature=case_when(feature=="IGHV status"~"IGHV.mutated",
+                           feature=="trisomy 12"~"trisomy12_positive",
+                           feature=="POT1"~"POT1_mut",
+                           feature=="SF3B1"~"SF3B1_mut",
+                           feature=="gain(8q)"~"gain8q_positive",
+                           feature=="RAS/RAF"~"RAS_RAF_mut",
+                           feature=="TP53"~"TP53_mut",
+                           feature=="ATM"~"ATM_mut"))
+
+Coef_Perc_Table %>% 
+  pivot_longer(IGHV.mutated:gain8q_positive, names_to = "feature", values_to = "Percentage" ) %>% 
+  left_join(plotTab_for_Perc, by=c("Cluster"="cluster", "feature")) %>% 
+  mutate(meanCoef=if_else(is.na(meanCoef), 0, meanCoef)) %>% 
+  mutate(Cluster=factor(Cluster, levels = rev(c(1,2,3,4))),
+         feature= factor(feature, 
+                         levels=c("IGHV.mutated","trisomy12_positive","POT1_mut","SF3B1_mut", "gain8q_positive","RAS_RAF_mut","TP53_mut","ATM_mut"), 
+                         labels=c("IGHV mutated","trisomy 12","POT1","SF3B1","gain8q","KRAS, BRAF or NRAS","TP53","ATM" ))) %>% 
+  
+  ggplot(aes(y=Cluster, x=feature))+
+  geom_tile(aes(fill=meanCoef),color = "grey")+
+   scale_fill_gradient2(low ="#003DA5",  mid ="white",  high = "#A6093D", midpoint = 0)+
+   geom_text(aes( label=Percentage) )+
+    t1+
+   t.leg+
+  theme(legend.position = "bottom", 
+        legend.key.width = unit(1.7, "cm"))+
+  labs(fill="Coefficient", x="Genetic alteration")
+
+  
+```
+
 
 ### Figure 2E
 GSEA of differentially expressed genes between clusters.    
