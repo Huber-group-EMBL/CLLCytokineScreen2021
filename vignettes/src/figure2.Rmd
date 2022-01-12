@@ -1186,6 +1186,65 @@ CLL_PD %>%
 
 
 ```
+### Correlation between CLL-PD and Stimuli response
+```{r, fig.height=5}
+x<-left_join(CLL_PD, df, by = "PatientID") %>% 
+  group_by(PatientID,CLL_PD ) %>% 
+  summarise(.groups="keep") %>% 
+  ungroup() %>% 
+  arrange(PatientID) %>% 
+  select(CLL_PD) %>% 
+  unlist()
+
+# Stimuli<-"IL-4"
+
+Stim_PD.corr <- vector("list", length = length(unique(df$Cytokine)))
+names(Stim_PD.corr)  <- unique(df$Cytokine)
+
+for(Stimuli in unique(df$Cytokine)){
+
+y<-left_join(CLL_PD, df, by = "PatientID") %>% 
+  filter(Cytokine==Stimuli)%>% 
+  group_by(PatientID,Log ) %>% 
+  summarise(.groups="keep") %>% 
+  ungroup() %>% 
+  arrange(PatientID) %>% 
+  select(Log) %>% 
+  unlist()
+
+cor <- cor.test(x, y, conf.level = 0.95, method = c("pearson"))
+    
+    #convert to table
+    cor.df <- unlist(cor) %>% as.data.frame()
+    colnames(cor.df) <- Stimuli
+    
+    #add corr.test output to drug.corr dataframe
+    Stim_PD.corr[[Stimuli]] <- cor.df
+
+}
+
+Stim_PD.corr_all <- do.call(cbind, Stim_PD.corr) %>% 
+  rownames_to_column("feature")
+
+Stim_PD.corr_all <- setNames(data.frame(t(Stim_PD.corr_all[,-1])), Stim_PD.corr_all[,1])
+
+Stim_PD.corr_all <-rownames_to_column(Stim_PD.corr_all, var="Cytokine") %>% 
+  mutate(p.value=as.numeric(p.value), estimate.cor=as.numeric(estimate.cor))
+
+
+sgncuoff<-1.4
+
+ggplot( Stim_PD.corr_all, aes(x=estimate.cor, y=-log10(p.value))) +
+      # annotate("rect", xmin = 0.0, xmax = Inf, ymin = -Inf, ymax = Inf, fill = palreds[1], alpha = 0.2)+
+      # annotate("rect", xmin = 0.0, xmax = -Inf, ymin = -Inf, ymax = Inf,alpha = 0.2, fill = palblues[1])+
+      geom_point(aes(alpha=0.4)) +
+      theme(legend.position = "none") +
+      geom_label_repel(aes(label=ifelse(p.value<0.05&abs(estimate.cor)>0.1,Cytokine,'')))+
+      # scale_colour_manual(values=c(palblues[2], palreds[4], "black", "grey"))+
+      t2 +
+      labs(title="Correlation between CLL-PD and response to Stimuli", x = "Pearson Correlation coefficient", y = "-log10(adj p-val)")+
+      guides(color="none", alpha="none")
+```
 
 
 ## Appendix
