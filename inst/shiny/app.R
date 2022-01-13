@@ -488,12 +488,13 @@ server <- function(input, output) {
    
     #plot
     
-    ggplot(plotTab3, aes(treatment_combination, Log, group = PatientID)) +
+    ggplot(plotTab3, aes(treatment_combination, Log)) +
       
       #plot mutated points only
-      geom_point(colour = palreds[7]) +
-      geom_line(colour = palreds[7]) +
+      geom_point(aes(group = PatientID), colour = palreds[7], alpha=0.3) +
+      geom_line(aes(group = PatientID), colour = palreds[7], alpha=0.3) +
       geom_hline(yintercept = 0)+
+      geom_boxplot(fill=NA, outlier.shape = NA)+
       
       
       #Sort aesthetics
@@ -540,13 +541,14 @@ server <- function(input, output) {
                                      
     #plot
     
-    ggplot(plotTab4, aes(treatment_combination, Log, group = PatientID)) +
+    ggplot(plotTab4, aes(treatment_combination, Log)) +
       
       #plot WT points and then Mutated points
-      geom_point(colour = "#D0D0CE") +
-      geom_line(colour = "#D0D0CE") +
+      geom_point(aes(group = PatientID), colour = "#696969", alpha=0.3) +
+      geom_line(aes(group = PatientID), colour = "#696969", alpha=0.3) +
       geom_hline(yintercept = 0)+
-      
+      geom_boxplot(fill=NA, outlier.shape = NA)+
+ 
       
       #Sort aesthetics
       ggtitle(paste(input$drugP2, "+", input$cytP2,"\nfor", ifelse(input$omicP2 == "IGHV.status", "IGHV Unmutated", "WT"),"samples",  sep=" ")) + 
