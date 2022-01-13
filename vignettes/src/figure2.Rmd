@@ -1142,7 +1142,7 @@ Figure2
 
 ```
 
-
+## Additional figures for Revision
 ### Additional Figure of Methylation Clusters and Microenviroenmental response
 ```{r, fig.height=5}
 
@@ -1186,6 +1186,7 @@ CLL_PD %>%
 
 
 ```
+
 ### Correlation between CLL-PD and Stimuli response
 
 #### Overview
@@ -1249,6 +1250,7 @@ ggplot( Stim_PD.corr_all, aes(x=estimate.cor, y=-log10(p.value))) +
 ```
 
 #### Scatter Plots
+##### Scatter Plots for all stimuli in all patients
 ```{r, fig.height=5}
 # Stimuli<-"Resiquimod"
 Stimuli_list<-  arrange(Stim_PD.corr_all, estimate.cor) %>% 
@@ -1282,6 +1284,7 @@ print(scatterplot)
 }
 ```
 
+##### Scatter Plots for all stimuli faceted by IGHV status
 ```{r, fig.height=5}
 # Stimuli<-"Resiquimod"
 
@@ -1314,6 +1317,7 @@ print(scatterplot)
 }
 ```
 
+##### Scatter Plots for all stimuli faceted by Cluster
 ```{r, fig.height=5}
 # Stimuli<-"Resiquimod"
 
