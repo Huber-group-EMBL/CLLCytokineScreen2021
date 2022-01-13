@@ -1175,8 +1175,8 @@ CLL_PD %>%
   
   
   ggplot(aes(x=Cluster, y=CLL_PD,group=Cluster, fill=Cluster ))+
-  geom_boxplot()+
-  geom_beeswarm()+
+  geom_boxplot(outlier.shape = NA)+
+  geom_beeswarm(aes(shape=CLL_PD_group ))+
   t2+
   scale_fill_manual(values=colors[1:4]) +
   guides(fill="none") +
@@ -1187,6 +1187,8 @@ CLL_PD %>%
 
 ```
 ### Correlation between CLL-PD and Stimuli response
+
+#### Overview
 ```{r, fig.height=5}
 x<-left_join(CLL_PD, df, by = "PatientID") %>% 
   group_by(PatientID,CLL_PD ) %>% 
@@ -1244,6 +1246,102 @@ ggplot( Stim_PD.corr_all, aes(x=estimate.cor, y=-log10(p.value))) +
       t2 +
       labs(title="Correlation between CLL-PD and response to Stimuli", x = "Pearson Correlation coefficient", y = "-log10(adj p-val)")+
       guides(color="none", alpha="none")
+```
+
+#### Scatter Plots
+```{r, fig.height=5}
+# Stimuli<-"Resiquimod"
+Stimuli_list<-  arrange(Stim_PD.corr_all, estimate.cor) %>% 
+    select(Cytokine) %>% 
+    unlist() %>% 
+    rev()
+
+for( Stimuli in Stimuli_list){
+
+
+Pearson_Correlation<-Stim_PD.corr_all %>% 
+  filter(Cytokine==Stimuli) %>% 
+  select(estimate.cor) %>% 
+  unlist() %>% 
+  round(2)
+
+scatterplot<-left_join(CLL_PD, df, by = "PatientID") %>% 
+  left_join(patMeta, by = "PatientID") %>% 
+  filter(Cytokine==Stimuli,
+         !is.na(IGHV.status), !is.na(trisomy12)) %>% 
+  
+  ggplot(aes(x=CLL_PD, y=Log))+
+geom_point(aes(color=IGHV.status, shape=trisomy12))+
+  geom_smooth(method = "lm", formula = 'y ~ x')+
+  stat_cor(method = "pearson")+
+   # geom_text(x=-1, y=2, label=paste0("Pearson Correlation Coefficient: ", Pearson_Correlation), size=4)+
+  t2+
+  ggtitle(paste0(Stimuli))
+
+print(scatterplot)
+}
+```
+
+```{r, fig.height=5}
+# Stimuli<-"Resiquimod"
+
+  
+for( Stimuli in Stimuli_list){
+
+
+
+Pearson_Correlation<-Stim_PD.corr_all %>% 
+  filter(Cytokine==Stimuli) %>% 
+  select(estimate.cor) %>% 
+  unlist() %>% 
+  round(2)
+
+scatterplot<-left_join(CLL_PD, df, by = "PatientID") %>% 
+  left_join(patMeta, by = "PatientID") %>% 
+  filter(Cytokine==Stimuli,
+         !is.na(IGHV.status), !is.na(trisomy12)) %>% 
+  
+  ggplot(aes(x=CLL_PD, y=Log))+
+geom_point(aes(color=IGHV.status, shape=trisomy12))+
+  geom_smooth(method = "lm", formula = 'y ~ x')+
+  stat_cor(method = "pearson")+
+   # geom_text(x=-1, y=2, label=paste0("Pearson Correlation Coefficient: ", Pearson_Correlation), size=4)+
+  t2+
+  ggtitle(paste0(Stimuli))+
+  facet_wrap(~IGHV.status)
+
+print(scatterplot)
+}
+```
+
+```{r, fig.height=5}
+# Stimuli<-"Resiquimod"
+
+for( Stimuli in Stimuli_list){
+
+
+Pearson_Correlation<-Stim_PD.corr_all %>% 
+  filter(Cytokine==Stimuli) %>% 
+  select(estimate.cor) %>% 
+  unlist() %>% 
+  round(2)
+
+scatterplot<-left_join(CLL_PD, df, by = "PatientID") %>% 
+  left_join(patMeta_cl, by = "PatientID") %>% 
+  filter(Cytokine==Stimuli,
+         !is.na(IGHV.status), !is.na(trisomy12)) %>% 
+  
+  ggplot(aes(x=CLL_PD, y=Log))+
+geom_point(aes(color=IGHV.status, shape=trisomy12))+
+  geom_smooth(method = "lm", formula = 'y ~ x')+
+  stat_cor(method = "pearson")+
+   # geom_text(x=-1, y=2, label=paste0("Pearson Correlation Coefficient: ", Pearson_Correlation), size=4)+
+  t2+
+  ggtitle(paste0(Stimuli))+
+  facet_wrap(~Cluster)
+
+print(scatterplot)
+}
 ```
 
 
