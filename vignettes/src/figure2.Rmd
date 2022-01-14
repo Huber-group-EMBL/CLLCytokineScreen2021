@@ -1413,7 +1413,7 @@ df %>%
 ```
 
 #### Correlation of LDT and Overall Stimuli response
-```{r}
+```{r, fig.height=5}
 
 df %>% 
   group_by(PatientID) %>% 
