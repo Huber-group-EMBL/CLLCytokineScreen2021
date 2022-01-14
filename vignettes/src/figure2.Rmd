@@ -1353,12 +1353,13 @@ geom_point(aes(color=IGHV.status, shape=trisomy12))+
 print(scatterplot)
 }
 ```
+
 #### Overall Cytokine Response and CLL-PD
 ```{r, fig.height=5}
 left_join(CLL_PD, df, by = "PatientID") %>% 
   left_join(patMeta_cl, by = "PatientID") %>%
   group_by(PatientID, CLL_PD,IGHV.status) %>% 
-  summarise(Cytokine_Overall_Response=mean(abs(Log)), .groups="keep") %>% 
+  summarise(Cytokine_Overall_Response=mean((Log)), .groups="keep") %>% 
   
   ggplot(aes(x=CLL_PD, y= Cytokine_Overall_Response))+
   geom_point(aes(color=IGHV.status))+
@@ -1376,7 +1377,7 @@ left_join(CLL_PD, df, by = "PatientID") %>%
   left_join(patMeta_cl, by = "PatientID") %>%
   filter(Cytokine%in%c("Resiquimod" ,"CpG ,ODN" ,"sCD40L" ,"IL-1b" ,"soluble ,anti-IgM" ,"BAFF" ,"TGF-b1")) %>% 
   group_by(PatientID, CLL_PD,IGHV.status) %>% 
-  summarise(Cytokine_Overall_Response=mean(abs(Log)), .groups="keep") %>% 
+  summarise(Cytokine_Overall_Response=mean((Log)), .groups="keep") %>% 
   
   ggplot(aes(x=CLL_PD, y= Cytokine_Overall_Response))+
   geom_point(aes(color=IGHV.status))+
@@ -1387,6 +1388,49 @@ left_join(CLL_PD, df, by = "PatientID") %>%
 
 
 
+```
+
+#### Overall Stimuli response by Cluster
+```{r, fig.height=5}
+
+df %>% 
+  group_by(PatientID) %>% 
+  summarise(Cytokine_Overall_Response=mean((Log)), .groups="keep") %>% 
+  
+  left_join(patMeta_cl, by = "PatientID") %>% 
+  left_join(LDT, by = "PatientID") %>% 
+  
+  ggplot(aes(x=Cluster, y=Cytokine_Overall_Response))+
+  geom_boxplot(aes(fill=Cluster))+
+  geom_beeswarm()+
+  t2+
+  scale_fill_manual(values=colors[1:4]) +
+  guides(fill="none") +
+  ylab("Overall Stimuli response") +
+  stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=6, label.x = 1.3, label.y=0.45)+
+  coord_cartesian(clip="off")
+
+```
+
+#### Correlation of LDT and Overall Stimuli response
+```{r}
+
+df %>% 
+  group_by(PatientID) %>% 
+  summarise(Cytokine_Overall_Response=mean((Log)), .groups="keep") %>% 
+  
+  left_join(patMeta_cl, by = "PatientID") %>% 
+  left_join(LDT, by = "PatientID") %>% 
+  filter(!is.na(doubling.time)) %>% 
+  
+   ggplot(aes(x=Cytokine_Overall_Response, y= doubling.time))+
+  geom_point(aes())+
+  geom_smooth(method="lm", formula = 'y ~ x')+
+  stat_cor()+
+  scale_y_log10()+
+  t2+
+  xlab("Overall Stimuli response") +
+  ylab("LDT")
 ```
 
 
