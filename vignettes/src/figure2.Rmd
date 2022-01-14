@@ -1235,18 +1235,24 @@ Stim_PD.corr_all <-rownames_to_column(Stim_PD.corr_all, var="Cytokine") %>%
   mutate(p.value=as.numeric(p.value), estimate.cor=as.numeric(estimate.cor))
 
 
-sgncuoff<-1.4
+Stim_PD.corr_all %<>% 
+mutate(adj.p.value=p.adjust(p.value, method = "BH"))
 
-ggplot( Stim_PD.corr_all, aes(x=estimate.cor, y=-log10(p.value))) +
+
+
+ggplot( Stim_PD.corr_all, aes(x=estimate.cor, y=-log10(adj.p.value))) +
       # annotate("rect", xmin = 0.0, xmax = Inf, ymin = -Inf, ymax = Inf, fill = palreds[1], alpha = 0.2)+
       # annotate("rect", xmin = 0.0, xmax = -Inf, ymin = -Inf, ymax = Inf,alpha = 0.2, fill = palblues[1])+
       geom_point(aes(alpha=0.4)) +
-      theme(legend.position = "none") +
-      geom_label_repel(aes(label=ifelse(p.value<0.05&abs(estimate.cor)>0.1,Cytokine,'')))+
-      # scale_colour_manual(values=c(palblues[2], palreds[4], "black", "grey"))+
+      theme(legend.position = "none") +  
+      geom_hline(yintercept = -log10(0.05))+
+      geom_label_repel(aes(label=ifelse(adj.p.value<0.05&abs(estimate.cor)>0.1,Cytokine,'')))+
       t2 +
-      labs(title="Correlation between CLL-PD and response to Stimuli", x = "Pearson Correlation coefficient", y = "-log10(adj p-val)")+
+      labs(title="Correlation between CLL-PD and response to Stimuli", x = "Pearson Correlation coefficient", y = "-log10(p-val)")+
       guides(color="none", alpha="none")
+
+
+
 ```
 
 #### Scatter Plots
@@ -1347,6 +1353,42 @@ geom_point(aes(color=IGHV.status, shape=trisomy12))+
 print(scatterplot)
 }
 ```
+#### Overall Cytokine Response and CLL-PD
+```{r, fig.height=5}
+left_join(CLL_PD, df, by = "PatientID") %>% 
+  left_join(patMeta_cl, by = "PatientID") %>%
+  group_by(PatientID, CLL_PD,IGHV.status) %>% 
+  summarise(Cytokine_Overall_Response=mean(abs(Log)), .groups="keep") %>% 
+  
+  ggplot(aes(x=CLL_PD, y= Cytokine_Overall_Response))+
+  geom_point(aes(color=IGHV.status))+
+  geom_smooth(method="lm", formula = 'y ~ x')+
+  stat_cor()+
+  t2
+
+
+
+```
+
+#### Response to selected Cytokines and CLL-PD
+```{r, fig.height=5}
+left_join(CLL_PD, df, by = "PatientID") %>% 
+  left_join(patMeta_cl, by = "PatientID") %>%
+  filter(Cytokine%in%c("Resiquimod" ,"CpG ,ODN" ,"sCD40L" ,"IL-1b" ,"soluble ,anti-IgM" ,"BAFF" ,"TGF-b1")) %>% 
+  group_by(PatientID, CLL_PD,IGHV.status) %>% 
+  summarise(Cytokine_Overall_Response=mean(abs(Log)), .groups="keep") %>% 
+  
+  ggplot(aes(x=CLL_PD, y= Cytokine_Overall_Response))+
+  geom_point(aes(color=IGHV.status))+
+  geom_smooth(method="lm", formula = 'y ~ x')+
+  stat_cor()+
+  t2+
+  ylab("Response to selected Cytokines")
+
+
+
+```
+
 
 
 ## Appendix
