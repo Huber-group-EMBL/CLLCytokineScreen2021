@@ -1,5 +1,5 @@
 ---
-title: 'Supplementary Material'
+title: 'Appendix'
 date: "9th November 2021"
 header-includes:
 - \usepackage{pdflscape}
@@ -31,10 +31,10 @@ _Peter-Martin Bruch\* , Holly A. R. Giles\*, Carolin Kolb, Sophie A. Herbst, Tin
 
 \newpage
 
-**Supplementary Methods**
+**Appendix Methods**
 
 **Drug-stimulation profiling of samples treated with Ibrutinib, IL4 and AS1517499**   
-The experiment in Supp. Fig. 11, was performed as detailed in the main methods (Sample preparation and drug-stimulation profiling), but with the following adjustments. 16 independent CLL PBMC samples were used and luminescence was read out using a Perkin Elmer EnSight.
+The experiment in Appendix Fig. 11, was performed as detailed in the main methods (Sample preparation and drug-stimulation profiling), but with the following adjustments. 16 independent CLL PBMC samples were used and luminescence was read out using a Perkin Elmer EnSight.
 
 **ATAC sequencing**  
 Peripheral blood was taken from 4 CLL patients and separated by Ficoll gradient (GE Healthcare), mononuclear cells were cryopreserved on liquid nitrogen. Samples were later thawed from frozen as previously described^1^ and MACS sorted for CD19 positive cells (Miltenyi autoMACS®). The cells were resuspended in RPMI (GIBCO, Cat.No. 21875–034), with the addition of 2mM glutamine (GIBCO, Cat.No. 25030–24), 1% Pen/Strep (GIBCO, Cat.No. 15140–122) and 10% pooled, heat–inactivated and sterile filtered human type AB male off the clot serum (PAN Biotech, Cat.No. P40–2701, Lot.No:P–020317). 5ml of cell suspension was cultured in 6–well plates (Greiner Bio–One Cat.No. 657160). After thawing, cells were incubated at 37°C and 5% CO2 for 6 hours in 0.2% DMSO. The final cell concentration was 2x10ˆ6 cells/ml. Cell viability and purity was assessed using FACS. All samples had a viability over 90% and over 95% of CD19+/CD5+/CD3– cells.
@@ -619,7 +619,7 @@ colnames(Cytokine_labels) <- c("name", "Cytlabel")
 
 \blandscape
 
-```{r Supp Table 1}
+```{r Appendix Table 1}
 
 drugs %>%
   dplyr::select(-ID, -approved_012020,-devel_012020) %>%
@@ -639,12 +639,12 @@ kable_styling(latex_options = "striped", font_size=8)
 
 
 ```
-**Supplementary Table 1. Drugs contained in the study.** List of drugs, along with their main target, supplier and concentration. All drugs were dissolved in Dimethyl Sulfoxide (DMSO) and stored at –20°C.
+**Appendix Table 1. Drugs contained in the study.** List of drugs, along with their main target, supplier and concentration. All drugs were dissolved in Dimethyl Sulfoxide (DMSO) and stored at –20°C.
 \newpage
 
 
 
-```{r Supp Table 2, dev="cairo_pdf"}
+```{r Appendix Table 2, dev="cairo_pdf"}
 
 #tidy names for table
 cytokines$stimulus[grepl("IL-4 human recombinant animal component free",cytokines$stimulus)]<-"IL4 human recombinant animal component free"
@@ -670,11 +670,11 @@ cytokines %>%
 
 
 ```
-**Supplementary Table 2. Stimuli contained in the study.** List of microenvironmental stimuli, supplier, concentration and main pathway.
+**Appendix Table 2. Stimuli contained in the study.** List of microenvironmental stimuli, supplier, concentration and main pathway.
 
 \elandscape
 
-```{r Supp Table 3 Pat Characteristics}
+```{r Appendix Table 3 Pat Characteristics}
 
 patMeta %>%
   dplyr::select(PatientID, gender, treatment, IGHV.status, `Methylation_Cluster`, del13q, del11q, trisomy12, del17p) %>%
@@ -684,10 +684,10 @@ patMeta %>%
     kable_styling(latex_options = c("hold_position", "repeat_header", "striped"), font_size=8)
 
 ```
-**Supplementary Table 3. Patient samples included in the study.** List of patient samples and selected characteristics. For a full list of characteristics see [online vignette](https://github.com/Huber-group-EMBL/CLLCytokineScreen2021).
+**Appendix Table 3. Patient samples included in the study.** List of patient samples and selected characteristics. For a full list of characteristics see [online vignette](https://github.com/Huber-group-EMBL/CLLCytokineScreen2021).
 \newpage
 
-```{r Supp Table 4 OS ~ MES response}
+```{r Appendix Table 4 OS ~ MES response}
 
 clusters.surv<- left_join(Heatmap_clusters, survT, by = "PatientID")
 
@@ -739,7 +739,7 @@ cox_output %>%
 
 ```
 
-**Supplementary Table 4. Multivariate survival analysis of response clusters.** Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference.
+**Appendix Table 4. Multivariate survival analysis of response clusters.** Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference.
 
 \newpage
 
@@ -819,7 +819,7 @@ p1+
   p2+
   plot_layout(nrow=1, guides="collect", widths = c(0.7,0.3))
 ```
-**Supplementary Figure 1. Genetic profiles of screened patient samples.**  Selected genetic alterations on y-axis and screened patient samples on x-axis.
+**Appendix Figure 1. Genetic profiles of screened patient samples.**  Selected genetic alterations on y-axis and screened patient samples on x-axis.
 
 
 
@@ -939,7 +939,7 @@ Cyt_Cor_Plot + tp +
   plot_annotation(tag_levels = "A")
 ```
 
-**Supplementary Figure 2. Correlation of responses to stimuli and drugs.** Pearson correlation of log transformed viability values normalised to untreated control. Correlation between drug treatments  **(A)** and microenvironmental stimuli **(B)**.
+**Appendix Figure 2. Correlation of responses to stimuli and drugs.** Pearson correlation of log transformed viability values normalised to untreated control. Correlation between drug treatments  **(A)** and microenvironmental stimuli **(B)**.
 
 
 ```{r}
@@ -1010,7 +1010,7 @@ FigS3B
 
 ```
 
-**Supplementary Figure 3. Response to stimuli by IGHV status.** Viability after 48h incubation with microenvironmental stimuli. Log transformed viabilities, normalized to DMSO solvent controls, stratified by IGHV status.  BH-adjusted p-values are shown from one-sample t-tests of all patient samples. (p<0.00001=&#42;&#42;&#42;&#42;&#42;, p<0.0001=&#42;&#42;&#42;&#42;, p>0.05=ns) 
+**Appendix Figure 3. Response to stimuli by IGHV status.** Viability after 48h incubation with microenvironmental stimuli. Log transformed viabilities, normalized to DMSO solvent controls, stratified by IGHV status.  BH-adjusted p-values are shown from one-sample t-tests of all patient samples. (p<0.00001=&#42;&#42;&#42;&#42;&#42;, p<0.0001=&#42;&#42;&#42;&#42;, p>0.05=ns) 
 
 
 ```{r S4 Cytokine response between Clusters 1 and 2, fig.width=11, fig.height=14}
@@ -1054,7 +1054,7 @@ df %>%
 
 ```
 
-**Supplementary Figure 4. Stimuli response by clusters.** Log transformed viabilities after treatment with stimuli, faceted by cluster. BH-adjusted p-values from student's t-tests are shown.
+**Appendix Figure 4. Stimuli response by clusters.** Log transformed viabilities after treatment with stimuli, faceted by cluster. BH-adjusted p-values from student's t-tests are shown.
 
 
 
@@ -1171,7 +1171,7 @@ OS_Clusters_KM+theme(plot.tag=element_text(size = 20))+
 
 ```
 
-**Supplementary Figure 5. Time to first treatment and overall survival by clusters.** Kaplan-Meier Curves of time to first treatment with p-value from univariate Cox proportional hazards model between C3 and C4 **(A)** and overall survival with p-value from univariate Cox proportional hazards  model between C1&2 and C3&4 **(B)**. Median survival not reached.
+**Appendix Figure 5. Time to first treatment and overall survival by clusters.** Kaplan-Meier Curves of time to first treatment with p-value from univariate Cox proportional hazards model between C3 and C4 **(A)** and overall survival with p-value from univariate Cox proportional hazards  model between C1&2 and C3&4 **(B)**. Median survival not reached.
 
 
 
@@ -1306,7 +1306,7 @@ tp <- theme(plot.tag=element_text(size = 30))
   plot_annotation(tag_levels = "A")
 
 ```
-**Supplementary Figure 6. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.** Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 **(A)**. X axis indicates log2 fold change values, calculated using the Deseq package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software.
+**Appendix Figure 6. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.** Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 **(A)**. X axis indicates log2 fold change values, calculated using the Deseq package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software.
 
 ```{r S8 receptor expression, fig.width=10, fig.height=7, warning=F}
 
@@ -1421,7 +1421,7 @@ CR_volcanoplot
 
 
 ```
-**Supplementary Figure 7. Correlation of stimuli response and receptor expression.** The effects of the microenvironmental stimuli on viability were largely independent of the expression of the corresponding stimuli receptors. Volcano plot depicts Pearson correlation coefficients against corresponding BH-adjusted p values, for the correlation between control - normalised  log viability values with each stimulus and vst RNA counts of corresponding stimuli receptor. RNA counts taken from RNA-Sequencing of untreated matched CLL patient sample. Only viability  after treatment with Resiquimod correlated with receptor expression (R>0.3).
+**Appendix Figure 7. Correlation of stimuli response and receptor expression.** The effects of the microenvironmental stimuli on viability were largely independent of the expression of the corresponding stimuli receptors. Volcano plot depicts Pearson correlation coefficients against corresponding BH-adjusted p values, for the correlation between control - normalised  log viability values with each stimulus and vst RNA counts of corresponding stimuli receptor. RNA counts taken from RNA-Sequencing of untreated matched CLL patient sample. Only viability  after treatment with Resiquimod correlated with receptor expression (R>0.3).
 
 
 ```{r Ibrutinib Resiquimod in trisomy 12 and IGHV, fig.height=7, fig.width=12}
@@ -1469,7 +1469,7 @@ rm(plotTab)
 
 
 ```
-**Supplementary Figure 8. BCR inhibition by ibrutinib counters the protective effect of TLR stimulation in all genetic subgroups of IGHV and trisomy 12.** Log normalized viability after treatment with resiquimod with and without ibrutinib. Faceted by IGHV mutation status and trisomy 12.
+**Appendix Figure 8. BCR inhibition by ibrutinib counters the protective effect of TLR stimulation in all genetic subgroups of IGHV and trisomy 12.** Log normalized viability after treatment with resiquimod with and without ibrutinib. Faceted by IGHV mutation status and trisomy 12.
 
 \newpage
 
@@ -1507,7 +1507,7 @@ rm(plotTab)
 # nrow(filter(diffTF_small, weighted_meanDifference>0, pvalueAdj <0.05))
 ```
 
-**Supplementary Figure 9. ATAC-Seq comparing trisomy 12 and non-trisomy 12 CLL samples.** Volcano plot shows change in inferred TF activity (x axis) against adjusted p-values (y axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in analytic mode and adjusted by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.15, and adjusted p-value < 0.01.
+**Appendix Figure 9. ATAC-Seq comparing trisomy 12 and non-trisomy 12 CLL samples.** Volcano plot shows change in inferred TF activity (x axis) against adjusted p-values (y axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in analytic mode and adjusted by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.15, and adjusted p-value < 0.01.
 
 
 
@@ -1830,7 +1830,7 @@ coeff.long.mat_Fig6 %>%
    facet_grid(label~., scales = "free_y",  space="free_y", switch = "both")
 
 ```
-**Supplementary Figure 10. Genetic predictors of drug - stimulus interactions.** Heatmap depicting overview of genetic predictors of drug - stimulus interactions (each row represents the coefficients from fitting a single multivariate model). Stimuli are shown on left, and corresponding drugs on right. Drugs, stimuli and genetic alterations are alphabetically sorted. Coloured fields indicate that the $\beta_{int}$ for given drug and stimulus is modulated by corresponding genetic feature. Positive coefficients are shown in red, indicating $\beta_{int}$ is more positive for given drug and stimulus combination if the feature is present.
+**Appendix Figure 10. Genetic predictors of drug - stimulus interactions.** Heatmap depicting overview of genetic predictors of drug - stimulus interactions (each row represents the coefficients from fitting a single multivariate model). Stimuli are shown on left, and corresponding drugs on right. Drugs, stimuli and genetic alterations are alphabetically sorted. Coloured fields indicate that the $\beta_{int}$ for given drug and stimulus is modulated by corresponding genetic feature. Positive coefficients are shown in red, indicating $\beta_{int}$ is more positive for given drug and stimulus combination if the feature is present.
 
 \newpage
 
@@ -1843,7 +1843,7 @@ coeff.long.mat_Fig6 %>%
 
 ```
 
-**Supplementary Figure 11. Genetic predictors of the interaction between ibrutinib and IL4.** Predictor profile depicting genetic features that modulate the size of $\beta_{int}$ for ibrutinib and IL4. To generate predictor profile, linear model in Eqn. (1) was fitted in a sample - specific manner, to calculate drug-stimulus interaction coefficients ($\beta_{int}$) for each patient sample. Ranked patient-specific $\beta_{int}$ values are shown in lower scatter plot. Associations between the size of $\beta_{int}$ and genetic features were identified using multivariate regression with L1 (lasso) regularisation, with gene mutations and IGHV status as predictors, and selecting coefficients that were chosen in >90% of bootstrapped model fits. The horizontal bars  on left show the size of fitted coefficients assigned to genetic features. Matrix above scatter plot indicates patient mutation status for the selected genetic features. Matrix fields correspond to points in scatter plot (ie patient data is aligned), to indicate how the size of $\beta_{int}$ varies with selected genetic feature.
+**Appendix Figure 11. Genetic predictors of the interaction between ibrutinib and IL4.** Predictor profile depicting genetic features that modulate the size of $\beta_{int}$ for ibrutinib and IL4. To generate predictor profile, linear model in Eqn. (1) was fitted in a sample - specific manner, to calculate drug-stimulus interaction coefficients ($\beta_{int}$) for each patient sample. Ranked patient-specific $\beta_{int}$ values are shown in lower scatter plot. Associations between the size of $\beta_{int}$ and genetic features were identified using multivariate regression with L1 (lasso) regularisation, with gene mutations and IGHV status as predictors, and selecting coefficients that were chosen in >90% of bootstrapped model fits. The horizontal bars  on left show the size of fitted coefficients assigned to genetic features. Matrix above scatter plot indicates patient mutation status for the selected genetic features. Matrix fields correspond to points in scatter plot (ie patient data is aligned), to indicate how the size of $\beta_{int}$ varies with selected genetic feature.
 
 \newpage
 
@@ -1872,7 +1872,7 @@ IbrStat6iComb %>%
 
 p1
 ```
-**Supplementary Figure 12. STAT6 dependency of IL4 signaling.** The effects observed with IL4 stimulation are dependent on STAT6 activation. Addition of the STAT6 inhibitor AS1517499 could revoke the effect on baseline viability as well as drug induced toxicity.  Log transformed viability after treatment with IL4 in combination with ibrutinib, the STAT6 inhibitor AS1517499, and both.
+**Appendix Figure 12. STAT6 dependency of IL4 signaling.** The effects observed with IL4 stimulation are dependent on STAT6 activation. Addition of the STAT6 inhibitor AS1517499 could revoke the effect on baseline viability as well as drug induced toxicity.  Log transformed viability after treatment with IL4 in combination with ibrutinib, the STAT6 inhibitor AS1517499, and both.
 
 
 \newpage
