@@ -617,62 +617,69 @@ colnames(Cytokine_labels) <- c("name", "Cytlabel")
 
 ```
 
-\blandscape
+<!-- \blandscape -->
 
-```{r Appendix Table 1}
+<!-- ```{r Appendix Table 1} -->
 
-drugs %>%
-  dplyr::select(-ID, -approved_012020,-devel_012020) %>%
-  dplyr::rename(Drug=Name,
-                `Main targets`=main_targets,
-                `Target category`=target_category,
-                `Drug Group`=group,
-                Pathway=pathway,
-                Distributor=distributor,
-                `Catalogue number`=cat_no,
-                `Conc. 1`= conc1,
-                `Conc. 2`= conc2) %>%
-  kable() %>%
-  row_spec(0, bold=TRUE) %>%
-kable_styling(latex_options = "striped", font_size=8)
+<!-- Drug_table<-drugs %>% -->
+<!--   dplyr::select(-ID, -approved_012020,-devel_012020) %>% -->
+<!--   dplyr::rename(Drug=Name, -->
+<!--                 `Main targets`=main_targets, -->
+<!--                 `Target category`=target_category, -->
+<!--                 `Drug Group`=group, -->
+<!--                 Pathway=pathway, -->
+<!--                 Distributor=distributor, -->
+<!--                 `Catalogue number`=cat_no, -->
+<!--                 `Conc. 1`= conc1, -->
+<!--                 `Conc. 2`= conc2) -->
 
+<!-- Drug_table %>%  -->
+<!--   kable() %>% -->
+<!--   row_spec(0, bold=TRUE) %>% -->
+<!-- kable_styling(latex_options = "striped", font_size=8) -->
 
-
-```
-**Appendix Table 1. Drugs contained in the study.** List of drugs, along with their main target, supplier and concentration. All drugs were dissolved in Dimethyl Sulfoxide (DMSO) and stored at –20°C.
-\newpage
+<!-- # writexl::write_xlsx(Drug_table, "../../inst/extdata/Drugs.xlsx") -->
 
 
-
-```{r Appendix Table 2, dev="cairo_pdf"}
-
-#tidy names for table
-cytokines$stimulus[grepl("IL-4 human recombinant animal component free",cytokines$stimulus)]<-"IL4 human recombinant animal component free"
-cytokines$stimulus[grepl("IL-2 human recombinant animal component free",cytokines$stimulus)]<-"IL2 human recombinant animal component free"
-cytokines$stimulus[grepl("Human IL-1beta",cytokines$stimulus)]<-"Human IL-1 beta"
-cytokines$stimulus[grepl("Human IL-15",cytokines$stimulus)]<-"Human IL15"
-cytokines$stimulus[grepl("Human IFN-gamma",cytokines$stimulus)]<-"Human Interferon gamma"
-cytokines$stimulus[grepl("IL-10 human Animal component free",cytokines$stimulus)]<-"IL10 human Animal component free"
-cytokines$stimulus[grepl("Human TGF-beta1",cytokines$stimulus)] <- "Human TGF\u03B21"
-cytokines$stimulus[grepl("Human IL-6",cytokines$stimulus)]<-"Human IL6"
-cytokines$stimulus[grepl("alpha",cytokines$stimulus)] <- "Human SDF1 alpha (CXCL12)"
-cytokines$stimulus[grepl("HS-5 konditioniertes Medium",cytokines$stimulus)] <- "HS-5 conditioned medium"
-
-cytokines %>%
-  left_join(Cytokine_labels, by = "name") %>%
-  dplyr::select(-name, -additional_pathways, -source) %>%
-  dplyr::rename(Stimulus=stimulus, Name = Cytlabel, Supplier=company, Concentration=conc, `Catalogue Number`=cat_no, `Lot Number`=lot_no, Pathway=pathway) %>%
-
-  select(Stimulus, Name,  everything()) %>%
-  kable() %>%
-  row_spec(0,bold=TRUE) %>%
-  kable_styling(latex_options = "striped", font_size=8, html_font = "arial")
+<!-- ``` -->
+<!-- **Appendix Table 1. Drugs contained in the study.** List of drugs, along with their main target, supplier and concentration. All drugs were dissolved in Dimethyl Sulfoxide (DMSO) and stored at –20°C. -->
+<!-- \newpage -->
 
 
-```
-**Appendix Table 2. Stimuli contained in the study.** List of microenvironmental stimuli, supplier, concentration and main pathway.
 
-\elandscape
+<!-- ```{r Appendix Table 2, dev="cairo_pdf"} -->
+
+<!-- #tidy names for table -->
+<!-- cytokines$stimulus[grepl("IL-4 human recombinant animal component free",cytokines$stimulus)]<-"IL4 human recombinant animal component free" -->
+<!-- cytokines$stimulus[grepl("IL-2 human recombinant animal component free",cytokines$stimulus)]<-"IL2 human recombinant animal component free" -->
+<!-- cytokines$stimulus[grepl("Human IL-1beta",cytokines$stimulus)]<-"Human IL-1 beta" -->
+<!-- cytokines$stimulus[grepl("Human IL-15",cytokines$stimulus)]<-"Human IL15" -->
+<!-- cytokines$stimulus[grepl("Human IFN-gamma",cytokines$stimulus)]<-"Human Interferon gamma" -->
+<!-- cytokines$stimulus[grepl("IL-10 human Animal component free",cytokines$stimulus)]<-"IL10 human Animal component free" -->
+<!-- cytokines$stimulus[grepl("Human TGF-beta1",cytokines$stimulus)] <- "Human TGF\u03B21" -->
+<!-- cytokines$stimulus[grepl("Human IL-6",cytokines$stimulus)]<-"Human IL6" -->
+<!-- cytokines$stimulus[grepl("alpha",cytokines$stimulus)] <- "Human SDF1 alpha (CXCL12)" -->
+<!-- cytokines$stimulus[grepl("HS-5 konditioniertes Medium",cytokines$stimulus)] <- "HS-5 conditioned medium" -->
+
+<!-- Cytokine_table<- cytokines %>% -->
+<!--   left_join(Cytokine_labels, by = "name") %>% -->
+<!--   dplyr::select(-name, -additional_pathways, -source) %>% -->
+<!--   dplyr::rename(Stimulus=stimulus, Name = Cytlabel, Supplier=company, Concentration=conc, `Catalogue Number`=cat_no, `Lot Number`=lot_no, Pathway=pathway) %>% -->
+
+<!--   select(Stimulus, Name,  everything()) -->
+
+
+<!-- Cytokine_table %>%    -->
+<!--   kable() %>% -->
+<!--   row_spec(0,bold=TRUE) %>% -->
+<!--   kable_styling(latex_options = "striped", font_size=8, html_font = "arial") -->
+
+
+<!-- # writexl::write_xlsx(Cytokine_table, "../../inst/extdata/Cytokines.xlsx") -->
+<!-- ``` -->
+<!-- **Appendix Table 2. Stimuli contained in the study.** List of microenvironmental stimuli, supplier, concentration and main pathway. -->
+
+<!-- \elandscape -->
 
 ```{r Appendix Table 3 Pat Characteristics}
 
