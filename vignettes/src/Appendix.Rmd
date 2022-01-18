@@ -1886,45 +1886,6 @@ p1
 
 
 
-## Additional Figures for Revisions
-
-### Clusters by Drug response 
-```{r, fig.height=12, fig.width=11}
-
-stat.test <- df %>%
-  left_join(Heatmap_clusters, by = "PatientID") %>%
-  dplyr::filter(Drug!="DMSO",
-                Cytokine=="No Cytokine",
-                Drug_Concentration=="High",
-                Cluster%in%c(1,2,3,4)) %>%
-  dplyr::mutate(Cluster=factor(Cluster))  %>%
-  group_by(Drug) %>%
-  rstatix::t_test(Log ~ Cluster, p.adjust.method="BH")%>%
-  filter((group1==1&group2==2)|(group1==3&group2==4)) %>%
-  rstatix::add_y_position(step.increase=0.001)
-
-df %>%
-  left_join(Heatmap_clusters, by = "PatientID") %>%
-  dplyr::filter(Drug!="DMSO",
-                Cytokine=="No Cytokine",
-                Drug_Concentration=="High",
-                Cluster%in%c(1,2,3,4)) %>%
-  dplyr::mutate(Cluster=factor(Cluster))  %>%
-
-  ggplot(aes(x=Cluster, y= Log))+
-  stat_pvalue_manual(stat.test, label = "p.adj", tip.length = 0.01)+
-  geom_hline(yintercept = 0)+
-  geom_boxplot()+
-  geom_beeswarm(aes(color=Cluster))+
-  scale_color_manual(values=colors[1:4])+
-  t2+ theme(strip.background =element_blank())+
-  guides(color="none")+
-  facet_wrap(~Drug, ncol=3, scales="free_y")+
-  ylab("Log(Viability)")+
-  coord_cartesian(clip="off")
-
-```
-
 
 
 **References**  
