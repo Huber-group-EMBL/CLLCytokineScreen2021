@@ -429,6 +429,12 @@ breaks <- c(seq(-3, 3, length.out = 101)) %>% `names<-`(
 Plot Figure
 ```{r Fig2A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=8, warning = FALSE}
 
+rownames(viab.mat.lims)<- rownames(viab.mat.lims) %>% 
+  gsub("Interferon gamma", "Interferon \u03B3", .) %>% 
+  gsub("TGF-b1", "TGF-\u03B21", .) %>% 
+  gsub("IL-1b", "IL1\u03B2", .) %>% 
+  gsub("SDF-1a", "SDF-1\u03B1", .) 
+
 #Plot heatmap
 Fig2A <- 
 pheatmap(viab.mat.lims,  
@@ -447,13 +453,12 @@ pheatmap(viab.mat.lims,
          border_color=NA,
          fontsize=12,
          fontsize_row=16,
-         legend_breaks = c(-3,0,3),
-         labels_row = c("SDF-1\u03B1","TGF-\u03B21","IL6","IL10","Resiquimod","CpG ODN","IL4","sCD40L + IL4","sCD40L","BAFF","IL1\u03B2","soluble anti-IgM","IL15","IL2","Interferon \u03B3","IL21","HS-5 CM") ) 
+         legend_breaks = c(-3,0,3)) 
         
 
 Fig2A
 
-
+  
 ```
 
 
