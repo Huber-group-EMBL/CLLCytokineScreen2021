@@ -54,6 +54,7 @@ knitr::opts_chunk$set(echo = FALSE, message=FALSE, fig.pos = "!H", out.extra = "
 <!-- Load Libraries -->
 ```{r loadLibraries_supp,  warning=FALSE}
 
+
 #Libraries
 library(maxstat)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
@@ -91,8 +92,6 @@ library(cowplot)
 library(ggh4x)
 library(magick)
 ```
-
-
 <!-- Define Functions -->
 ```{r factor2ind_supp}
 
@@ -495,6 +494,28 @@ load( "../../data/dds_smp.RData")
 #diffTF_small: tibble containing results from running diffTF package
 load( "../../data/diffTF_small.RData")
 
+#diffTF_wochr12: tibble containing results from running diffTF package without reads from chromosome 12
+load( "../../data/diffTF_wochr12.RData")
+
+
+#ChIPseq data for SPIB and PU1 binding in OCILY3 cell line (downloaded from GEO)
+
+#get info on dataset of interest
+chipSeq <- getGEOInfo(genome="hg19", simplify=FALSE) %>% dplyr::filter(series_id=="GSE56857")
+
+#Define gsm id for SPIB and PU1 ChIPseq dataset in OCILY3 cell line (DLBCL)
+gsm_spib = "GSM1370276"
+gsm_pu1 = "GSM1370275"                                                         
+
+#download bed file if not already there                                          
+downloadGSMbedFiles(gsm_spib, destDir="../../inst/extdata/")
+downloadGSMbedFiles(gsm_pu1, destDir="../../inst/extdata/")
+
+#read the data
+#ChIPseq data downloaded from GEO Accession Number: GSE56857
+peak.spib <-  genomation ::readBed("../../inst/extdata/GSM1370276_OCILY3_SPIB_GEM_events.bed.gz", track.line = "auto")
+peak.pu1 <-  genomation ::readBed( "../../inst/extdata/GSM1370275_OCILY3_PU1_GEM_events.bed.gz", track.line = "auto")
+
 #patMeta: tibble containing patient genetic data
 load( "../../data/patMeta.RData")
 patMeta$treatment <- as.factor(patMeta$treatment)
@@ -568,7 +589,7 @@ rowData(dds_smp) <- rowdata_rna
 
 
 #diffTF_small: tibble containing results from running diffTF package
-diffTF_small <- read_tsv("../../inst/extdata/Tri12vsWT.Cons.summary.tsv.gz ")
+diffTF_small <- read_tsv("../../inst/extdata/Tri12vsWT.Cons.summary.tsv.gz")
 
 
 #diffTF_wochr12: tibble containing results from running diffTF package without reads from chromosome 12
@@ -1493,7 +1514,7 @@ plotTab$TF <- gsub("SPI1", "PU1", plotTab$TF)
 
 atac.plot =
   ggplot(data = plotTab,
-         aes(x = weighted_meanDifference, y = -log10(pvalueAdj))) +
+         aes(x = weighted_meanDifference, y = -log10(pvalueAdj+0.000001))) +
 
   geom_point(aes(alpha=0.4, colour = ifelse(-log10(pvalueAdj) > 2,"black","grey")),size=3) +
   geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 4&abs(weighted_meanDifference)>0.15,
@@ -1507,7 +1528,7 @@ atac.plot =
   ggtitle("ATAC seq: Tri12 v WT") +
   xlab("Change in inferred TF activity") +
   guides(color="none", alpha="none") +
-  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"), breaks=seq(0,150,50))
+  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))
 
 
 atac.plot
@@ -1521,7 +1542,7 @@ rm(plotTab)
 **Appendix Figure 9. ATAC-Seq comparing trisomy 12 and non-trisomy 12 CLL samples.** Volcano plot shows change in inferred TF activity (x axis) against adjusted p-values (y axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in analytic mode and adjusted by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.15, and adjusted p-value < 0.01.
 
 
-```{r S10 tri12atacnochr12_2v2, fig.height = 6, fig.width = 10}
+```{r S9 tri12atac_2v2, fig.height = 6, fig.width = 10}
 
 plotTab <- diffTF_wochr12 %>%  filter(!is.na(pvalueAdj))
 
@@ -1530,7 +1551,7 @@ plotTab$TF <- gsub("SPI1", "PU1", plotTab$TF)
 
 atac.plot =
   ggplot(data = plotTab,
-         aes(x = weighted_meanDifference, y = -log10(pvalueAdj))) +
+         aes(x = weighted_meanDifference, y = -log10(pvalueAdj + 0.000001))) +
 
   geom_point(aes(alpha=0.4, colour = ifelse(-log10(pvalueAdj) > 2,"black","grey")),size=3) +
   geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 4&abs(weighted_meanDifference)>0.15,
@@ -1541,10 +1562,10 @@ atac.plot =
                    size=7, max.overlaps=10)+
   scale_colour_manual(values=c(palblues[3], palreds[8], "black", "grey")) +
   t2 +
-  ggtitle("ATAC seq: Tri12 v WT without chromosome 12 data") +
+  ggtitle("ATAC seq: Tri12 v WT") +
   xlab("Change in inferred TF activity") +
   guides(color="none", alpha="none") +
-  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"), breaks=seq(0,150,50))
+  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))
 
 
 atac.plot
@@ -1555,8 +1576,150 @@ rm(plotTab)
 # nrow(filter(diffTF_small, weighted_meanDifference>0, pvalueAdj <0.05))
 ```
 
-**Appendix Figure 10. ATAC-Seq comparing trisomy 12 and non-trisomy 12 CLL samples.** Volcano plot shows change in inferred TF activity (x axis) against adjusted p-values (y axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in analytic mode and adjusted by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.15, and adjusted p-value < 0.01.
+**Appendix Figure 10. ATAC-Seq comparing trisomy 12 and non-trisomy 12 CLL samples, without including TF binding sites on chromosome 12.** Volcano plot shows change in inferred TF activity (x axis) against adjusted p-values (y axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference.  p-values are obtained through diffTF in analytic mode and adjusted by the Benjamini-Hochberg procedure. TFs are labelled where absolute weighted mean difference > 0.15, and adjusted p-value < 0.01.
 
+```{R, S11, fig.width=15, fig.height=7, message=FALSE }
+
+# Get significant peaks
+#filter ChipSeq data for peaks with significant score -log10(Qscore)>1.3
+#if q < 0.05, then Qlog >1.3
+spib.filtered <- peak.spib[(elementMetadata(peak.spib)[,1] > 1.3)]
+
+
+# Annotate ChIP peaks
+# Annotate peaks with meta data
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+
+peakAnno.spib <- annotatePeak(spib.filtered, 
+                              tssRegion = c(-3000, 3000),
+                              TxDb = txdb, 
+                              annoDb = "org.Hs.eg.db",
+                              verbose=FALSE)
+
+#Filter for genes within ±1kb
+peakAnno.spib.1kb <- as.data.frame(peakAnno.spib) %>% dplyr::filter(abs(distanceToTSS) <1000)
+
+
+#get  KEGG pathways from msigdbr database
+kegg <- 
+  msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP:KEGG") %>% 
+  #select pathway name and entrez id 
+  dplyr::select(gs_name, entrez_gene)
+
+
+colnames(kegg) <- c("term", "gene")
+
+#tidy up terms - remove KEGG, underscore and put in lower cases
+kegg$term <- gsub("KEGG_", "",kegg$term )
+kegg$term <- gsub("_", " ",kegg$term )
+
+kegg$genesetDatabase <- "KEGG"
+
+
+#get reactome pathways
+reactome <- 
+  msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP:REACTOME") %>% 
+  #select pathway name and entrez id
+  dplyr::select(gs_name, entrez_gene)
+
+
+colnames(reactome) <- c("term", "gene")
+
+#tidy up terms
+reactome$term <- gsub("REACTOME_", "",reactome$term )
+reactome$term <- gsub("_", " ",reactome$term )
+
+
+#annotate which database these pathways come from 
+reactome$genesetDatabase <- "Reactome"
+
+
+
+#generate TERM2GENE dataframe to use in overrepresetation test
+#join kegg and reactome gene sets together - this defines the list of pathways we are interested in, and select term and gene columns
+term2gene <- rbind(kegg, reactome) %>% dplyr::select(term, gene)
+
+#term2genesetdatabase - keep details of database source for each pathway 
+term2genesetdatabase <- rbind(kegg, reactome) %>% dplyr::select(term, genesetDatabase)
+colnames(term2genesetdatabase) <- c("term", "name")
+
+##SPIB
+#run over-representation test, and extract all results and p values:
+#NB Bg ratio = number of genes in set / number of unique genes in term2gene, 
+#NB Gene ratio = number of SPIB targets in gene set being tested / total number of SPIB targets that overlap with genes in term to gene
+
+spibRes <- enricher(unique(as.data.frame(peakAnno.spib.1kb)$geneId), 
+                    #Use pathways in term2gene
+                    TERM2GENE=term2gene, 
+                    #assign description for each term, as its database source
+                    TERM2NAME = term2genesetdatabase, 
+                    #no cutoffs on reported results, we want to see all results and p values 
+                    minGSSize = 0,
+                    maxGSSize = 1000,
+                    pvalueCutoff = 1, 
+                    qvalueCutoff = 1)
+
+
+#get dataframe of results
+spibRes.df <- fortify(spibRes, 
+              showCategory = length(unique(term2gene$term)), #show all pathways tested
+              split=NULL)
+
+resTab.spib <-  
+  mutate(spibRes.df, genesetSize = BgRatio*length(unique(term2gene$gene))) %>%  #multiply BgRatio by total genes tested to get number of genes in set
+  dplyr::select(ID, Description, pvalue, Count, genesetSize)
+
+colnames(resTab.spib) <- c("ID", "genesetDatabase", "pvalue_SPIB","count_SPIB", "genesetSize")
+
+
+resTab <- resTab.spib
+
+#where count and p value is NA, put a 0 / 1 (ie there were no SPIB target genes in the set)
+resTab$count_SPIB[is.na(resTab$count_SPIB)] <- 0
+
+resTab$pvalue_SPIB[is.na(resTab$pvalue_SPIB)] <- 1
+
+#select columns of interest to show in figure
+resTab <- dplyr::select(resTab, ID, genesetDatabase, genesetSize,  count_SPIB, pvalue_SPIB)
+
+#adjust decimal places of p values
+resTab$pvalue_SPIB <- round(resTab$pvalue_SPIB, digits = 3)
+
+#get results with smallest p values
+resTab <- dplyr::filter(resTab, pvalue_SPIB==0)
+
+#filter fo smallest p values and rank by number of targets = show this is still important 
+resTab_ranked <- top_n(resTab, 40, count_SPIB)
+
+resTab_ranked <- resTab_ranked[order(-resTab_ranked$count_SPIB),]
+
+colnames(resTab_ranked) <- c("Pathway",
+                      "Geneset\nDatabase" , 
+                      "Geneset\nSize",  
+                      
+                      #show the total number of SPIB targets in ChIPseq data 
+                      paste("Spi-B targets\n(/" ,length(unique(as.data.frame(peakAnno.spib.1kb)$geneId)),")", sep= ""), 
+                      "SPIB\np-value")
+
+S11 <- 
+ggtexttable(resTab_ranked, rows = NULL, 
+           theme = ttheme(
+             colnames.style = colnames_style(color = "white", fill = palreds[7], size = 16),
+             tbody.style = tbody_style(color = "black",size = 18)
+           )
+)
+
+
+
+
+
+S11
+
+
+       
+
+```
+**Appendix Figure 11.  Over-representation tests of all KEGG and Reactome pathways in ChIPseq analysis of Spi-B binding in lymphoma cell lines ** 
 
 ```{r }
 
@@ -1877,7 +2040,7 @@ coeff.long.mat_Fig6 %>%
    facet_grid(label~., scales = "free_y",  space="free_y", switch = "both")
 
 ```
-**Appendix Figure 11. Genetic predictors of drug - stimulus interactions.** Heatmap depicting overview of genetic predictors of drug - stimulus interactions (each row represents the coefficients from fitting a single multivariate model). Stimuli are shown on left, and corresponding drugs on right. Drugs, stimuli and genetic alterations are alphabetically sorted. Coloured fields indicate that the $\beta_{int}$ for given drug and stimulus is modulated by corresponding genetic feature. Positive coefficients are shown in red, indicating $\beta_{int}$ is more positive for given drug and stimulus combination if the feature is present.
+**Appendix Figure 12. Genetic predictors of drug - stimulus interactions.** Heatmap depicting overview of genetic predictors of drug - stimulus interactions (each row represents the coefficients from fitting a single multivariate model). Stimuli are shown on left, and corresponding drugs on right. Drugs, stimuli and genetic alterations are alphabetically sorted. Coloured fields indicate that the $\beta_{int}$ for given drug and stimulus is modulated by corresponding genetic feature. Positive coefficients are shown in red, indicating $\beta_{int}$ is more positive for given drug and stimulus combination if the feature is present.
 
 \newpage
 
@@ -1890,7 +2053,7 @@ coeff.long.mat_Fig6 %>%
 
 ```
 
-**Appendix Figure 12. Genetic predictors of the interaction between ibrutinib and IL4.** Predictor profile depicting genetic features that modulate the size of $\beta_{int}$ for ibrutinib and IL4. To generate predictor profile, linear model in Eqn. (1) was fitted in a sample - specific manner, to calculate drug-stimulus interaction coefficients ($\beta_{int}$) for each patient sample. Ranked patient-specific $\beta_{int}$ values are shown in lower scatter plot. Associations between the size of $\beta_{int}$ and genetic features were identified using multivariate regression with L1 (lasso) regularisation, with gene mutations and IGHV status as predictors, and selecting coefficients that were chosen in >90% of bootstrapped model fits. The horizontal bars  on left show the size of fitted coefficients assigned to genetic features. Matrix above scatter plot indicates patient mutation status for the selected genetic features. Matrix fields correspond to points in scatter plot (ie patient data is aligned), to indicate how the size of $\beta_{int}$ varies with selected genetic feature.
+**Appendix Figure 13. Genetic predictors of the interaction between ibrutinib and IL4.** Predictor profile depicting genetic features that modulate the size of $\beta_{int}$ for ibrutinib and IL4. To generate predictor profile, linear model in Eqn. (1) was fitted in a sample - specific manner, to calculate drug-stimulus interaction coefficients ($\beta_{int}$) for each patient sample. Ranked patient-specific $\beta_{int}$ values are shown in lower scatter plot. Associations between the size of $\beta_{int}$ and genetic features were identified using multivariate regression with L1 (lasso) regularisation, with gene mutations and IGHV status as predictors, and selecting coefficients that were chosen in >90% of bootstrapped model fits. The horizontal bars  on left show the size of fitted coefficients assigned to genetic features. Matrix above scatter plot indicates patient mutation status for the selected genetic features. Matrix fields correspond to points in scatter plot (ie patient data is aligned), to indicate how the size of $\beta_{int}$ varies with selected genetic feature.
 
 \newpage
 
@@ -1919,7 +2082,7 @@ IbrStat6iComb %>%
 
 p1
 ```
-**Appendix Figure 13. STAT6 dependency of IL4 signaling.** The effects observed with IL4 stimulation are dependent on STAT6 activation. Addition of the STAT6 inhibitor AS1517499 could revoke the effect on baseline viability as well as drug induced toxicity.  Log transformed viability after treatment with IL4 in combination with ibrutinib, the STAT6 inhibitor AS1517499, and both.
+**Appendix Figure 14. STAT6 dependency of IL4 signaling.** The effects observed with IL4 stimulation are dependent on STAT6 activation. Addition of the STAT6 inhibitor AS1517499 could revoke the effect on baseline viability as well as drug induced toxicity.  Log transformed viability after treatment with IL4 in combination with ibrutinib, the STAT6 inhibitor AS1517499, and both.
 
 
 \newpage
