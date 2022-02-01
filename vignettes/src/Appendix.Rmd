@@ -22,7 +22,7 @@ output:
       toc_float: yes
       self_contained: yes
 ---
-TEST COMMIT 
+
 # Drug-microenvironment mapping reveals resistance mechanisms and prognostic patient subgroups in CLL 
 _Peter-Martin Bruch\* , Holly A. R. Giles\*, Carolin Kolb, Sophie A. Herbst, Tina Becirovic, Tobias Roider, Junyan Lu, Sebastian Scheinost, Lena Wagner, Jennifer Huellein, Ivan Berest, Mark Kriegsmann, Katharina Kriegsmann, Christiane Zgorzelski, Peter Dreger, Judith B. Zaugg, Carsten Müller-Tidow, Thorsten Zenz, Wolfgang Huber\*, Sascha Dietrich\* _
 
@@ -1542,7 +1542,7 @@ rm(plotTab)
 **Appendix Figure 9. ATAC-Seq comparing trisomy 12 and non-trisomy 12 CLL samples.** Volcano plot shows change in inferred TF activity (x axis) against adjusted p-values (y axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in analytic mode and adjusted by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.15, and adjusted p-value < 0.01.
 
 
-```{r S9 tri12atac_2v2, fig.height = 6, fig.width = 10}
+```{r S10 tri12atac_2v2, fig.height = 6, fig.width = 10}
 
 plotTab <- diffTF_wochr12 %>%  filter(!is.na(pvalueAdj))
 
