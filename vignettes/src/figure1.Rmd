@@ -475,15 +475,355 @@ Fig1F
 ```
 
 
+### New Correlation Figure, adapted from Supp Figs
+```{r, fig.height=7, fig.width=10}
+# Data preparation
+#:::::::::::::::::::::::::::::::::::::::::::
+mydata <- mtcars %>%
+  select(mpg, disp, hp, drat, wt, qsec)
+head(mydata, 3)
+
+mydata<-df%>%
+  filter((Drug=="DMSO"&Cytokine!="No Cytokine")|(Drug!="DMSO"&Cytokine=="No Cytokine"), Drug_Concentration%in%c("High", "None"))%>%
+  group_by(PatientID, Drug, Cytokine) %>%
+  summarize(Log=mean(Log), .groups = "keep") %>%
+  ungroup() %>%
+  mutate(Cytokine=as.character(Cytokine), Drug=as.character(Drug)) %>%
+  mutate(Condition=case_when(Cytokine=="No Cytokine"~ Drug, Drug=="DMSO"~Cytokine)) %>%
+  select(PatientID, Condition, Log)%>%
+  spread(Condition, Log)%>%
+  ungroup() %>% 
+  column_to_rownames("PatientID")
+
+# Compute correlation matrix
+#::::::::::::::::::::::::::::::::::::::::::
+# Correlation matrix between all variables
+cor.mat <- mydata %>% rstatix::cor_mat()
+cor.mat
+
+Cor.p.value<-cor.mat %>% rstatix::cor_get_pval() %>% 
+  column_to_rownames( var="rowname")%>%
+  as_tibble(rownames="Component_1") %>%
+    dplyr::mutate(Component_1=factor(Component_1)) %>%
+  pivot_longer(-Component_1, names_to="Component_2", values_to="p_value")
+
+cor.mat <- column_to_rownames(cor.mat, var="rowname")  
+
+# Define Lists of Stimuli and Drugs
+Cytokines <-unique(df$Cytokine) %>% setdiff("No Cytokine")
+Drugs<-unique(df$Drug) %>% setdiff("DMSO")
+
+# Define Theme for plots
+t_tmp<-theme(
+  plot.background = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.major.x = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.line = element_line(),
+  axis.text.x  = element_text(size = 12, face="bold"),
+  axis.text.y = element_text(size = 12, face="bold"),
+  axis.ticks.x = element_blank())
+
+
+#Drug
+
+Drug_Corr<-cor.mat[which(rownames(cor.mat)%in%Drugs), which(colnames(cor.mat)%in%Drugs)]
+
+    Drug_Corr[upper.tri(Drug_Corr, diag = TRUE)]<- NA
+
+Drug_Corr_tab<-Drug_Corr %>%
+  as_tibble(rownames="Drug_1") %>%
+    dplyr::mutate(Drug_1=factor(Drug_1, levels = rev(rownames(Drug_Corr)))) %>%
+  pivot_longer(-Drug_1, names_to="Drug_2", values_to="Pearson_R") %>%
+  dplyr::filter(!is.na(Pearson_R)) %>% 
+  left_join(Cor.p.value, by=c("Drug_1"="Component_1", "Drug_2"="Component_2")) %>% 
+  mutate(adj.p.value=p.adjust(p_value, method="BH"))
+    
+Drug_Cor_Plot<- Drug_Corr_tab %>% 
+  ggplot(aes(Drug_1, Drug_2))+
+  geom_tile(aes(fill=Pearson_R),color = "grey")+
+  scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+
+  geom_text(aes(label=round(Pearson_R,2), fontface = ifelse(adj.p.value<0.05, 2, 1)), size=4)+
+    t_tmp+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
+    labs(fill = "Pearson R", x="", y="")+
+  guides(fill="none")
+
+Drug_Cor_Plot
+
+
+
+# Cytokine
+
+Cyt_Corr<-cor.mat[which(rownames(cor.mat)%in%Cytokines), which(colnames(cor.mat)%in%Cytokines)]
+
+    Cyt_Corr[upper.tri(Cyt_Corr, diag = TRUE)]<- NA
+
+Cyt_Corr_tab<-Cyt_Corr %>%
+  as_tibble(rownames="Cyt_1") %>%
+    dplyr::mutate(Cyt_1=factor(Cyt_1, levels = rev(rownames(Cyt_Corr)))) %>%
+  pivot_longer(-Cyt_1, names_to="Cyt_2", values_to="Pearson_R") %>%
+  dplyr::filter(!is.na(Pearson_R)) %>% 
+  left_join(Cor.p.value, by=c("Cyt_1"="Component_1", "Cyt_2"="Component_2")) %>% 
+  mutate(adj.p.value=p.adjust(p_value, method="BH"))    
+    
+Cyt_Cor_Plot<-  Cyt_Corr_tab %>%
+  ggplot(aes(Cyt_1, Cyt_2))+
+  geom_tile(aes(fill=Pearson_R),color = "grey")+
+  scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+
+  geom_text(aes(label=round(Pearson_R,2), fontface = ifelse(adj.p.value<0.05, 2, 1)), size=4)+
+    t_tmp+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
+    labs(fill = "Pearson R", x="", y="")+
+  scale_y_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))+
+  scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))
+
+Cyt_Cor_Plot
+
+```
+
+
+
+<!-- ```{r,  fig.height=8, fig.width=16, warning = FALSE, message=FALSE} -->
+<!-- # Using high Drug Concentrations -->
+
+<!-- tmp<-df%>% -->
+<!--   filter((Drug=="DMSO"&Cytokine!="No Cytokine")|(Drug!="DMSO"&Cytokine=="No Cytokine"), Drug_Concentration%in%c("High", "None"))%>% -->
+<!--   group_by(PatientID, Drug, Cytokine) %>% -->
+<!--   summarize(Log=mean(Log), .groups = "keep") %>% -->
+<!--   ungroup() %>% -->
+<!--   mutate(Cytokine=as.character(Cytokine), Drug=as.character(Drug)) %>% -->
+<!--   mutate(Condition=case_when(Cytokine=="No Cytokine"~ Drug, Drug=="DMSO"~Cytokine)) %>% -->
+<!--   select(PatientID, Condition, Log)%>% -->
+<!--   spread(Condition, Log)%>% -->
+<!--   ungroup() -->
+
+<!-- Drug_Cyt_df<-tmp%>% -->
+<!--   select(-"PatientID")%>% -->
+<!--   as.matrix() -->
+
+<!-- rownames(Drug_Cyt_df)<-tmp %>% -->
+<!--   ungroup() %>% -->
+<!--   group_by(PatientID)%>% -->
+<!--   dplyr::summarise( .groups = "keep")%>% -->
+<!--   ungroup()%>% -->
+<!--   unlist() -->
+
+<!-- Corr_method="pearson" -->
+
+<!-- Drug_Cyt_Correlation<-stats::cor(Drug_Cyt_df, method=Corr_method) -->
+
+<!-- # Plot -->
+
+
+<!-- Cytokines <-unique(df$Cytokine) %>% setdiff("No Cytokine") -->
+
+<!-- Drugs<-unique(df$Drug) %>% setdiff("DMSO") -->
+
+
+<!-- t_tmp<-theme( -->
+<!--   plot.background = element_blank(), -->
+<!--   panel.grid.major = element_blank(), -->
+<!--   panel.grid.major.x = element_blank(), -->
+<!--   panel.grid.minor = element_blank(), -->
+<!--   panel.border = element_blank(), -->
+<!--   panel.background = element_blank(), -->
+<!--   axis.line = element_line(), -->
+<!--   axis.text.x  = element_text(size = 12, face="bold"), -->
+<!--   axis.text.y = element_text(size = 12, face="bold"), -->
+<!--   axis.ticks.x = element_blank()) -->
+
+
+<!-- #Drug -->
+
+<!-- Drug_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Drugs), which(colnames(Drug_Cyt_Correlation)%in%Drugs)] -->
+
+<!--     Drug_Corr[upper.tri(Drug_Corr, diag = TRUE)]<- NA -->
+
+<!-- Drug_Cor_Plot<-  Drug_Corr %>% -->
+<!--   as_tibble(rownames="Drug_1") %>% -->
+<!--     dplyr::mutate(Drug_1=factor(Drug_1, levels = rev(rownames(Drug_Corr)))) %>% -->
+<!--   pivot_longer(-Drug_1, names_to="Drug_2", values_to="Pearson_R") %>% -->
+<!--   dplyr::filter(!is.na(Pearson_R)) %>% -->
+
+
+<!--   ggplot(aes(Drug_1, Drug_2))+ -->
+<!--   geom_tile(aes(fill=Pearson_R),color = "grey")+ -->
+<!--   scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+ -->
+<!--   geom_text(aes(label=round(Pearson_R,2)), size=4)+ -->
+<!--     t_tmp+ -->
+<!--     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+ -->
+<!--     labs(fill = "Pearson R", x="", y="")+ -->
+<!--   guides(fill="none") -->
+
+
+<!-- # Cytokine -->
+
+<!-- Cyt_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Cytokines), which(colnames(Drug_Cyt_Correlation)%in%Cytokines)] -->
+
+
+<!--     Cyt_Corr[upper.tri(Cyt_Corr, diag = TRUE)]<- NA -->
+
+<!-- Cyt_Cor_Plot<-  Cyt_Corr %>% -->
+<!--   as_tibble(rownames="Cyt_1") %>% -->
+<!--     dplyr::mutate(Cyt_1=factor(Cyt_1, levels = rev(rownames(Cyt_Corr)))) %>% -->
+<!--   pivot_longer(-Cyt_1, names_to="Cyt_2", values_to="Pearson_R") %>% -->
+<!--   dplyr::filter(!is.na(Pearson_R)) %>% -->
+<!--   # View() -->
+
+<!--   ggplot(aes(Cyt_1, Cyt_2))+ -->
+<!--   geom_tile(aes(fill=Pearson_R),color = "grey")+ -->
+<!--   scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+ -->
+<!--   geom_text(aes(label=round(Pearson_R,2)), size=4)+ -->
+<!--     t_tmp+ -->
+<!--     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+ -->
+<!--     labs(fill = "Pearson R", x="", y="")+ -->
+<!--   scale_y_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))+ -->
+<!--   scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1")) -->
+
+
+
+<!-- #Drug Cytokine -->
+<!-- Drug_Cyt_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Cytokines), which(colnames(Drug_Cyt_Correlation)%in%Drugs)] -->
+
+
+<!-- design1<-" -->
+<!--   12 -->
+<!--   " -->
+<!-- tp<- theme(plot.tag=element_text(size = 30)) -->
+
+<!-- Drug_Cor_Plot + tp + -->
+<!-- Cyt_Cor_Plot + tp + -->
+<!--   plot_layout(design = design1, widths = c(1,1.3))+ -->
+<!--   plot_annotation(tag_levels = "A") -->
+<!-- ``` -->
+
+
+<!-- ```{r S2 Person Correlations,  fig.height=8, fig.width=16, warning = FALSE, message=FALSE} -->
+<!-- # Using high Drug Concentrations -->
+
+<!-- tmp<-df%>% -->
+<!--   filter((Drug=="DMSO"&Cytokine!="No Cytokine")|(Drug!="DMSO"&Cytokine=="No Cytokine"), Drug_Concentration%in%c("High", "None"))%>% -->
+<!--   group_by(PatientID, Drug, Cytokine) %>% -->
+<!--   summarize(Log=mean(Log), .groups = "keep") %>% -->
+<!--   ungroup() %>% -->
+<!--   mutate(Cytokine=as.character(Cytokine), Drug=as.character(Drug)) %>% -->
+<!--   mutate(Condition=case_when(Cytokine=="No Cytokine"~ Drug, Drug=="DMSO"~Cytokine)) %>% -->
+<!--   select(PatientID, Condition, Log)%>% -->
+<!--   spread(Condition, Log)%>% -->
+<!--   ungroup() -->
+
+<!-- Drug_Cyt_df<-tmp%>% -->
+<!--   select(-"PatientID")%>% -->
+<!--   as.matrix() -->
+
+<!-- rownames(Drug_Cyt_df)<-tmp %>% -->
+<!--   ungroup() %>% -->
+<!--   group_by(PatientID)%>% -->
+<!--   dplyr::summarise( .groups = "keep")%>% -->
+<!--   ungroup()%>% -->
+<!--   unlist() -->
+
+<!-- Corr_method="pearson" -->
+
+<!-- Drug_Cyt_Correlation<-stats::cor(Drug_Cyt_df, method=Corr_method) -->
+
+<!-- # Plot -->
+
+
+<!-- Cytokines <-unique(df$Cytokine) %>% setdiff("No Cytokine") -->
+
+<!-- Drugs<-unique(df$Drug) %>% setdiff("DMSO") -->
+
+
+<!-- t_tmp<-theme( -->
+<!--   plot.background = element_blank(), -->
+<!--   panel.grid.major = element_blank(), -->
+<!--   panel.grid.major.x = element_blank(), -->
+<!--   panel.grid.minor = element_blank(), -->
+<!--   panel.border = element_blank(), -->
+<!--   panel.background = element_blank(), -->
+<!--   axis.line = element_line(), -->
+<!--   axis.text.x  = element_text(size = 12, face="bold"), -->
+<!--   axis.text.y = element_text(size = 12, face="bold"), -->
+<!--   axis.ticks.x = element_blank()) -->
+
+
+<!-- #Drug -->
+
+<!-- Drug_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Drugs), which(colnames(Drug_Cyt_Correlation)%in%Drugs)] -->
+
+<!--     Drug_Corr[upper.tri(Drug_Corr, diag = TRUE)]<- NA -->
+
+<!-- Drug_Cor_Plot<-  Drug_Corr %>% -->
+<!--   as_tibble(rownames="Drug_1") %>% -->
+<!--     dplyr::mutate(Drug_1=factor(Drug_1, levels = rev(rownames(Drug_Corr)))) %>% -->
+<!--   pivot_longer(-Drug_1, names_to="Drug_2", values_to="Pearson_R") %>% -->
+<!--   dplyr::filter(!is.na(Pearson_R)) %>% -->
+
+
+<!--   ggplot(aes(Drug_1, Drug_2))+ -->
+<!--   geom_tile(aes(fill=Pearson_R),color = "grey")+ -->
+<!--   scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+ -->
+<!--   geom_text(aes(label=round(Pearson_R,2)), size=4)+ -->
+<!--     t_tmp+ -->
+<!--     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+ -->
+<!--     labs(fill = "Pearson R", x="", y="")+ -->
+<!--   guides(fill="none") -->
+
+
+<!-- # Cytokine -->
+
+<!-- Cyt_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Cytokines), which(colnames(Drug_Cyt_Correlation)%in%Cytokines)] -->
+
+
+<!--     Cyt_Corr[upper.tri(Cyt_Corr, diag = TRUE)]<- NA -->
+
+<!-- Cyt_Cor_Plot<-  Cyt_Corr %>% -->
+<!--   as_tibble(rownames="Cyt_1") %>% -->
+<!--     dplyr::mutate(Cyt_1=factor(Cyt_1, levels = rev(rownames(Cyt_Corr)))) %>% -->
+<!--   pivot_longer(-Cyt_1, names_to="Cyt_2", values_to="Pearson_R") %>% -->
+<!--   dplyr::filter(!is.na(Pearson_R)) %>% -->
+<!--   # View() -->
+
+<!--   ggplot(aes(Cyt_1, Cyt_2))+ -->
+<!--   geom_tile(aes(fill=Pearson_R),color = "grey")+ -->
+<!--   scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+ -->
+<!--   geom_text(aes(label=round(Pearson_R,2)), size=4)+ -->
+<!--     t_tmp+ -->
+<!--     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+ -->
+<!--     labs(fill = "Pearson R", x="", y="")+ -->
+<!--   scale_y_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))+ -->
+<!--   scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1")) -->
+
+
+
+<!-- #Drug Cytokine -->
+<!-- Drug_Cyt_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Cytokines), which(colnames(Drug_Cyt_Correlation)%in%Drugs)] -->
+
+
+<!-- design1<-" -->
+<!--   12 -->
+<!--   " -->
+<!-- tp<- theme(plot.tag=element_text(size = 30)) -->
+
+<!-- Drug_Cor_Plot + tp + -->
+<!-- Cyt_Cor_Plot + tp + -->
+<!--   plot_layout(design = design1, widths = c(1,1.3))+ -->
+<!--   plot_annotation(tag_levels = "A") -->
+<!-- ``` -->
+
+
 ## Assemble Figure
-```{r, Figure1, fig.height=11, fig.width=18, fig.path=plotDir, dev=c("png", "cairo_pdf"), message=FALSE, warning=FALSE}
+```{r, Figure1, fig.height=13, fig.width=18, fig.path=plotDir, dev=c("png", "cairo_pdf"), message=FALSE, warning=FALSE}
 
 tp <- theme(plot.tag=element_text(size = 30, face="plain"))
 
 design1 <-"
   ABBC
   DDEE
-  DDFF
 "
 
 Figure1 <-
@@ -491,12 +831,11 @@ Figure1 <-
   Fig1A + tp+
   Fig1B + tp+
   wrap_elements(Fig1C ) + tp+
-  wrap_elements(Fig1D) + tp+
-  wrap_elements(Fig1E) + tp+
-  wrap_elements(Fig1F) + tp+
+  wrap_elements(Drug_Cor_Plot) + tp+
+  wrap_elements(Cyt_Cor_Plot) + tp+
   
   plot_annotation(tag_levels = "A", title="Figure 1", theme = theme(title=element_text(size = 20))) +
-  plot_layout(design = design1, heights = c(0.7,0.55,0.45), width=c(1,0.8,0.8,1))
+  plot_layout(design = design1, heights = c(0.7,1.2), width=c(1,0.4,1.2,1))
 
 
 Figure1
