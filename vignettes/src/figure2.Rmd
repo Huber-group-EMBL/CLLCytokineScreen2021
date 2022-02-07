@@ -1755,7 +1755,7 @@ C3_drug_heatmap<-pheatmap(viab.mat.tmp.ordered,
 ```
 
 
-```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=14.5, fig.height=8, warning = FALSE}
+```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=14.5, fig.height=11, warning = FALSE}
 
 #Plot heatmap
 viab.mat.tmp<-viab.mat.unscaled %>% 
