@@ -45,6 +45,7 @@ ATACseq libraries were generated as described previously^2^. Cell preparation an
 **ATAC sequencing analysis of transcription factor activity in trisomy 12 CLL**   
 Raw ATACseq data generated from our CLL samples were processed as described in Berest et al. 2019^3^, with the only exception that we did not use CG bias correction step. We then used analytical mode of diffTF with HOCOMOCO v10 database^4^ using the following parameters: minOverlap = 1; design formula = “~ Patient + trisomy 12 status”.
 
+\newpage
 <!-- Set up  -->
 ```{R setUp_supp, echo = FALSE}
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, fig.pos = "!H", out.extra = "")
@@ -772,7 +773,7 @@ cox_output %>%
 ```
 
 **Appendix Table 4. Multivariate survival analysis of response clusters.** Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference.
-
+\newpage
 
 
 
@@ -1261,7 +1262,7 @@ OS_Clusters_KM+theme(plot.tag=element_text(size = 20))+
 
 <!-- Plot Figure 2D:    -->
 <!-- Coefficients (feature importance) for each cluster -->
-```{r, Fig2D, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=7, fig.width=5}
+```{r, Fig2D,  dev=c("png", "cairo_pdf"), fig.height=7, fig.width=5}
 load("../../data/multinominal_regression_Clusters_Fig2D.RData" )
 
 #average remaining coefficients in dataframe for plotting
@@ -1317,7 +1318,8 @@ names(Cluster.labs) <- c(1, 2, 3, 4)
    guides(fill = "none")
 
 
-```
+```  
+
 **Appendix Figure XX.  Multinomial regression with lasso penalisation to identify enrichment or depletion of genetic features within each cluster.** 
 
 <!-- ### Additional Figure of Methylation Clusters and Microenviroenmental response -->
@@ -1482,7 +1484,11 @@ breaks <- breaks %>% `names<-`(
 
 
 
-```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=14.5, fig.height=11, warning = FALSE}
+```{r , dev=c("png", "cairo_pdf"), fig.width=14.5, fig.height=11, warning = FALSE}
+Cluster_for_Heatmap<-patMeta_Cluster %>% select(PatientID, Cluster) %>%
+  column_to_rownames("PatientID") %>%
+  as.data.frame()
+
 
 #Plot heatmap
 viab.mat.tmp<-viab.mat.unscaled %>% 
@@ -1638,7 +1644,7 @@ wrap_elements(arrangeGrob(C4_drug_heatmap[[4]]))+
   plot_layout(nrow=1, widths = c(0.93,0.13,0.52,1.03))
 ```
 
-<!-- **Appendix Figure XXX. Drug response between clusters.**  Heatmap showing the log normalised viability after drug treatment.  Rows represent drug treatments and columns represent primary CLL samples, annotated for their genetic background, sex and pretreatment status above. Red values indicate increased viability upon treatment, blue indicates decreased viability.  -->
+**Appendix Figure XXX. Drug response between clusters.**  Heatmap showing the log normalised viability after drug treatment.  Rows represent drug treatments and columns represent primary CLL samples, annotated for their genetic background, sex and pretreatment status above. Red values indicate increased viability upon treatment, blue indicates decreased viability.
 
 
 
