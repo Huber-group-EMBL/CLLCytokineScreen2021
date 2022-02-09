@@ -741,7 +741,7 @@ coefTab <- lapply(names(coefList), function(d) {
      mutate(cluster = d)
 }) %>% bind_rows()
 
-
+# save(coefTab, file = "../../data/multinominal_regression_Clusters_Fig2D.RData" )
 
 ```
 
@@ -1126,111 +1126,11 @@ Figure2
 ```
 
 ## Additional figures for Revision
-### Additional Figure of Methylation Clusters and Microenviroenmental response
-```{r, fig.height=5}
-
-patMeta_cl %>% 
-  group_by(Cluster, Methylation_Cluster) %>% 
-  count() %>% 
-  group_by(Cluster) %>% 
-  mutate(freq = n / sum(n)) %>% 
-   plyr::ddply("Cluster", transform, label_ypos=cumsum(freq)) %>% 
 
 
-  ggplot(aes(x=Cluster, y=freq, fill=Methylation_Cluster))+
-  geom_bar(stat="identity")+
-  ylab("Relative incidence of\n methylation profiles")+
-  t2
-  
- 
-
-  
 
 
-```
 
-### Old Figure 2D
-
-Plot Figure 2D:   
-Coefficients (feature importance) for each cluster
-```{r, Fig2D, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=7, fig.width=5}
-#average remaining coefficients in dataframe for plotting
-#ie show all sig features, the cluster they predict, and the average coefficient 
-plotTab <-
-  coefTab %>%
-  dplyr::group_by(feature, cluster) %>% 
-  dplyr::summarise(meanCoef = mean(coef),
-                   sdCoef = sd(coef)) %>%
-  dplyr::arrange(desc(meanCoef)) %>% 
-  ungroup()
-
-#update labelling 
-plotTab <- plotTab %>% mutate(feature = ifelse(feature == "IGHV", "IGHV status", 
-                                   ifelse(feature == "trisomy12", "trisomy 12", 
-                                      ifelse(feature == "gain8q", "gain(8q)", feature))))
-
-plotTab$feature <- factor(plotTab$feature,
-                          levels=c("IGHV status", 
-                                   "trisomy 12",
-                                   "SF3B1", 
-                                   "POT1",
-                                   "ATM", 
-                                   "TP53",
-                                   "RAS/RAF",
-                                   "gain(8q)"))
-
-
-Cluster.labs <- c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4")
-names(Cluster.labs) <- c(1, 2, 3, 4)
- 
-
-Fig2D <- 
-    ggplot(plotTab, aes(x=feature, y=meanCoef))+ 
-    geom_bar(stat= "identity", aes(fill = cluster))+
-    geom_errorbar(aes(ymin = meanCoef - sdCoef, 
-                      ymax = meanCoef + sdCoef))+
-    ggtitle("") +
-    coord_cartesian(ylim=c(-1.5, 1.75))+
-    geom_hline(yintercept=0)+
-    ylab("Depleted / Enriched\n")+
-    xlab("")+
-    scale_fill_manual(values=colors[1:4])+
-    t1+
-   t.leg+
-
-   theme(strip.text = element_text(size = fontsize),
-         axis.text.x= element_text(size=fontsize+4, angle=45, vjust=1))+
-    facet_wrap(~cluster, 
-               nrow=4, 
-               strip.position = "right", 
-               labeller = labeller(cluster = Cluster.labs))+
-   guides(fill = "none")
-
-Fig2D
-
-```
-
-
-### Additional Figure of CLL_PD and Clusters of Microenvironmental response
-```{r, fig.height=5}
-load( "../../data/CLL_PD.RData")
-
-CLL_PD %>% 
-  left_join( patMeta_cl, by="PatientID") %>% 
-  
-  
-  ggplot(aes(x=Cluster, y=CLL_PD,group=Cluster, fill=Cluster ))+
-  geom_boxplot(outlier.shape = NA)+
-  geom_beeswarm(aes(shape=CLL_PD_group ))+
-  t2+
-  scale_fill_manual(values=colors[1:4]) +
-  guides(fill="none") +
-  ylab("CLL Proliferative Drive") +
-  stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=6, label.x = 1.3, label.y=3.1)+
-  coord_cartesian(clip="off")
-
-
-```
 
 ### Correlation between CLL-PD and Stimuli response
 
@@ -1368,436 +1268,436 @@ print(scatterplot)
 }
 ```
 
-##### Scatter Plots for all stimuli faceted by Cluster
-```{r, fig.height=5}
-# Stimuli<-"Resiquimod"
-
-for( Stimuli in Stimuli_list){
-
-
-Pearson_Correlation<-Stim_PD.corr_all %>% 
-  filter(Cytokine==Stimuli) %>% 
-  select(estimate.cor) %>% 
-  unlist() %>% 
-  round(2)
-
-scatterplot<-left_join(CLL_PD, df, by = "PatientID") %>% 
-  left_join(patMeta_cl, by = "PatientID") %>% 
-  filter(Cytokine==Stimuli,
-         !is.na(IGHV.status), !is.na(trisomy12)) %>% 
-  
-  ggplot(aes(x=CLL_PD, y=Log))+
-geom_point(aes(color=IGHV.status, shape=trisomy12))+
-  geom_smooth(method = "lm", formula = 'y ~ x')+
-  stat_cor(method = "pearson")+
-   # geom_text(x=-1, y=2, label=paste0("Pearson Correlation Coefficient: ", Pearson_Correlation), size=4)+
-  t2+
-  ggtitle(paste0(Stimuli))+
-  facet_wrap(~Cluster)
-
-print(scatterplot)
-}
-```
-
-#### Overall Cytokine Response and CLL-PD
-```{r, fig.height=5}
-left_join(CLL_PD, df, by = "PatientID") %>% 
-  left_join(patMeta_cl, by = "PatientID") %>%
-  group_by(PatientID, CLL_PD,IGHV.status) %>% 
-  summarise(Cytokine_Overall_Response=mean((Log)), .groups="keep") %>% 
-  
-  ggplot(aes(x=CLL_PD, y= Cytokine_Overall_Response))+
-  geom_point(aes(color=IGHV.status))+
-  geom_smooth(method="lm", formula = 'y ~ x')+
-  stat_cor()+
-  t2
-
-
-
-```
-
-#### Response to selected Cytokines and CLL-PD
-```{r, fig.height=5}
-left_join(CLL_PD, df, by = "PatientID") %>% 
-  left_join(patMeta_cl, by = "PatientID") %>%
-  filter(Cytokine%in%c("Resiquimod" ,"CpG ,ODN" ,"sCD40L" ,"IL-1b" ,"soluble ,anti-IgM" ,"BAFF" ,"TGF-b1")) %>% 
-  group_by(PatientID, CLL_PD,IGHV.status) %>% 
-  summarise(Cytokine_Overall_Response=mean((Log)), .groups="keep") %>% 
-  
-  ggplot(aes(x=CLL_PD, y= Cytokine_Overall_Response))+
-  geom_point(aes(color=IGHV.status))+
-  geom_smooth(method="lm", formula = 'y ~ x')+
-  stat_cor()+
-  t2+
-  ylab("Response to selected Cytokines")
-
-
-
-```
-
-#### Overall Stimuli response by Cluster
-```{r, fig.height=5}
-
-df %>% 
-  group_by(PatientID) %>% 
-  summarise(Cytokine_Overall_Response=mean((Log)), .groups="keep") %>% 
-  
-  left_join(patMeta_cl, by = "PatientID") %>% 
-  left_join(LDT, by = "PatientID") %>% 
-  
-  ggplot(aes(x=Cluster, y=Cytokine_Overall_Response))+
-  geom_boxplot(aes(fill=Cluster))+
-  geom_beeswarm()+
-  t2+
-  scale_fill_manual(values=colors[1:4]) +
-  guides(fill="none") +
-  ylab("Overall Stimuli response") +
-  stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=6, label.x = 1.3, label.y=0.45)+
-  coord_cartesian(clip="off")
-
-```
-
-#### Correlation of LDT and Overall Stimuli response
-```{r, fig.height=5}
-
-df %>% 
-  group_by(PatientID) %>% 
-  summarise(Cytokine_Overall_Response=mean((Log)), .groups="keep") %>% 
-  
-  left_join(patMeta_cl, by = "PatientID") %>% 
-  left_join(LDT, by = "PatientID") %>% 
-  filter(!is.na(doubling.time)) %>% 
-  
-   ggplot(aes(x=Cytokine_Overall_Response, y= doubling.time))+
-  geom_point(aes())+
-  geom_smooth(method="lm", formula = 'y ~ x')+
-  stat_cor()+
-  scale_y_log10()+
-  t2+
-  xlab("Overall Stimuli response") +
-  ylab("LDT")
-```
-
-###  Drug Response heatmap
-Heatmap of all scaled log(viability) values, for all patient samples and drugs.
-```{r }
-
-########### Viability matrix ################
-#make viability matrix for cytokine treatments for patients
-viab.mat <- filter(df_full, Drug!="DMSO", Cytokine=="No Cytokine", Drug_Concentration=="High") %>% 
-            dplyr::select(PatientID, Log, Drug) %>% 
-            tidyr::spread(Drug, Log) %>%
-  as.data.frame()
-
-#make PatientID the row names
-rownames(viab.mat) <- unlist(viab.mat[,1]) # the first row will be the header
-viab.mat <- viab.mat[,-1]
-
-#Transform matrix
-viab.mat <- t(viab.mat)
-
-#keep unscaled matrix 
-viab.mat.unscaled <- viab.mat
-
-#run scaleCytResp on viability matrix
-viab.mat <- scaleCytResp(viab.mat)
-
-#apply deckel function to matrix
-#Calculate dendrogram 
-breaks <- c(seq(-2,2, length.out = 101))
-
-viab.mat.lims <- deckel(viab.mat,
-                            lower = dplyr::first(breaks),
-                            upper = dplyr::last(breaks))
-
-```
-
-Arrange annotations for heatmap
-```{r}
-
-#Sort heatmap annotations
-#Select annotations from patMeta_cl
-Heatmap_Annotation <- dplyr::select(patMeta_cl, 
-                                    PatientID, 
-                                    IGHV.status, 
-                                    Methylation_Cluster,
-                                    trisomy12,
-                                    TP53,
-                                    ATM,
-                                    treatment, 
-                                    gender, 
-                                    Cluster) %>%
-  
-  #Adjust names/levels for legend
-  mutate(treatment=case_when(treatment==0~"No", 
-                             treatment==1~"Yes")) %>%
-
-  mutate(gender=case_when(gender=="f"~"Female", 
-                          gender=="m"~"Male")) %>%
-  
-  mutate(IGHV.status=case_when(IGHV.status=="U"~"Unmutated", 
-                               IGHV.status=="M"~"Mutated"))%>%
-  
-  mutate(Methylation_Cluster=case_when(Methylation_Cluster=="LP"~"Low", 
-                               Methylation_Cluster=="IP"~"Intermediate", 
-                               Methylation_Cluster=="HP"~"High"))
-
-
-#Rename columns for legend
-colnames(Heatmap_Annotation) <- c("PatientID", 
-                                  "IGHV status",
-                                  "Methylation Cluster",
-                                  "trisomy 12", 
-                                  "TP53", 
-                                  "ATM",
-                                  "Pretreated", 
-                                  "Sex", 
-                                  "Cluster")
-
-#make Pat IDs the rownames
-Heatmap_Annotation <- as.data.frame(Heatmap_Annotation)
-rownames(Heatmap_Annotation) <- unlist(Heatmap_Annotation$PatientID)
-
-#Tidy Up Heatmap Annotation table
-Heatmap_Annotation$Cluster <- as.factor(Heatmap_Annotation$Cluster)
-
-Heatmap_Annotation <- dplyr::select(Heatmap_Annotation,-"PatientID")
-
-
-```
-
-Define aesthetics for heatmap and annotations
-```{r }
-
-########### Set Heatmap Aesthetics ###############
-#Generate red-blue divergent palette
-breaks <- breaks %>% `names<-`(
-     colorRampPalette(c(palblues, "white",palreds))(101))
-
-#Specify colors of annotations 
- ann_colors = 
-   list(
-    "IGHV status" = c("Unmutated"=IGHV[1],
-                      "Mutated"=IGHV[2]),
-    "Methylation Cluster"= c("Low"=Methylation_cluster[1],
-                             "Intermediate"=Methylation_cluster[2],
-                             "High"=Methylation_cluster[3]),
-    "Sex" = c("Female"=Sex[1],
-              "Male"=Sex[2]),
-    "Pretreated" = c("No"=Mutant[1],
-                  "Yes"=Mutant[2]),
-    "trisomy 12" = c("1"=Mutant[2],
-                     "0"=Mutant[1]),
-    "ATM" = c("1"=Mutant[2],
-              "0"=Mutant[1]),
-    "TP53" = c("1"=Mutant[2],
-               "0"=Mutant[1]),
-    "Cluster" = c("1"=colors[1],
-                  "2"=colors[2],
-                  "3"=colors[3],
-                  "4"=colors[4]))
-```
-
-Plot Figure
-```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=8, warning = FALSE}
-
-#Plot heatmap
-
-Cluster_for_Heatmap<-patMeta_cl %>% select(PatientID, Cluster) %>% 
-  column_to_rownames("PatientID") %>% 
-  as.data.frame()
-
-Pigengene::pheatmap.type(t(viab.mat.unscaled), 
-         annRow = Cluster_for_Heatmap,
-         type="Cluster",
-         doTranspose=TRUE,
-         # scale = "row",
-         # clustering_method = "complete", 
-         cluster_rows = TRUE,
-         show_colnames = FALSE,
-         # annotation_col = Heatmap_Annotation,
-         # annotation_colors = ann_colors,
-         cellheight = 22,
-         cellwidth = 4,
-         breaks = breaks,
-         color= names(breaks),
-         border_color=NA,
-         fontsize=10,
-         fontsize_row=16
-         )
-```
-
-Plot Figure
-```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=8, warning = FALSE}
-
-#Plot heatmap
-viab.mat.tmp<-viab.mat.unscaled %>% 
-  t() %>% 
-  merge(Cluster_for_Heatmap,. , by=0)%>% 
-  column_to_rownames("Row.names") %>% 
-  filter(Cluster==1) %>% 
-  select(-Cluster) %>% 
-  t() 
-
-viab.mat.tmp.ordered<-viab.mat.tmp[ c( "Fludarabine" ,"Nutlin-3a" ,"Luminespib"  ,"BAY-11-7085" ,"Pyridone-6" ,"Ralimetinib" ,"I-BET 762"  ,"Everolimus" ,"Selumetinib" ,"Idelalisib" ,      "Ibrutinib" ,"PRT062607"), ]
-  
-# row.names(viab.mat.tmp)
-
-C1_drug_heatmap<-pheatmap(viab.mat.tmp.ordered, 
-         annRow = Cluster_for_Heatmap,
-         type="Cluster",
-         doTranspose=TRUE,
-         # scale = "row",
-         # clustering_method = "complete", 
-         cluster_rows = FALSE,
-         show_colnames = FALSE,
-         annotation_col = Heatmap_Annotation,
-         annotation_colors = ann_colors,
-         cellheight = 22,
-         cellwidth = 4,
-         breaks = breaks,
-         color= names(breaks),
-         border_color=NA,
-         fontsize=10,
-         fontsize_row=16, 
-         legend=FALSE,
-         annotation_legend = FALSE, 
-         show_rownames=FALSE,
-         annotation_names_col=FALSE
-         )
-  
-
-
-```
-
-```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=8, warning = FALSE}
-
-#Plot heatmap
-viab.mat.tmp<-viab.mat.unscaled %>% 
-  t() %>% 
-  merge(Cluster_for_Heatmap,. , by=0)%>% 
-  column_to_rownames("Row.names") %>% 
-  filter(Cluster==2) %>% 
-  select(-Cluster) %>% 
-  t() 
-
-viab.mat.tmp.ordered<-viab.mat.tmp[ c( "Fludarabine" ,"Nutlin-3a" ,"Luminespib"  ,"BAY-11-7085" ,"Pyridone-6" ,"Ralimetinib" ,"I-BET 762"  ,"Everolimus" ,"Selumetinib" ,"Idelalisib" ,      "Ibrutinib" ,"PRT062607"), ]
-  
-# row.names(viab.mat.tmp)
-
-C2_drug_heatmap<-pheatmap(viab.mat.tmp.ordered, 
-         annRow = Cluster_for_Heatmap,
-         type="Cluster",
-         doTranspose=TRUE,
-         # scale = "row",
-         # clustering_method = "complete", 
-         cluster_rows = FALSE,
-         show_colnames = FALSE,
-         annotation_col = Heatmap_Annotation,
-         annotation_colors = ann_colors,
-         cellheight = 22,
-         cellwidth = 4,
-         breaks = breaks,
-         color= names(breaks),
-         border_color=NA,
-         fontsize=10,
-         fontsize_row=16, 
-         legend=FALSE,
-         annotation_legend = FALSE, 
-         show_rownames=FALSE,
-         annotation_names_col=FALSE
-         )
-  
-
-
-```
-
-
-```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=8, warning = FALSE}
-
-#Plot heatmap
-viab.mat.tmp<-viab.mat.unscaled %>% 
-  t() %>% 
-  merge(Cluster_for_Heatmap,. , by=0)%>% 
-  column_to_rownames("Row.names") %>% 
-  filter(Cluster==3) %>% 
-  select(-Cluster) %>% 
-  t() 
-
-viab.mat.tmp.ordered<-viab.mat.tmp[ c( "Fludarabine" ,"Nutlin-3a" ,"Luminespib"  ,"BAY-11-7085" ,"Pyridone-6" ,"Ralimetinib" ,"I-BET 762"  ,"Everolimus" ,"Selumetinib" ,"Idelalisib" ,      "Ibrutinib" ,"PRT062607"), ]
-  
-# row.names(viab.mat.tmp)
-
-C3_drug_heatmap<-pheatmap(viab.mat.tmp.ordered, 
-         annRow = Cluster_for_Heatmap,
-         type="Cluster",
-         doTranspose=TRUE,
-         # scale = "row",
-         # clustering_method = "complete", 
-         cluster_rows = FALSE,
-         show_colnames = FALSE,
-         annotation_col = Heatmap_Annotation,
-         annotation_colors = ann_colors,
-         cellheight = 22,
-         cellwidth = 4,
-         breaks = breaks,
-         color= names(breaks),
-         border_color=NA,
-         fontsize=10,
-         fontsize_row=16, 
-         legend=FALSE,
-         annotation_legend = FALSE, 
-         show_rownames=FALSE,
-         annotation_names_col=FALSE
-         )
-  
-
-
-```
-
-
-```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=14.5, fig.height=11, warning = FALSE}
-
-#Plot heatmap
-viab.mat.tmp<-viab.mat.unscaled %>% 
-  t() %>% 
-  merge(Cluster_for_Heatmap,. , by=0)%>% 
-  column_to_rownames("Row.names") %>% 
-  filter(Cluster==4) %>% 
-  select(-Cluster) %>% 
-  t() 
-
-viab.mat.tmp.ordered<-viab.mat.tmp[ c( "Fludarabine" ,"Nutlin-3a" ,"Luminespib"  ,"BAY-11-7085" ,"Pyridone-6" ,"Ralimetinib" ,"I-BET 762"  ,"Everolimus" ,"Selumetinib" ,"Idelalisib" ,      "Ibrutinib" ,"PRT062607"), ]
-  
-# row.names(viab.mat.tmp)
-
-C4_drug_heatmap<-pheatmap(viab.mat.tmp.ordered, 
-         annRow = Cluster_for_Heatmap,
-         type="Cluster",
-         doTranspose=TRUE,
-         # scale = "row",
-         # clustering_method = "complete", 
-         cluster_rows = FALSE,
-         show_colnames = FALSE,
-         annotation_col = Heatmap_Annotation,
-         annotation_colors = ann_colors,
-         cellheight = 22,
-         cellwidth = 4,
-         breaks = breaks,
-         color= names(breaks),
-         border_color=NA,
-         fontsize=10,
-         fontsize_row=16
-         )
-  
-
-
-wrap_elements(arrangeGrob(C1_drug_heatmap[[4]]))+
-wrap_elements(arrangeGrob(C2_drug_heatmap[[4]]))+
-wrap_elements(arrangeGrob(C3_drug_heatmap[[4]]))+
-wrap_elements(arrangeGrob(C4_drug_heatmap[[4]]))+
-  plot_layout(nrow=1, widths = c(0.93,0.13,0.52,1.03))
-```
+<!-- ##### Scatter Plots for all stimuli faceted by Cluster -->
+<!-- ```{r, fig.height=5} -->
+<!-- # Stimuli<-"Resiquimod" -->
+
+<!-- for( Stimuli in Stimuli_list){ -->
+
+
+<!-- Pearson_Correlation<-Stim_PD.corr_all %>%  -->
+<!--   filter(Cytokine==Stimuli) %>%  -->
+<!--   select(estimate.cor) %>%  -->
+<!--   unlist() %>%  -->
+<!--   round(2) -->
+
+<!-- scatterplot<-left_join(CLL_PD, df, by = "PatientID") %>%  -->
+<!--   left_join(patMeta_cl, by = "PatientID") %>%  -->
+<!--   filter(Cytokine==Stimuli, -->
+<!--          !is.na(IGHV.status), !is.na(trisomy12)) %>%  -->
+
+<!--   ggplot(aes(x=CLL_PD, y=Log))+ -->
+<!-- geom_point(aes(color=IGHV.status, shape=trisomy12))+ -->
+<!--   geom_smooth(method = "lm", formula = 'y ~ x')+ -->
+<!--   stat_cor(method = "pearson")+ -->
+<!--    # geom_text(x=-1, y=2, label=paste0("Pearson Correlation Coefficient: ", Pearson_Correlation), size=4)+ -->
+<!--   t2+ -->
+<!--   ggtitle(paste0(Stimuli))+ -->
+<!--   facet_wrap(~Cluster) -->
+
+<!-- print(scatterplot) -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- #### Overall Cytokine Response and CLL-PD -->
+<!-- ```{r, fig.height=5} -->
+<!-- left_join(CLL_PD, df, by = "PatientID") %>%  -->
+<!--   left_join(patMeta_cl, by = "PatientID") %>% -->
+<!--   group_by(PatientID, CLL_PD,IGHV.status) %>%  -->
+<!--   summarise(Cytokine_Overall_Response=mean((Log)), .groups="keep") %>%  -->
+
+<!--   ggplot(aes(x=CLL_PD, y= Cytokine_Overall_Response))+ -->
+<!--   geom_point(aes(color=IGHV.status))+ -->
+<!--   geom_smooth(method="lm", formula = 'y ~ x')+ -->
+<!--   stat_cor()+ -->
+<!--   t2 -->
+
+
+
+<!-- ``` -->
+
+<!-- #### Response to selected Cytokines and CLL-PD -->
+<!-- ```{r, fig.height=5} -->
+<!-- left_join(CLL_PD, df, by = "PatientID") %>%  -->
+<!--   left_join(patMeta_cl, by = "PatientID") %>% -->
+<!--   filter(Cytokine%in%c("Resiquimod" ,"CpG ,ODN" ,"sCD40L" ,"IL-1b" ,"soluble ,anti-IgM" ,"BAFF" ,"TGF-b1")) %>%  -->
+<!--   group_by(PatientID, CLL_PD,IGHV.status) %>%  -->
+<!--   summarise(Cytokine_Overall_Response=mean((Log)), .groups="keep") %>%  -->
+
+<!--   ggplot(aes(x=CLL_PD, y= Cytokine_Overall_Response))+ -->
+<!--   geom_point(aes(color=IGHV.status))+ -->
+<!--   geom_smooth(method="lm", formula = 'y ~ x')+ -->
+<!--   stat_cor()+ -->
+<!--   t2+ -->
+<!--   ylab("Response to selected Cytokines") -->
+
+
+
+<!-- ``` -->
+
+<!-- #### Overall Stimuli response by Cluster -->
+<!-- ```{r, fig.height=5} -->
+
+<!-- df %>%  -->
+<!--   group_by(PatientID) %>%  -->
+<!--   summarise(Cytokine_Overall_Response=mean((Log)), .groups="keep") %>%  -->
+
+<!--   left_join(patMeta_cl, by = "PatientID") %>%  -->
+<!--   left_join(LDT, by = "PatientID") %>%  -->
+
+<!--   ggplot(aes(x=Cluster, y=Cytokine_Overall_Response))+ -->
+<!--   geom_boxplot(aes(fill=Cluster))+ -->
+<!--   geom_beeswarm()+ -->
+<!--   t2+ -->
+<!--   scale_fill_manual(values=colors[1:4]) + -->
+<!--   guides(fill="none") + -->
+<!--   ylab("Overall Stimuli response") + -->
+<!--   stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=6, label.x = 1.3, label.y=0.45)+ -->
+<!--   coord_cartesian(clip="off") -->
+
+<!-- ``` -->
+
+<!-- #### Correlation of LDT and Overall Stimuli response -->
+<!-- ```{r, fig.height=5} -->
+
+<!-- df %>%  -->
+<!--   group_by(PatientID) %>%  -->
+<!--   summarise(Cytokine_Overall_Response=mean((Log)), .groups="keep") %>%  -->
+
+<!--   left_join(patMeta_cl, by = "PatientID") %>%  -->
+<!--   left_join(LDT, by = "PatientID") %>%  -->
+<!--   filter(!is.na(doubling.time)) %>%  -->
+
+<!--    ggplot(aes(x=Cytokine_Overall_Response, y= doubling.time))+ -->
+<!--   geom_point(aes())+ -->
+<!--   geom_smooth(method="lm", formula = 'y ~ x')+ -->
+<!--   stat_cor()+ -->
+<!--   scale_y_log10()+ -->
+<!--   t2+ -->
+<!--   xlab("Overall Stimuli response") + -->
+<!--   ylab("LDT") -->
+<!-- ``` -->
+
+<!-- ###  Drug Response heatmap -->
+<!-- Heatmap of all scaled log(viability) values, for all patient samples and drugs. -->
+<!-- ```{r } -->
+
+<!-- ########### Viability matrix ################ -->
+<!-- #make viability matrix for cytokine treatments for patients -->
+<!-- viab.mat <- filter(df_full, Drug!="DMSO", Cytokine=="No Cytokine", Drug_Concentration=="High") %>%  -->
+<!--             dplyr::select(PatientID, Log, Drug) %>%  -->
+<!--             tidyr::spread(Drug, Log) %>% -->
+<!--   as.data.frame() -->
+
+<!-- #make PatientID the row names -->
+<!-- rownames(viab.mat) <- unlist(viab.mat[,1]) # the first row will be the header -->
+<!-- viab.mat <- viab.mat[,-1] -->
+
+<!-- #Transform matrix -->
+<!-- viab.mat <- t(viab.mat) -->
+
+<!-- #keep unscaled matrix  -->
+<!-- viab.mat.unscaled <- viab.mat -->
+
+<!-- #run scaleCytResp on viability matrix -->
+<!-- viab.mat <- scaleCytResp(viab.mat) -->
+
+<!-- #apply deckel function to matrix -->
+<!-- #Calculate dendrogram  -->
+<!-- breaks <- c(seq(-2,2, length.out = 101)) -->
+
+<!-- viab.mat.lims <- deckel(viab.mat, -->
+<!--                             lower = dplyr::first(breaks), -->
+<!--                             upper = dplyr::last(breaks)) -->
+
+<!-- ``` -->
+
+<!-- Arrange annotations for heatmap -->
+<!-- ```{r} -->
+
+<!-- #Sort heatmap annotations -->
+<!-- #Select annotations from patMeta_cl -->
+<!-- Heatmap_Annotation <- dplyr::select(patMeta_cl,  -->
+<!--                                     PatientID,  -->
+<!--                                     IGHV.status,  -->
+<!--                                     Methylation_Cluster, -->
+<!--                                     trisomy12, -->
+<!--                                     TP53, -->
+<!--                                     ATM, -->
+<!--                                     treatment,  -->
+<!--                                     gender,  -->
+<!--                                     Cluster) %>% -->
+
+<!--   #Adjust names/levels for legend -->
+<!--   mutate(treatment=case_when(treatment==0~"No",  -->
+<!--                              treatment==1~"Yes")) %>% -->
+
+<!--   mutate(gender=case_when(gender=="f"~"Female",  -->
+<!--                           gender=="m"~"Male")) %>% -->
+
+<!--   mutate(IGHV.status=case_when(IGHV.status=="U"~"Unmutated",  -->
+<!--                                IGHV.status=="M"~"Mutated"))%>% -->
+
+<!--   mutate(Methylation_Cluster=case_when(Methylation_Cluster=="LP"~"Low",  -->
+<!--                                Methylation_Cluster=="IP"~"Intermediate",  -->
+<!--                                Methylation_Cluster=="HP"~"High")) -->
+
+
+<!-- #Rename columns for legend -->
+<!-- colnames(Heatmap_Annotation) <- c("PatientID",  -->
+<!--                                   "IGHV status", -->
+<!--                                   "Methylation Cluster", -->
+<!--                                   "trisomy 12",  -->
+<!--                                   "TP53",  -->
+<!--                                   "ATM", -->
+<!--                                   "Pretreated",  -->
+<!--                                   "Sex",  -->
+<!--                                   "Cluster") -->
+
+<!-- #make Pat IDs the rownames -->
+<!-- Heatmap_Annotation <- as.data.frame(Heatmap_Annotation) -->
+<!-- rownames(Heatmap_Annotation) <- unlist(Heatmap_Annotation$PatientID) -->
+
+<!-- #Tidy Up Heatmap Annotation table -->
+<!-- Heatmap_Annotation$Cluster <- as.factor(Heatmap_Annotation$Cluster) -->
+
+<!-- Heatmap_Annotation <- dplyr::select(Heatmap_Annotation,-"PatientID") -->
+
+
+<!-- ``` -->
+
+<!-- Define aesthetics for heatmap and annotations -->
+<!-- ```{r } -->
+
+<!-- ########### Set Heatmap Aesthetics ############### -->
+<!-- #Generate red-blue divergent palette -->
+<!-- breaks <- breaks %>% `names<-`( -->
+<!--      colorRampPalette(c(palblues, "white",palreds))(101)) -->
+
+<!-- #Specify colors of annotations  -->
+<!--  ann_colors =  -->
+<!--    list( -->
+<!--     "IGHV status" = c("Unmutated"=IGHV[1], -->
+<!--                       "Mutated"=IGHV[2]), -->
+<!--     "Methylation Cluster"= c("Low"=Methylation_cluster[1], -->
+<!--                              "Intermediate"=Methylation_cluster[2], -->
+<!--                              "High"=Methylation_cluster[3]), -->
+<!--     "Sex" = c("Female"=Sex[1], -->
+<!--               "Male"=Sex[2]), -->
+<!--     "Pretreated" = c("No"=Mutant[1], -->
+<!--                   "Yes"=Mutant[2]), -->
+<!--     "trisomy 12" = c("1"=Mutant[2], -->
+<!--                      "0"=Mutant[1]), -->
+<!--     "ATM" = c("1"=Mutant[2], -->
+<!--               "0"=Mutant[1]), -->
+<!--     "TP53" = c("1"=Mutant[2], -->
+<!--                "0"=Mutant[1]), -->
+<!--     "Cluster" = c("1"=colors[1], -->
+<!--                   "2"=colors[2], -->
+<!--                   "3"=colors[3], -->
+<!--                   "4"=colors[4])) -->
+<!-- ``` -->
+
+<!-- Plot Figure -->
+<!-- ```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=8, warning = FALSE} -->
+
+<!-- #Plot heatmap -->
+
+<!-- Cluster_for_Heatmap<-patMeta_cl %>% select(PatientID, Cluster) %>%  -->
+<!--   column_to_rownames("PatientID") %>%  -->
+<!--   as.data.frame() -->
+
+<!-- Pigengene::pheatmap.type(t(viab.mat.unscaled),  -->
+<!--          annRow = Cluster_for_Heatmap, -->
+<!--          type="Cluster", -->
+<!--          doTranspose=TRUE, -->
+<!--          # scale = "row", -->
+<!--          # clustering_method = "complete",  -->
+<!--          cluster_rows = TRUE, -->
+<!--          show_colnames = FALSE, -->
+<!--          # annotation_col = Heatmap_Annotation, -->
+<!--          # annotation_colors = ann_colors, -->
+<!--          cellheight = 22, -->
+<!--          cellwidth = 4, -->
+<!--          breaks = breaks, -->
+<!--          color= names(breaks), -->
+<!--          border_color=NA, -->
+<!--          fontsize=10, -->
+<!--          fontsize_row=16 -->
+<!--          ) -->
+<!-- ``` -->
+
+<!-- Plot Figure -->
+<!-- ```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=8, warning = FALSE} -->
+
+<!-- #Plot heatmap -->
+<!-- viab.mat.tmp<-viab.mat.unscaled %>%  -->
+<!--   t() %>%  -->
+<!--   merge(Cluster_for_Heatmap,. , by=0)%>%  -->
+<!--   column_to_rownames("Row.names") %>%  -->
+<!--   filter(Cluster==1) %>%  -->
+<!--   select(-Cluster) %>%  -->
+<!--   t()  -->
+
+<!-- viab.mat.tmp.ordered<-viab.mat.tmp[ c( "Fludarabine" ,"Nutlin-3a" ,"Luminespib"  ,"BAY-11-7085" ,"Pyridone-6" ,"Ralimetinib" ,"I-BET 762"  ,"Everolimus" ,"Selumetinib" ,"Idelalisib" ,      "Ibrutinib" ,"PRT062607"), ] -->
+
+<!-- # row.names(viab.mat.tmp) -->
+
+<!-- C1_drug_heatmap<-pheatmap(viab.mat.tmp.ordered,  -->
+<!--          annRow = Cluster_for_Heatmap, -->
+<!--          type="Cluster", -->
+<!--          doTranspose=TRUE, -->
+<!--          # scale = "row", -->
+<!--          # clustering_method = "complete",  -->
+<!--          cluster_rows = FALSE, -->
+<!--          show_colnames = FALSE, -->
+<!--          annotation_col = Heatmap_Annotation, -->
+<!--          annotation_colors = ann_colors, -->
+<!--          cellheight = 22, -->
+<!--          cellwidth = 4, -->
+<!--          breaks = breaks, -->
+<!--          color= names(breaks), -->
+<!--          border_color=NA, -->
+<!--          fontsize=10, -->
+<!--          fontsize_row=16,  -->
+<!--          legend=FALSE, -->
+<!--          annotation_legend = FALSE,  -->
+<!--          show_rownames=FALSE, -->
+<!--          annotation_names_col=FALSE -->
+<!--          ) -->
+
+
+
+<!-- ``` -->
+
+<!-- ```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=8, warning = FALSE} -->
+
+<!-- #Plot heatmap -->
+<!-- viab.mat.tmp<-viab.mat.unscaled %>%  -->
+<!--   t() %>%  -->
+<!--   merge(Cluster_for_Heatmap,. , by=0)%>%  -->
+<!--   column_to_rownames("Row.names") %>%  -->
+<!--   filter(Cluster==2) %>%  -->
+<!--   select(-Cluster) %>%  -->
+<!--   t()  -->
+
+<!-- viab.mat.tmp.ordered<-viab.mat.tmp[ c( "Fludarabine" ,"Nutlin-3a" ,"Luminespib"  ,"BAY-11-7085" ,"Pyridone-6" ,"Ralimetinib" ,"I-BET 762"  ,"Everolimus" ,"Selumetinib" ,"Idelalisib" ,      "Ibrutinib" ,"PRT062607"), ] -->
+
+<!-- # row.names(viab.mat.tmp) -->
+
+<!-- C2_drug_heatmap<-pheatmap(viab.mat.tmp.ordered,  -->
+<!--          annRow = Cluster_for_Heatmap, -->
+<!--          type="Cluster", -->
+<!--          doTranspose=TRUE, -->
+<!--          # scale = "row", -->
+<!--          # clustering_method = "complete",  -->
+<!--          cluster_rows = FALSE, -->
+<!--          show_colnames = FALSE, -->
+<!--          annotation_col = Heatmap_Annotation, -->
+<!--          annotation_colors = ann_colors, -->
+<!--          cellheight = 22, -->
+<!--          cellwidth = 4, -->
+<!--          breaks = breaks, -->
+<!--          color= names(breaks), -->
+<!--          border_color=NA, -->
+<!--          fontsize=10, -->
+<!--          fontsize_row=16,  -->
+<!--          legend=FALSE, -->
+<!--          annotation_legend = FALSE,  -->
+<!--          show_rownames=FALSE, -->
+<!--          annotation_names_col=FALSE -->
+<!--          ) -->
+
+
+
+<!-- ``` -->
+
+
+<!-- ```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=8, warning = FALSE} -->
+
+<!-- #Plot heatmap -->
+<!-- viab.mat.tmp<-viab.mat.unscaled %>%  -->
+<!--   t() %>%  -->
+<!--   merge(Cluster_for_Heatmap,. , by=0)%>%  -->
+<!--   column_to_rownames("Row.names") %>%  -->
+<!--   filter(Cluster==3) %>%  -->
+<!--   select(-Cluster) %>%  -->
+<!--   t()  -->
+
+<!-- viab.mat.tmp.ordered<-viab.mat.tmp[ c( "Fludarabine" ,"Nutlin-3a" ,"Luminespib"  ,"BAY-11-7085" ,"Pyridone-6" ,"Ralimetinib" ,"I-BET 762"  ,"Everolimus" ,"Selumetinib" ,"Idelalisib" ,      "Ibrutinib" ,"PRT062607"), ] -->
+
+<!-- # row.names(viab.mat.tmp) -->
+
+<!-- C3_drug_heatmap<-pheatmap(viab.mat.tmp.ordered,  -->
+<!--          annRow = Cluster_for_Heatmap, -->
+<!--          type="Cluster", -->
+<!--          doTranspose=TRUE, -->
+<!--          # scale = "row", -->
+<!--          # clustering_method = "complete",  -->
+<!--          cluster_rows = FALSE, -->
+<!--          show_colnames = FALSE, -->
+<!--          annotation_col = Heatmap_Annotation, -->
+<!--          annotation_colors = ann_colors, -->
+<!--          cellheight = 22, -->
+<!--          cellwidth = 4, -->
+<!--          breaks = breaks, -->
+<!--          color= names(breaks), -->
+<!--          border_color=NA, -->
+<!--          fontsize=10, -->
+<!--          fontsize_row=16,  -->
+<!--          legend=FALSE, -->
+<!--          annotation_legend = FALSE,  -->
+<!--          show_rownames=FALSE, -->
+<!--          annotation_names_col=FALSE -->
+<!--          ) -->
+
+
+
+<!-- ``` -->
+
+
+<!-- ```{r , fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=14.5, fig.height=11, warning = FALSE} -->
+
+<!-- #Plot heatmap -->
+<!-- viab.mat.tmp<-viab.mat.unscaled %>%  -->
+<!--   t() %>%  -->
+<!--   merge(Cluster_for_Heatmap,. , by=0)%>%  -->
+<!--   column_to_rownames("Row.names") %>%  -->
+<!--   filter(Cluster==4) %>%  -->
+<!--   select(-Cluster) %>%  -->
+<!--   t()  -->
+
+<!-- viab.mat.tmp.ordered<-viab.mat.tmp[ c( "Fludarabine" ,"Nutlin-3a" ,"Luminespib"  ,"BAY-11-7085" ,"Pyridone-6" ,"Ralimetinib" ,"I-BET 762"  ,"Everolimus" ,"Selumetinib" ,"Idelalisib" ,      "Ibrutinib" ,"PRT062607"), ] -->
+
+<!-- # row.names(viab.mat.tmp) -->
+
+<!-- C4_drug_heatmap<-pheatmap(viab.mat.tmp.ordered,  -->
+<!--          annRow = Cluster_for_Heatmap, -->
+<!--          type="Cluster", -->
+<!--          doTranspose=TRUE, -->
+<!--          # scale = "row", -->
+<!--          # clustering_method = "complete",  -->
+<!--          cluster_rows = FALSE, -->
+<!--          show_colnames = FALSE, -->
+<!--          annotation_col = Heatmap_Annotation, -->
+<!--          annotation_colors = ann_colors, -->
+<!--          cellheight = 22, -->
+<!--          cellwidth = 4, -->
+<!--          breaks = breaks, -->
+<!--          color= names(breaks), -->
+<!--          border_color=NA, -->
+<!--          fontsize=10, -->
+<!--          fontsize_row=16 -->
+<!--          ) -->
+
+
+
+<!-- wrap_elements(arrangeGrob(C1_drug_heatmap[[4]]))+ -->
+<!-- wrap_elements(arrangeGrob(C2_drug_heatmap[[4]]))+ -->
+<!-- wrap_elements(arrangeGrob(C3_drug_heatmap[[4]]))+ -->
+<!-- wrap_elements(arrangeGrob(C4_drug_heatmap[[4]]))+ -->
+<!--   plot_layout(nrow=1, widths = c(0.93,0.13,0.52,1.03)) -->
+<!-- ``` -->
 ## Appendix
 ```{r appendix2}
 Sys.info()
