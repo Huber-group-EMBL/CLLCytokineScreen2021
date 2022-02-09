@@ -916,7 +916,8 @@ Fig2D<-Coef_Perc_Table %>%
   theme(legend.position = "bottom", 
         legend.key.width = unit(1.7, "cm"),
          axis.text.x= element_text(size=fontsize+4, angle=45, vjust=1))+
-  labs(fill="Coefficient", x="Genetic alteration")
+  labs(fill="Coefficient", x="Genetic alteration")+
+  guides(fill="none")
 
   Fig2D
 ```
