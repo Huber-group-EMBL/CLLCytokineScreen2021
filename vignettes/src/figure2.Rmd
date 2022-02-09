@@ -1698,6 +1698,7 @@ print(scatterplot)
 <!-- wrap_elements(arrangeGrob(C4_drug_heatmap[[4]]))+ -->
 <!--   plot_layout(nrow=1, widths = c(0.93,0.13,0.52,1.03)) -->
 <!-- ``` -->
+
 ## Appendix
 ```{r appendix2}
 Sys.info()
