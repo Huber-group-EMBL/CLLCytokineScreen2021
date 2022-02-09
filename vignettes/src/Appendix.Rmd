@@ -92,6 +92,7 @@ library(cowplot)
 library(ggh4x)
 library(magick)
 ```
+
 <!-- Define Functions -->
 ```{r factor2ind_supp}
 
@@ -734,7 +735,7 @@ clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
 c <- 
   clusters.surv %>%
   mutate(Cluster=factor(Cluster)) %>%
-  coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3)+ IGHV.status + trisomy12 + TP53,  data=.)
+  coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3)+ IGHV.status + trisomy12 + TP53+Methylation_Cluster,  data=.)
 
 #tidy results, exponentiate coefficients and estimate 95% confidence intervals 
 cox_output<- tidy(c, conf.int = TRUE,  exponentiate = TRUE) %>%
@@ -768,10 +769,60 @@ cox_output %>%
   kable() %>%
   kable_styling(latex_options = "striped") 
 
-
 ```
 
 **Appendix Table 4. Multivariate survival analysis of response clusters.** Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference.
+
+
+
+
+```{r}
+######Arrange data######
+clusters.surv <- left_join(Heatmap_clusters, survT, by = "PatientID")
+
+#Add meta data to heatmap clusters
+clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
+
+
+coxph <- clusters.surv%>%
+  mutate(Cluster=factor(Cluster))%>%
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3)+Methylation_Cluster, data=.) 
+
+# cox_outputcoxph_summ$coefficients
+
+#tidy results, exponentiate coefficients and estimate 95% confidence intervals 
+cox_output<- tidy(coxph, conf.int = TRUE,  exponentiate = TRUE) %>%
+  dplyr::select(term, estimate, p.value, conf.low, conf.high)
+
+#tidy names
+cox_output$term<-
+  cox_output$term %>% 
+  gsub(pattern="factor2ind", "", .)%>% 
+  gsub(pattern="[()]", "", .)%>% 
+  gsub(pattern=":", " ", .)%>% 
+  gsub(pattern="Cluster, 3", "Cluster 3 vs ", .)%>% 
+  gsub(pattern="Methylation_ClusterIP", "Methylation Cluster IP", .)%>% 
+  gsub(pattern="Methylation_ClusterLP", "Methylation Cluster LP", .)
+
+colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High")
+
+cox_output$HR <- round(cox_output$HR, 2)
+cox_output$p.value <- round(cox_output$p.value, 2)
+cox_output$CI.low <- round(cox_output$CI.low, 2)
+cox_output$CI.High <- round(cox_output$CI.High, 2)
+
+cox_output <- cox_output %>% 
+  dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
+
+
+colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
+
+cox_output %>%  
+  kable() %>%
+  kable_styling(latex_options = "striped") 
+
+```
+**Appendix Table 5. Multivariate survival analysis of response clusters.** Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference taken only Methylation Clusters into account. 
 
 \newpage
 
@@ -856,122 +907,122 @@ p1+
 
 
 
-```{r S2 Person Correlations,  fig.height=8, fig.width=16, warning = FALSE, message=FALSE}
-# Using high Drug Concentrations
+<!-- ```{r S2 Person Correlations,  fig.height=8, fig.width=16, warning = FALSE, message=FALSE} -->
+<!-- # Using high Drug Concentrations -->
 
-tmp<-df%>%
-  filter((Drug=="DMSO"&Cytokine!="No Cytokine")|(Drug!="DMSO"&Cytokine=="No Cytokine"), Drug_Concentration%in%c("High", "None"))%>%
-  group_by(PatientID, Drug, Cytlabel) %>%
-  summarize(Log=mean(Log), .groups = "keep") %>%
-  ungroup() %>%
-  mutate(Cytlabel=as.character(Cytlabel), Drug=as.character(Drug)) %>%
-  mutate(Condition=case_when(Cytlabel=="No Cytokine"~ Drug, Drug=="DMSO"~Cytlabel)) %>%
-  select(PatientID, Condition, Log)%>%
-  spread(Condition, Log)%>%
-  ungroup()
-
-
-Drug_Cyt_df<-tmp%>%
-  select(-"PatientID")%>%
-  as.matrix()
-
-rownames(Drug_Cyt_df)<-tmp %>%
-  ungroup() %>%
-  group_by(PatientID)%>%
-  dplyr::summarise( .groups = "keep")%>%
-  ungroup()%>%
-  unlist()
-
-Corr_method="pearson"
-
-Drug_Cyt_Correlation<-stats::cor(Drug_Cyt_df, method=Corr_method)
-
-# Plot
+<!-- tmp<-df%>% -->
+<!--   filter((Drug=="DMSO"&Cytokine!="No Cytokine")|(Drug!="DMSO"&Cytokine=="No Cytokine"), Drug_Concentration%in%c("High", "None"))%>% -->
+<!--   group_by(PatientID, Drug, Cytlabel) %>% -->
+<!--   summarize(Log=mean(Log), .groups = "keep") %>% -->
+<!--   ungroup() %>% -->
+<!--   mutate(Cytlabel=as.character(Cytlabel), Drug=as.character(Drug)) %>% -->
+<!--   mutate(Condition=case_when(Cytlabel=="No Cytokine"~ Drug, Drug=="DMSO"~Cytlabel)) %>% -->
+<!--   select(PatientID, Condition, Log)%>% -->
+<!--   spread(Condition, Log)%>% -->
+<!--   ungroup() -->
 
 
-Cytokines <-unique(df$Cytlabel) %>% setdiff("No Cytokine")
+<!-- Drug_Cyt_df<-tmp%>% -->
+<!--   select(-"PatientID")%>% -->
+<!--   as.matrix() -->
 
-Drugs<-unique(df$Drug) %>% setdiff("DMSO")
+<!-- rownames(Drug_Cyt_df)<-tmp %>% -->
+<!--   ungroup() %>% -->
+<!--   group_by(PatientID)%>% -->
+<!--   dplyr::summarise( .groups = "keep")%>% -->
+<!--   ungroup()%>% -->
+<!--   unlist() -->
 
+<!-- Corr_method="pearson" -->
 
-t_tmp<-theme(
-  plot.background = element_blank(),
-  panel.grid.major = element_blank(),
-  panel.grid.major.x = element_blank(),
-  panel.grid.minor = element_blank(),
-  panel.border = element_blank(),
-  panel.background = element_blank(),
-  axis.line = element_line(),
-  axis.text.x  = element_text(size = 12, face="bold"),
-  axis.text.y = element_text(size = 12, face="bold"),
-  axis.ticks.x = element_blank())
+<!-- Drug_Cyt_Correlation<-stats::cor(Drug_Cyt_df, method=Corr_method) -->
 
-
-#Drug
-
-Drug_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Drugs), which(colnames(Drug_Cyt_Correlation)%in%Drugs)]
-
-    Drug_Corr[upper.tri(Drug_Corr, diag = TRUE)]<- NA
-
-Drug_Cor_Plot<-  Drug_Corr %>%
-  as_tibble(rownames="Drug_1") %>%
-    dplyr::mutate(Drug_1=factor(Drug_1, levels = rev(rownames(Drug_Corr)))) %>%
-  pivot_longer(-Drug_1, names_to="Drug_2", values_to="Pearson_R") %>%
-  dplyr::filter(!is.na(Pearson_R)) %>%
+<!-- # Plot -->
 
 
-  ggplot(aes(Drug_1, Drug_2))+
-  geom_tile(aes(fill=Pearson_R),color = "grey")+
-  scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+
-  geom_text(aes(label=round(Pearson_R,2)), size=4)+
-    t_tmp+
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
-    labs(fill = "Pearson R", x="", y="")+
-  guides(fill="none")
+<!-- Cytokines <-unique(df$Cytlabel) %>% setdiff("No Cytokine") -->
+
+<!-- Drugs<-unique(df$Drug) %>% setdiff("DMSO") -->
 
 
-# Cytokine
-
-Cyt_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Cytokines), which(colnames(Drug_Cyt_Correlation)%in%Cytokines)]
-
-
-    Cyt_Corr[upper.tri(Cyt_Corr, diag = TRUE)]<- NA
-
-Cyt_Cor_Plot<-  Cyt_Corr %>%
-  as_tibble(rownames="Cyt_1") %>%
-    dplyr::mutate(Cyt_1=factor(Cyt_1, levels = rev(rownames(Cyt_Corr)))) %>%
-  pivot_longer(-Cyt_1, names_to="Cyt_2", values_to="Pearson_R") %>%
-  dplyr::filter(!is.na(Pearson_R)) %>%
-  # View()
-
-  ggplot(aes(Cyt_1, Cyt_2))+
-  geom_tile(aes(fill=Pearson_R),color = "grey")+
-  scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+
-  geom_text(aes(label=round(Pearson_R,2)), size=4)+
-    t_tmp+
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
-    labs(fill = "Pearson R", x="", y="")+
-  scale_y_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))+
-  scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))
+<!-- t_tmp<-theme( -->
+<!--   plot.background = element_blank(), -->
+<!--   panel.grid.major = element_blank(), -->
+<!--   panel.grid.major.x = element_blank(), -->
+<!--   panel.grid.minor = element_blank(), -->
+<!--   panel.border = element_blank(), -->
+<!--   panel.background = element_blank(), -->
+<!--   axis.line = element_line(), -->
+<!--   axis.text.x  = element_text(size = 12, face="bold"), -->
+<!--   axis.text.y = element_text(size = 12, face="bold"), -->
+<!--   axis.ticks.x = element_blank()) -->
 
 
+<!-- #Drug -->
 
-#Drug Cytokine
-Drug_Cyt_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Cytokines), which(colnames(Drug_Cyt_Correlation)%in%Drugs)]
+<!-- Drug_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Drugs), which(colnames(Drug_Cyt_Correlation)%in%Drugs)] -->
+
+<!--     Drug_Corr[upper.tri(Drug_Corr, diag = TRUE)]<- NA -->
+
+<!-- Drug_Cor_Plot<-  Drug_Corr %>% -->
+<!--   as_tibble(rownames="Drug_1") %>% -->
+<!--     dplyr::mutate(Drug_1=factor(Drug_1, levels = rev(rownames(Drug_Corr)))) %>% -->
+<!--   pivot_longer(-Drug_1, names_to="Drug_2", values_to="Pearson_R") %>% -->
+<!--   dplyr::filter(!is.na(Pearson_R)) %>% -->
 
 
-design1<-"
-  12
-  "
-tp<- theme(plot.tag=element_text(size = 30))
+<!--   ggplot(aes(Drug_1, Drug_2))+ -->
+<!--   geom_tile(aes(fill=Pearson_R),color = "grey")+ -->
+<!--   scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+ -->
+<!--   geom_text(aes(label=round(Pearson_R,2)), size=4)+ -->
+<!--     t_tmp+ -->
+<!--     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+ -->
+<!--     labs(fill = "Pearson R", x="", y="")+ -->
+<!--   guides(fill="none") -->
 
-Drug_Cor_Plot + tp +
-Cyt_Cor_Plot + tp +
-  plot_layout(design = design1, widths = c(1,1.3))+
-  plot_annotation(tag_levels = "A")
-```
 
-**Appendix Figure 2. Correlation of responses to stimuli and drugs.** Pearson correlation of log transformed viability values normalised to untreated control. Correlation between drug treatments  **(A)** and microenvironmental stimuli **(B)**.
+<!-- # Cytokine -->
+
+<!-- Cyt_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Cytokines), which(colnames(Drug_Cyt_Correlation)%in%Cytokines)] -->
+
+
+<!--     Cyt_Corr[upper.tri(Cyt_Corr, diag = TRUE)]<- NA -->
+
+<!-- Cyt_Cor_Plot<-  Cyt_Corr %>% -->
+<!--   as_tibble(rownames="Cyt_1") %>% -->
+<!--     dplyr::mutate(Cyt_1=factor(Cyt_1, levels = rev(rownames(Cyt_Corr)))) %>% -->
+<!--   pivot_longer(-Cyt_1, names_to="Cyt_2", values_to="Pearson_R") %>% -->
+<!--   dplyr::filter(!is.na(Pearson_R)) %>% -->
+<!--   # View() -->
+
+<!--   ggplot(aes(Cyt_1, Cyt_2))+ -->
+<!--   geom_tile(aes(fill=Pearson_R),color = "grey")+ -->
+<!--   scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+ -->
+<!--   geom_text(aes(label=round(Pearson_R,2)), size=4)+ -->
+<!--     t_tmp+ -->
+<!--     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+ -->
+<!--     labs(fill = "Pearson R", x="", y="")+ -->
+<!--   scale_y_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))+ -->
+<!--   scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1")) -->
+
+
+
+<!-- #Drug Cytokine -->
+<!-- Drug_Cyt_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Cytokines), which(colnames(Drug_Cyt_Correlation)%in%Drugs)] -->
+
+
+<!-- design1<-" -->
+<!--   12 -->
+<!--   " -->
+<!-- tp<- theme(plot.tag=element_text(size = 30)) -->
+
+<!-- Drug_Cor_Plot + tp + -->
+<!-- Cyt_Cor_Plot + tp + -->
+<!--   plot_layout(design = design1, widths = c(1,1.3))+ -->
+<!--   plot_annotation(tag_levels = "A") -->
+<!-- ``` -->
+
+<!-- **Appendix Figure 2. Correlation of responses to stimuli and drugs.** Pearson correlation of log transformed viability values normalised to untreated control. Correlation between drug treatments  **(A)** and microenvironmental stimuli **(B)**. -->
 
 
 ```{r}
@@ -1026,7 +1077,7 @@ p2<-df_patMeta%>%
              y=Log))+
   geom_hline(yintercept = 0)+
   geom_violin(cex=0.4, alpha=0.7,aes(x=Cytlabel, y=Log, colour = IGHV.status, fill = IGHV.status))+
-   geom_text(aes(label = Sig, y = 0.625), size = 6, data = filter(t_tests, Cytlabel%in%c("IL1\u03B2","Interferon \u03B3","SDF-1\u03B1","sCD40L","soluble anti-IgM","IL6","IL10","IL21","HS-5 CM","IL15","BAFF","IL2", "TGF\u03B21")))+
+   geom_text(aes(label = Sig, y = 0.625), size = 6, data = filter(t_tests, Cytlabel%in%c("IL1\u03B2","Interferon \u03B3","Interferonγ","SDF-1\u03B1","sCD40L","soluble anti-IgM","IL6","IL10","IL21","HS-5 CM","IL15","BAFF","IL2", "TGF\u03B21")))+
   scale_colour_manual(name = 'IGHV status', values = setNames(c(palreds[8],palblues[1]), c("M", "U"))) +
   scale_fill_manual(name = 'IGHV status', values = setNames(c(palreds[8],palblues[1]), c("M", "U"))) +
   theme_minimal()+
@@ -1204,6 +1255,26 @@ OS_Clusters_KM+theme(plot.tag=element_text(size = 20))+
 ```
 
 **Appendix Figure 5. Time to first treatment and overall survival by clusters.** Kaplan-Meier Curves of time to first treatment with p-value from univariate Cox proportional hazards model between C3 and C4 **(A)** and overall survival with p-value from univariate Cox proportional hazards  model between C1&2 and C3&4 **(B)**. Median survival not reached.
+
+### Additional Figure of Methylation Clusters and Microenviroenmental response
+```{r, fig.height=5}
+
+patMeta_Cluster %>% 
+  group_by(Cluster, Methylation_Cluster) %>% 
+  count() %>% 
+  group_by(Cluster) %>% 
+  mutate(freq = n / sum(n)) %>% 
+   plyr::ddply("Cluster", transform, label_ypos=cumsum(freq)) %>% 
+
+
+  ggplot(aes(x=Cluster, y=freq, fill=Methylation_Cluster))+
+  geom_bar(stat="identity")+
+  ylab("Relative incidence of\n methylation profiles")+
+  scale_fill_manual(name = 'Methylation Profile', values = Methylation_cluster)+
+  t2
+```
+
+**Appendix Figure XXX. Methylation profile of Clusters defined by response to microenvironmental stimuli** Barplot of methylation profiles in the four clusters of microenvironmental response. Predominantly IGHV unmutated clusters 1 and 2 show higher abundance of Low programmed Methylation profiles, while predominantly IGHV mutated clusters 3 and 4 show more highly programmed methylation clusters.
 
 
 
