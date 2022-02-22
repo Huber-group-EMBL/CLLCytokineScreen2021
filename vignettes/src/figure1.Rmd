@@ -528,24 +528,34 @@ t_tmp<-theme(
 
 
 #Drug
+Druglist<-c("Pyridone-6",  "BAY-11-7085", "Ralimetinib", "Everolimus",  "Selumetinib", "Idelalisib",  "Ibrutinib",   "PRT062607",   "Fludarabine", "Nutlin-3a",   "I-BET 762",   "Luminespib")
 
-Drug_Corr<-cor.mat[which(rownames(cor.mat)%in%Drugs), which(colnames(cor.mat)%in%Drugs)]
+Drug_data_tmp<-cor.mat[Druglist, Druglist]
+
+Drug_Corr<-Drug_data_tmp
 
     Drug_Corr[upper.tri(Drug_Corr, diag = TRUE)]<- NA
+    
+    
+# Drug_heatmap_clusters<-pheatmap::pheatmap(Drug_data_tmp)    
+
+
+# Drug_data_order<-rownames(Drug_data_tmp[Drug_heatmap_clusters$tree_row[["order"]],])
 
 Drug_Corr_tab<-Drug_Corr %>%
   as_tibble(rownames="Drug_1") %>%
-    dplyr::mutate(Drug_1=factor(Drug_1, levels = rev(rownames(Drug_Corr)))) %>%
   pivot_longer(-Drug_1, names_to="Drug_2", values_to="Pearson_R") %>%
   dplyr::filter(!is.na(Pearson_R)) %>% 
   left_join(Cor.p.value, by=c("Drug_1"="Component_1", "Drug_2"="Component_2")) %>% 
   mutate(adj.p.value=p.adjust(p_value, method="BH"))
     
 Drug_Cor_Plot<- Drug_Corr_tab %>% 
+    dplyr::mutate(Drug_1=factor(Drug_1, levels = rev(Druglist)),
+                   Drug_2=factor(Drug_2, levels = (Druglist))) %>%
   ggplot(aes(Drug_1, Drug_2))+
   geom_tile(aes(fill=Pearson_R),color = "grey")+
   scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+
-  geom_text(aes(label=round(Pearson_R,2), fontface = ifelse(adj.p.value<0.05, 2, 1)), size=4)+
+  geom_text(aes(label=ifelse(adj.p.value<0.05,sub("^(-?)0.", "\\1.", sprintf("%.2f", round(Pearson_R,2))),""), fontface = ifelse(adj.p.value<0.05, 1, 1)), size=5)+
     t_tmp+
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
     labs(fill = "Pearson R", x="", y="")+
@@ -554,26 +564,32 @@ Drug_Cor_Plot<- Drug_Corr_tab %>%
 Drug_Cor_Plot
 
 
-
 # Cytokine
 
-Cyt_Corr<-cor.mat[which(rownames(cor.mat)%in%Cytokines), which(colnames(cor.mat)%in%Cytokines)]
+tmp_heatmap<-pheatmap::pheatmap(cor.mat[which(rownames(cor.mat)%in%Cytokines), which(colnames(cor.mat)%in%Cytokines)], silent = TRUE)
+
+Cytokinelist<-rownames(cor.mat[which(rownames(cor.mat)%in%Cytokines), which(colnames(cor.mat)%in%Cytokines)][tmp_heatmap$tree_row[["order"]],])
+
+Cyt_Corr<-cor.mat[Cytokinelist, Cytokinelist]
+
 
     Cyt_Corr[upper.tri(Cyt_Corr, diag = TRUE)]<- NA
 
 Cyt_Corr_tab<-Cyt_Corr %>%
   as_tibble(rownames="Cyt_1") %>%
-    dplyr::mutate(Cyt_1=factor(Cyt_1, levels = rev(rownames(Cyt_Corr)))) %>%
+    # dplyr::mutate(Cyt_1=factor(Cyt_1, levels = rev(rownames(Cyt_Corr)))) %>%
   pivot_longer(-Cyt_1, names_to="Cyt_2", values_to="Pearson_R") %>%
   dplyr::filter(!is.na(Pearson_R)) %>% 
   left_join(Cor.p.value, by=c("Cyt_1"="Component_1", "Cyt_2"="Component_2")) %>% 
   mutate(adj.p.value=p.adjust(p_value, method="BH"))    
     
 Cyt_Cor_Plot<-  Cyt_Corr_tab %>%
+    dplyr::mutate(Cyt_1=factor(Cyt_1, levels = rev(Cytokinelist)),
+                  Cyt_2=factor(Cyt_2, levels = (Cytokinelist))) %>%
   ggplot(aes(Cyt_1, Cyt_2))+
   geom_tile(aes(fill=Pearson_R),color = "grey")+
   scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+
-  geom_text(aes(label=round(Pearson_R,2), fontface = ifelse(adj.p.value<0.05, 2, 1)), size=4)+
+  geom_text(aes(label=ifelse(adj.p.value<0.05,sub("^(-?)0.", "\\1.", sprintf("%.2f", round(Pearson_R,2))),""), fontface = ifelse(adj.p.value<0.05, 1,1)), size=5)+
     t_tmp+
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
     labs(fill = "Pearson R", x="", y="")+
@@ -832,11 +848,11 @@ Figure1 <-
   Fig1A + tp+
   Fig1B + tp+
   wrap_elements(Fig1C ) + tp+
-  wrap_elements(Drug_Cor_Plot) + tp+
-  wrap_elements(Cyt_Cor_Plot) + tp+
+  Drug_Cor_Plot + tp+
+  Cyt_Cor_Plot + tp+
   
   plot_annotation(tag_levels = "A", title="Figure 1", theme = theme(title=element_text(size = 20))) +
-  plot_layout(design = design1, heights = c(0.7,1.2), width=c(1,0.5,1.1,1))
+  plot_layout(design = design1, heights = c(0.7,1.2), width=c(1,0.7,.9,1))
 
 
 Figure1
