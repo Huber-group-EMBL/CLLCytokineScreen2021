@@ -479,9 +479,6 @@ Fig1F
 ```{r, fig.height=7, fig.width=10}
 # Data preparation
 #:::::::::::::::::::::::::::::::::::::::::::
-mydata <- mtcars %>%
-  select(mpg, disp, hp, drat, wt, qsec)
-head(mydata, 3)
 
 mydata<-df%>%
   filter((Drug=="DMSO"&Cytokine!="No Cytokine")|(Drug!="DMSO"&Cytokine=="No Cytokine"), Drug_Concentration%in%c("High", "None"))%>%
