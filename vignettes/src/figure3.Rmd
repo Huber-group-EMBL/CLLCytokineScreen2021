@@ -589,6 +589,51 @@ Fig3A
 
 ```
 
+#### Adjusted Figure 3A with FDR of 5%
+```{r, fig.height = 8, fig.width = 9.5}
+############################# Define FDR cutoff #################################
+fdr = 0.05
+  
+
+############################################ Plot ########################################
+p_values %<>% 
+  mutate(Cytokine=factor(Cytokine, levels = Cytokine_order)) %>% 
+  mutate(Genetic_alt=factor(Genetic_alt, levels = Genetic_alt_order))
+  
+
+  ggplot(dplyr::filter(p_values, adj.p.value>fdr), 
+         aes(x = Cytokine, y = -log10(adj.p.value))) +
+  geom_point(color = "lightgrey", size=3) +
+  geom_beeswarm(data = dplyr::filter(p_values, adj.p.value<=fdr), 
+                aes( color=Genetic_alt), size=5, cex=1.7) +
+  ##FDR line  
+  geom_hline(yintercept = -log10(fdr),linetype="dashed", size=0.3)+
+  
+  ##Main Theme
+  t1 +
+  
+  theme(axis.text.x = element_text(angle=45, 
+                                   size=18, 
+                                   face="bold",
+                                   hjust=1, 
+                                   vjust=1),
+        axis.title.x=element_blank()) +
+  ##Legend Theme
+  theme(legend.position="bottom", 
+        legend.title = element_text(face='bold', hjust = 0, size=18), 
+        legend.key = element_blank(),  
+        legend.text = element_text(size=18)) +
+  guides(colour = guide_legend(nrow=3, title = "Mutations"), 
+         shape = guide_legend(ncol = 1)) +
+  scale_color_manual(name = "Mutations", values = colors, labels=c("IGHV.status"="IGHV status", "del9p"="del(9p)", "trisomy12"="trisomy 12", "gain17q"="gain(17q)", "gain2p"="gain(2p)","gain19p"="gain(19p)","gain19q"="gain(19q)", "del7q"="del(7q)","del9q"="del(9q)", "del4p"= "del(4p)", "SPEN"="SPEN", "del11q"="del(11q)", "del1q" = "del(1q)")) +
+  scale_y_continuous(expression("BH-adjusted  "* italic(p)*"-value"), 
+                     breaks=seq(0,10,5),
+                     labels=math_format(expr=10^.x)(-seq(0,10,5)))+
+  scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))
+
+```
+
+
 Print significant p-values for text reference. 
 ```{r arrange_pvals3}
 
