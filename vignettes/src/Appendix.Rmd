@@ -787,7 +787,7 @@ clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
 
 coxph <- clusters.surv%>%
   mutate(Cluster=factor(Cluster))%>%
-    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3)+Methylation_Cluster, data=.) 
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3), data=.) 
 
 # cox_outputcoxph_summ$coefficients
 
@@ -823,7 +823,55 @@ cox_output %>%
   kable_styling(latex_options = "striped") 
 
 ```
-**Appendix Table 5. Multivariate survival analysis of response clusters.** Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference taken only Methylation Clusters into account. 
+**Appendix Table 5. Survival analysis of microenvironmental response clusters comparing Cluster 3 to the other Clusters.** 
+
+<!-- ```{r} -->
+<!-- ######Arrange data###### -->
+<!-- clusters.surv <- left_join(Heatmap_clusters, survT, by = "PatientID") -->
+
+<!-- #Add meta data to heatmap clusters -->
+<!-- clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID") -->
+
+
+<!-- coxph <- clusters.surv%>% -->
+<!--   filter(Cluster%in%c(1,2,3)) %>%  -->
+<!--   mutate(Cluster3vs1_2=factor(if_else(Cluster==3, "3", "1_2")))%>% -->
+<!--     coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster3vs1_2, "3"), data=.)  -->
+
+<!-- # cox_outputcoxph_summ$coefficients -->
+
+<!-- #tidy results, exponentiate coefficients and estimate 95% confidence intervals  -->
+<!-- cox_output<- tidy(coxph, conf.int = TRUE,  exponentiate = TRUE) %>% -->
+<!--   dplyr::select(term, estimate, p.value, conf.low, conf.high) -->
+
+<!-- #tidy names -->
+<!-- cox_output$term<- -->
+<!--   cox_output$term %>%  -->
+<!--   gsub(pattern="factor2ind", "", .)%>%  -->
+<!--   gsub(pattern="[()]", "", .)%>%  -->
+<!--   gsub(pattern=":", " ", .)%>%  -->
+<!--   gsub(pattern="Cluster, 3", "Cluster 3 vs ", .)%>%  -->
+<!--   gsub(pattern="Methylation_ClusterIP", "Methylation Cluster IP", .)%>%  -->
+<!--   gsub(pattern="Methylation_ClusterLP", "Methylation Cluster LP", .) -->
+
+<!-- colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High") -->
+
+<!-- cox_output$HR <- round(cox_output$HR, 2) -->
+<!-- cox_output$p.value <- round(cox_output$p.value, 2) -->
+<!-- cox_output$CI.low <- round(cox_output$CI.low, 2) -->
+<!-- cox_output$CI.High <- round(cox_output$CI.High, 2) -->
+
+<!-- cox_output <- cox_output %>%  -->
+<!--   dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value ))  -->
+
+
+<!-- colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High") -->
+
+<!-- cox_output %>%   -->
+<!--   kable() %>% -->
+<!--   kable_styling(latex_options = "striped")  -->
+
+<!-- ``` -->
 
 \newpage
 
