@@ -1388,6 +1388,24 @@ patMeta_Cluster %>%
   t2
 ```
 
+```{r, fig.height=5}
+
+library(ggmosaic)
+
+patMeta_Cluster %>% 
+  select(PatientID, Cluster, Methylation_Cluster) %>% 
+  mutate(Methylation_Cluster=factor(Methylation_Cluster, levels = c("HP","IP", "LP"))) %>%
+  
+  ggplot()+
+    ggmosaic::geom_mosaic(aes(x = ggmosaic::product(Cluster), fill=Methylation_Cluster), alpha=1)+
+  ylab("Incidence of\n methylation profiles")+
+  scale_fill_manual(name = 'Methylation Profile', values = Methylation_cluster)+
+  t2
+
+
+```
+
+
 **Appendix Figure XXX. Methylation profile of Clusters defined by response to microenvironmental stimuli** Barplot of methylation profiles in the four clusters of microenvironmental response. Predominantly IGHV unmutated clusters 1 and 2 show higher abundance of Low programmed Methylation profiles, while predominantly IGHV mutated clusters 3 and 4 show more highly programmed methylation clusters.
 
 
