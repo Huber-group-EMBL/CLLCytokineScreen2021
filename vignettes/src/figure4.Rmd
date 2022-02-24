@@ -481,7 +481,8 @@ reactome$term <- gsub("SIGNALING BY INTERLEUKINS",
 reactome$term <- gsub("REGULATION OF TP53 ACTIVITY", 
                       "Regulation of TP53 Pathway",reactome$term )
 reactome$term <- gsub("SIGNALING BY TGF BETA RECEPTOR COMPLEX",
-                      "Signaling by TGFbeta \nReceptor Complex", reactome$term )
+                      # "Signaling by TGFbeta \nReceptor Complex", reactome$term )
+                      "Signaling by TGFbeta Receptor Complex", reactome$term )
 reactome$term <- gsub("TNF SIGNALING", 
                       "TNF Signaling",reactome$term )
 reactome$term <- gsub("INTERFERON ALPHA BETA SIGNALING", 
@@ -692,12 +693,43 @@ rm(plotTab)
 ```
 
 ## Assemble Figure 4
-```{r Figure4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=18, fig.width=19, eval = TRUE}
+
+<!-- # ```{r Figure4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=18, fig.width=19, eval = TRUE} -->
+<!-- #  -->
+<!-- # design1<-" -->
+<!-- #   AABB -->
+<!-- #   CCDD -->
+<!-- #   EFFF -->
+<!-- # " -->
+<!-- #  -->
+<!-- # tp <- theme(plot.tag=element_text(size = 30, face="plain")) -->
+<!-- #  -->
+<!-- # Fig4 <- -->
+<!-- #  -->
+<!-- #  -->
+<!-- #  wrap_elements( Fig4A )+ tp + -->
+<!-- #  wrap_elements( Fig4B )+ tp + -->
+<!-- #  wrap_elements( Fig4C )+ tp +  -->
+<!-- #  wrap_elements( Fig4D )+ tp +  -->
+<!-- #  wrap_elements( Fig4E )+ tp +   -->
+<!-- #  wrap_elements( Fig4F )+ tp + -->
+<!-- #      -->
+<!-- #   plot_annotation(tag_levels = "A", title="Figure 4", theme = theme(title=element_text(size = 20)))+ -->
+<!-- #   plot_layout(design = design1, heights = c(1,1,1), width=c(1,1,1,1)) -->
+<!-- #  -->
+<!-- # Fig4 -->
+<!-- #  -->
+<!-- #  -->
+<!-- # ``` -->
+
+```{r Figure4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=17, fig.width=17, eval = TRUE}
 
 design1<-"
-  AABB
-  CCDD
-  EFFF
+  AC
+  BC
+  BD
+  BF
+  EF
 "
 
 tp <- theme(plot.tag=element_text(size = 30, face="plain"))
@@ -713,7 +745,7 @@ Fig4 <-
  wrap_elements( Fig4F )+ tp +
     
   plot_annotation(tag_levels = "A", title="Figure 4", theme = theme(title=element_text(size = 20)))+
-  plot_layout(design = design1, heights = c(1,1,1), width=c(1,1,1,1))
+  plot_layout(design = design1, heights = c(1,0.3,0.4,0.3,1), width=c(1,2))
 
 Fig4
 
