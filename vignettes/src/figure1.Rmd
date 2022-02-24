@@ -552,7 +552,7 @@ Drug_Cor_Plot<- Drug_Corr_tab %>%
   ggplot(aes(Drug_1, Drug_2))+
   geom_tile(aes(fill=Pearson_R),color = "grey")+
   scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+
-  geom_text(aes(label=ifelse(adj.p.value<0.05,sub("^(-?)0.", "\\1.", sprintf("%.2f", round(Pearson_R,2))),""), fontface = ifelse(adj.p.value<0.05, 1, 1)), size=5)+
+  geom_text(aes(label=ifelse(adj.p.value<0.05,sub("^(-?)0.", "\\1.", sprintf("%.2f", round(Pearson_R,2))),""), fontface = ifelse(adj.p.value<0.05, 1, 1)), size=4)+
     t_tmp+
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
     labs(fill = "Pearson R", x="", y="")+
@@ -586,7 +586,7 @@ Cyt_Cor_Plot<-  Cyt_Corr_tab %>%
   ggplot(aes(Cyt_1, Cyt_2))+
   geom_tile(aes(fill=Pearson_R),color = "grey")+
   scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+
-  geom_text(aes(label=ifelse(adj.p.value<0.05,sub("^(-?)0.", "\\1.", sprintf("%.2f", round(Pearson_R,2))),""), fontface = ifelse(adj.p.value<0.05, 1,1)), size=5)+
+  geom_text(aes(label=ifelse(adj.p.value<0.05,sub("^(-?)0.", "\\1.", sprintf("%.2f", round(Pearson_R,2))),""), fontface = ifelse(adj.p.value<0.05, 1,1)), size=4)+
     t_tmp+
     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
     labs(fill = "Pearson R", x="", y="")+
@@ -831,7 +831,7 @@ Cyt_Cor_Plot
 
 
 ## Assemble Figure
-```{r, Figure1, fig.height=13, fig.width=18, fig.path=plotDir, dev=c("png", "cairo_pdf"), message=FALSE, warning=FALSE}
+```{r, Figure1, fig.height=11, fig.width=14, fig.path=plotDir, dev=c("png", "cairo_pdf"), message=FALSE, warning=FALSE}
 
 tp <- theme(plot.tag=element_text(size = 30, face="plain"))
 
@@ -842,14 +842,14 @@ design1 <-"
 
 Figure1 <-
   
-  Fig1A + tp+
-  Fig1B + tp+
+  wrap_elements(Fig1A) + tp+
+  wrap_elements(Fig1B) + tp+
   wrap_elements(Fig1C ) + tp+
-  Drug_Cor_Plot + tp+
-  Cyt_Cor_Plot + tp+
+  wrap_elements(Drug_Cor_Plot) + tp+
+  wrap_elements(Cyt_Cor_Plot) + tp+
   
   plot_annotation(tag_levels = "A", title="Figure 1", theme = theme(title=element_text(size = 20))) +
-  plot_layout(design = design1, heights = c(0.7,1.2), width=c(1,0.7,.9,1))
+  plot_layout(design = design1, heights = c(0.7,1.2), width=c(.8,.7,.9,1.2))
 
 
 Figure1
