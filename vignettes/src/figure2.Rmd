@@ -502,7 +502,17 @@ Fig2B
 
 
 ```
-
+#### Print median LDT of clusters for text reference
+```{r}
+  patMeta_cl %>%
+  #join patient meta data with clusters, to LDT dataframe
+  left_join(  dplyr::select(LDT, PatientID, doubling.time), by=c("PatientID"="PatientID")) %>%
+  dplyr::filter(!is.na(doubling.time)) %>%
+  dplyr::mutate(Cluster=as.factor(Cluster)) %>%
+  group_by(Cluster) %>% 
+  summarize(median.doubling.time=round(median(doubling.time), 2))
+  
+```
 
 ### Figure 2C
   
