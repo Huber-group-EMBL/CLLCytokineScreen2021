@@ -1628,6 +1628,76 @@ tp <- theme(plot.tag=element_text(size = 30))
 
 \newpage
 
+```{r, fig.height= 7, fig.width = 12, warning=F, message=F, cache=FALSE}
+
+cytSeq <- dds_smp
+
+#Filter out IGHV genes
+cytSeq <- cytSeq[!grepl("IG_", rowData(cytSeq)$biotype),]
+
+#split into 1,2
+cytSeq.12 <- cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(1,2)]
+
+#remove patients where IGHV is unknown
+cytSeq.12 <- cytSeq.12[,colData(cytSeq.12)[,"IGHV.status"] %in% c("U","M")]
+
+#set order of factors
+cytSeq.12$Cluster <- factor(cytSeq.12$Cluster,
+                            levels = c("1","2"))
+
+cytSeq.12$IGHV.status <- factor(cytSeq.12$IGHV.status,
+                                levels = c("U","M"))
+
+design(cytSeq.12) <- ~ IGHV.status + Cluster
+
+cytSeq.12 <- DESeq(cytSeq.12)
+
+res.ds <-
+  results(cytSeq.12, contrast = c("Cluster", 1, 2), tidy = TRUE) %>%
+  dplyr::rename(Symbol = "row") %>%
+  arrange(pvalue)
+
+#get ensembl ids to Entrez dataframe
+ens2entrez <-
+  rowData(cytSeq.12)[c("entrezgene", "symbol")] %>%
+  as.data.frame() %>%
+  rownames_to_column("ENSEMBL") %>%
+  tibble::as_tibble()
+
+
+
+#Join
+res.ds <- left_join(res.ds, ens2entrez, by=c("Symbol"="ENSEMBL"))
+
+sgncuoff <- 1.4
+
+volPlot <-
+  res.ds %>%
+  filter(!is.na(padj), !is.na(symbol), symbol!="") %>%
+
+ggplot( aes(x=log2FoldChange, y=-log10(padj))) +
+      annotate("rect", xmin = 0.0, xmax = Inf, ymin = -Inf, ymax = Inf, fill = palreds[1], alpha = 0.2)+
+      annotate("rect", xmin = 0.0, xmax = -Inf, ymin = -Inf, ymax = Inf,alpha = 0.2, fill = palblues[1])+
+      geom_point(aes(alpha=0.4, colour = ifelse(-log10(padj)>sgncuoff,"black","grey"))) +
+      theme(legend.position = "none") +
+      geom_label_repel(aes(label=ifelse(-log10(padj)>sgncuoff&abs(log2FoldChange)>2,as.character(symbol),''),
+                           colour=ifelse(log2FoldChange>0, palreds[2], palblues[4])),
+                       size=3.5, max.overlaps=30)+
+      scale_colour_manual(values=c(palblues[2], palreds[4], "black", "grey"))+
+      t2 +
+      labs(title="Cluster 1 versus 2", x = "Log2FC", y = "-log10(adj p-val)", color = "Significance")+
+      guides(color="none", alpha="none")
+
+
+volPlot
+
+
+```
+
+**Appendix Figure XX. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.** Volcano plot of differentially expressed genes between Cluster 1 and Cluster 2. X axis indicates log2 fold change values, calculated using the Deseq package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05.
+
+\newpage
+
 ```{r S8 receptor expression, fig.width=10, fig.height=7, warning=F}
 
 #VST
