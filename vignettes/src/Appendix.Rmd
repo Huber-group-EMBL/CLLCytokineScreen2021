@@ -1887,6 +1887,56 @@ wrap_elements(arrangeGrob(C4_drug_heatmap[[4]]))+
 
 \newpage
 
+
+```{r, fig.width=11, fig.height=14}
+
+Drug_order<-c("BAY-11-7085","Fludarabine","Everolimus","Nutlin-3a","Idelalisib","Ralimetinib","Ibrutinib","I-BET 762","PRT062607","Pyridone-6","Selumetinib","Luminespib")
+  
+stat.test <- df %>%
+  left_join(Heatmap_clusters, by = "PatientID") %>%
+  dplyr::filter(Drug!="DMSO",
+                Drug_Concentration=="High",
+                Cytlabel=="No Cytokine",
+                Cluster%in%c(1,2,3,4)) %>%
+  dplyr::mutate(Cluster=factor(Cluster)
+                ,Drug=factor(Drug, levels = Drug_order)
+                )  %>%
+  group_by(Drug) %>%
+  rstatix::t_test(Log ~ Cluster, p.adjust.method="BH", comparisons=list(c(1,2),c(3,4)))%>%
+  rstatix::add_y_position(step.increase=0.001)
+
+df %>%
+  left_join(Heatmap_clusters, by = "PatientID") %>%
+  dplyr::filter(Drug!="DMSO",
+                Drug_Concentration=="High",
+                Cytlabel=="No Cytokine",
+                Cluster%in%c(1,2,3,4)) %>%
+  dplyr::mutate(Cluster=factor(Cluster)
+                ,Drug=factor(Drug, levels = Drug_order)
+                ) %>%
+  
+
+  ggplot(aes(x=Cluster, y= Log))+
+  stat_pvalue_manual(stat.test, label = "p.adj", tip.length = 0.01)+
+  geom_hline(yintercept = 0)+
+  geom_boxplot()+
+  geom_beeswarm(aes(color=Cluster))+
+  scale_color_manual(values=colors[1:4])+
+  t2+ theme(strip.background =element_blank())+
+  guides(color="none")+
+  facet_wrap(.~Drug, ncol=3, scales="free_y")+
+  ylab("Log(Viability)")+
+  coord_cartesian(clip="off")
+
+
+```
+
+**Appendix Figure XX. Drug response by clusters.** Log transformed viabilities after treatment with drugs, faceted by cluster. BH-adjusted p-values from student's t-tests are shown.
+
+
+
+\newpage
+
 ```{r S6 GSEA, fig.height= 14, fig.width = 12, warning=F, message=F, cache=FALSE}
 
 cytSeq <- dds_smp
