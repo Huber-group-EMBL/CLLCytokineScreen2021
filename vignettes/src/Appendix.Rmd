@@ -88,6 +88,7 @@ library(magrittr)
 library(gtable)
 library(glmnet)
 library(RColorBrewer)
+library(grid)
 library(gridExtra)
 library(cowplot)
 library(ggh4x)
@@ -396,6 +397,165 @@ lassoPlot <- function(lassoOut, geneMatrix, betaMatrix, freqCut = 1, coefCut = 0
 
 ```
 
+
+```{r lassoPlot_CLLPD}
+
+
+ lassoPlot_CLLPD<- function(lassoOut, viabMatrix, PDMatrix, freqCut = 1, coefCut = 0.01) {
+
+    
+    ###FOR THE BAR PLOT
+    #extract coefMat for each stimulus
+    barValue <- rowMeans(lassoOut$coefMat)
+    #extract proportion of repeats for which each coefficient is significant
+    freqValue <- rowMeans(abs(sign(lassoOut$coefMat)))
+    #filter out coefficients that don't meet freqCut and coefCut thresholds
+    barValue <- barValue[abs(barValue) >= coefCut & freqValue >= freqCut] 
+    #arrange the bar values in numerical order
+    barValue <- barValue[order(barValue)]
+    #if there are no sig coefficients, don't plot
+    if(length(barValue) == 0) {
+      
+      next
+    }
+
+    ###FOR THE HEATMAP AND SCATTER PLOT
+    #get feature matrix and response matrix to plot
+    allData <- viabMatrix
+    PDValue <- PDMatrix
+    
+    #get feature matrix for sig coefficients only
+    tabValue <- allData[, names(barValue),drop=FALSE]
+    ord <- order(PDValue)
+    PDValue <- PDValue[ord]
+    tabValue <- tabValue[ord, ,drop=FALSE]
+    sampleIDs <- rownames(tabValue)
+    tabValue <- as_tibble(tabValue)
+    tabValue$Sample <- sampleIDs
+    
+    
+    
+    matValue <- gather(tabValue, key = "Var",value = "Value", -Sample)
+    
+    
+    #arrange order of heatmap
+    matValue$Var <- factor(matValue$Var, levels = names(barValue))
+    matValue$Sample <- factor(matValue$Sample, levels = names(PDValue))
+
+   
+     #plot the heatmap 
+    
+      p1 <- ggplot(matValue, aes(x=Sample, y=Var)) + 
+            geom_tile(aes(fill=Value), color = "white") + #ghost white
+            theme_bw()+
+            scale_y_discrete(expand=c(0,0)) + 
+            theme(axis.title.y = element_text( size=14),
+                  axis.title.x = element_text( size=14),
+                  axis.text.x=element_text(hjust=0, size=11),
+                  axis.text.y=element_text(hjust=0.1, size=11),
+                  axis.ticks=element_blank(),
+                  panel.border=element_rect(colour="gainsboro"),  
+                  plot.title=element_text(face="bold", size = 18, margin = margin(t = -5, b = 1)), 
+                  panel.background=element_blank(),
+                  panel.grid.major=element_blank(), 
+                  panel.grid.minor=element_blank()) + 
+            xlab("Viability z score") + 
+            ylab("") +
+            scale_fill_gradient2(low = palblues[1],high = palreds[8], mid = "white",guide="none")
+            
+        
+
+         
+    #Plot the bar plot on the left of the heatmap 
+    barDF = data.frame(barValue, nm = factor(names(barValue),levels=names(barValue)))
+    
+    p2 <- ggplot(data=barDF, aes(x = nm, y = barValue)) + 
+      geom_bar(stat = "identity", 
+               fill = ifelse(barValue<0,
+                           palblues[6], palreds[8]), 
+               colour = "black", 
+               size=0.3) + 
+      scale_x_discrete(expand = c(0, 0.5)) + 
+      scale_y_continuous(expand = c(0, 0)) + 
+      coord_flip(ylim = c(-0.3, 0.35)) + #changed from min(barValue) and max(barValue)
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(), 
+            axis.ticks.y = element_blank(),
+            panel.grid.minor = element_blank(), 
+            axis.text=element_text(size = 11, angle = 45, hjust = 1, vjust = 1),
+                axis.title = element_text(size = 14), 
+            panel.border = element_blank()) +
+      ylab("Size of predictor") + 
+      geom_vline(xintercept = c(0.5), 
+                 color = "black", 
+                 size = 0.6)
+    
+    #Plot the scatter plot under the heatmap
+    
+    scatterDF = data.frame(X=factor(names(PDValue), 
+                                    levels=names(PDValue)), 
+                           Y=unlist(PDValue))
+    
+    p3 <- 
+      ggplot(scatterDF, aes(x=X, y=Y)) + 
+      geom_point(shape=21, 
+                     fill="dimgrey", 
+                     colour="#707372", #dark grey
+                     size=1.2) + 
+      theme_bw() +
+      theme(panel.grid.minor=element_blank(), 
+                panel.grid.major.x=element_blank(), 
+                #axis.title.x=element_blank(), 
+                axis.ticks.x=element_blank(), 
+                axis.text.y=element_text(size=11), 
+                axis.title.x=element_text(size=14), 
+                panel.border=element_rect(colour="dimgrey", size=0.1),
+                panel.background=element_rect(fill="white")) +
+      xlab("CLL PD for each sample")
+    
+    
+    #Assemble all the plots togehter
+
+    # construct the gtable
+    wdths = c(0.2, 1.5, 0.2, 1.3*ncol(matValue), 1.5, 0.2)
+    hghts = c(0.2, 0.2, 0.0020*nrow(matValue), 0.3, 1, 0.2)
+    gt = gtable(widths=unit(wdths, "in"), heights=unit(hghts, "in"))
+    
+    ## make grobs
+    gg1 = ggplotGrob(p1)
+    gg2 = ggplotGrob(p2)
+    gg3 = ggplotGrob(p3)
+
+    ## fill in the gtable
+   
+    #HEATMAP
+    #5:1 = "PREDICTORS"
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "panel"), 3, 4) # add heatmap
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "panel"), 3, 4) #add legend
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "title"), 1, 4) #add title to plot
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "axis-l"), 3, 5) # variable names
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "xlab-b"), 2, 4) # axis title
+    
+    #BARPLOT
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "panel"), 3, 2) # add barplot
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "axis-b"), 4, 2) # y axis for barplot
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "xlab-b"), 2, 2) # y lab for barplot
+
+    
+    #SCATTER PLOT
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "panel"), 5, 4) # add scatterplot
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "xlab-b"), 6, 4) # x label for scatter plot
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "axis-l"), 5, 3) #  axis for scatter plot
+    
+   
+  # grid.draw(gt)
+    return(gt)
+ 
+}
+
+
+```
+
 ```{r makelegends_supp}
 
 makelegends <- function (legendFor, colors) 
@@ -457,6 +617,21 @@ makelegends <- function (legendFor, colors)
 
 ```
 
+```{r Scale viability matrix}
+########### Scaling and Centering of Viability Matrix ################
+
+# medianCenter_MadScale: 
+#function to  scale with MAD, center to merdian
+medianCenter_MadScale <- function(x) {
+  s <- median(x)
+  #s=0
+  (x - s) / mad(x, center = s)
+}
+
+# scaleCytResp function:  to apply medianCenter_MadScale row wise to viability matrix
+scaleCytResp  <- function(x) t(apply(x, 1, medianCenter_MadScale)) 
+
+```
 
 
 <!-- Define Aesthetics  -->
@@ -524,6 +699,10 @@ patMeta$treatment <- as.factor(patMeta$treatment)
 
 #survT: tibble containing patient clinical outcomes
 load( "../../data/survT.RData")
+
+
+#CLL PD 
+load( "../../data/CLL_PD.RData")
 
 ```
 
@@ -643,7 +822,6 @@ colnames(Cytokine_labels) <- c("name", "Cytlabel")
 
 
 ```
-
 
 ```{r Appendix Table 1 Pat Characteristics}
 
@@ -1182,11 +1360,11 @@ patMeta_Cluster %>%
 **Appendix Figure XXX. Methylation profile of Clusters defined by response to microenvironmental stimuli** Barplot of methylation profiles in the four clusters of microenvironmental response. Predominantly IGHV unmutated clusters 1 and 2 show higher abundance of Low programmed Methylation profiles, while predominantly IGHV mutated clusters 3 and 4 show more highly programmed methylation clusters.
 
 
+
 <!-- ### Additional Figure of CLL_PD and Clusters of Microenvironmental response -->
 ```{r, fig.height=5}
-load( "../../data/CLL_PD.RData")
 
-CLL_PD %>% 
+CLL_PD_Boxplot<-CLL_PD %>% 
   left_join( patMeta_Cluster, by="PatientID") %>% 
   mutate(Cluster=as.factor(Cluster)) %>% 
   
@@ -1203,11 +1381,227 @@ CLL_PD %>%
 
 
 ```
-**Appendix Figure XXX. CLL Proliferative Drive as defined by Lu et al., 2021^5^** Beeswarm Plot of Proliferative drive in the clusters defined by microenvironmental resonse. P-values are shown from student's t-tests. 
+
+
+```{r, message=FALSE, warning=FALSE}
+
+########### Lasso Model of CLL_PD and Cytokine response in all patients ################
+#make viability matrix for cytokine treatments for patients
+cyt_viab <- dplyr::select(dplyr::filter(df, Drug == "DMSO", Cytokine != "No Cytokine"), 
+                PatientID, 
+                Log, 
+                Cytokine) %>% spread(Cytokine, Log) %>% as.data.frame()
+
+#make PatID the row names
+rownames(cyt_viab) <- unlist(cyt_viab[,1]) # the first row will be the header
+cyt_viab <- dplyr::select(cyt_viab,-PatientID) 
+
+cyt_viab <- t(cyt_viab)
+
+#run scaleCytResp on viability matrix
+x <- scaleCytResp(cyt_viab)
+
+viabMat <-t(x)
+
+
+## Response matrix 
+PDmat <- 
+  dplyr::select(CLL_PD, PatientID, CLL_PD) %>% 
+  #reshape data
+  spread(key = PatientID, value = CLL_PD) %>% 
+  data.frame() 
+  
+
+
+#get only viability values for aptients that have a PD
+viabMat <- viabMat[colnames(PDmat),]
+
+
+# Run logistic regression
+## Run model
+PDmat <- t(PDmat)
+
+#fit the model
+cvglmfit <- runGlm(viabMat, PDmat, method = "lasso", repeats = 30, folds = 3)
+    
+#collect the results for each stimulus in one object
+dataResult <- cvglmfit
+
+
+# 
+# Get predictor profiles for stimuli of interest
+
+PDmat <- 
+  dplyr::select(CLL_PD, PatientID, CLL_PD) %>% 
+  #reshape data
+  spread(key = PatientID, value = CLL_PD) %>% 
+  data.frame() 
+  
+
+#make sample order same as in geneMatrix
+PDmat <- PDmat[,rownames(viabMat)]
+
+#get only viability values for aptients that have a PD
+viabMat <- viabMat[colnames(PDmat),]
+
+
+CLLPD_Lasso_all_patients<-lassoPlot_CLLPD(dataResult, 
+          viabMat, #use viab matrix for heatmap 
+          PDmat, #use CLL_PD matrix for scatter plot
+          freqCut = 0.75, #coefficients should be selected in <75% of bootstrapped model files
+          coefCut = 0.00) #no minimum value for coefficients 
+
+
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+########### Lasso Model of CLL_PD and Cytokine response in IGHV M patients ################
+#make viability matrix for cytokine treatments for patients
+cyt_viab <- dplyr::select(dplyr::filter(df, Drug == "DMSO", Cytokine != "No Cytokine"), 
+                PatientID, 
+                Log, 
+                Cytokine) %>% spread(Cytokine, Log) %>% as.data.frame()
+
+#make PatID the row names
+rownames(cyt_viab) <- unlist(cyt_viab[,1]) # the first row will be the header
+cyt_viab <- dplyr::select(cyt_viab,-PatientID) 
+
+cyt_viab <- t(cyt_viab)
+
+#run scaleCytResp on viability matrix
+x <- scaleCytResp(cyt_viab)
+
+viabMat <-t(x)
+
+Mpat <- patMeta %>% filter(IGHV.status == "M") %>% select(PatientID)
+
+PDmat <- 
+  filter(CLL_PD, PatientID %in% Mpat$PatientID) %>%
+  dplyr::select(PatientID, CLL_PD) %>% 
+  #reshape data
+  spread(key = PatientID, value = CLL_PD) %>% 
+  data.frame() 
+  
+#get only viability values for aptients that have a PD
+viabMat <- viabMat[colnames(PDmat),]
+
+PDmat <- t(PDmat)
+
+#fit the model
+cvglmfit <- runGlm(viabMat, PDmat, method = "lasso", repeats = 30, folds = 3)
+    
+#collect the results for each stimulus in one object
+dataResult <- cvglmfit
+
+
+PDmat <- 
+  dplyr::select(CLL_PD, PatientID, CLL_PD) %>% 
+  #reshape data
+  spread(key = PatientID, value = CLL_PD) %>% 
+  data.frame() 
+  
+
+#make sample order same as in geneMatrix
+PDmat <- PDmat[,rownames(viabMat)]
+
+#get only viability values for aptients that have a PD
+viabMat <- viabMat[colnames(PDmat),]
+
+
+CLLPD_Lasso_M_patients<-lassoPlot_CLLPD(dataResult, 
+          viabMat, #use viab matrix for heatmap 
+          PDmat, #use CLL_PD matrix for scatter plot
+          freqCut = 0.75, #coefficients should be selected in <75% of bootstrapped model files
+          coefCut = 0.00) #no minimum value for coefficients 
+
+
+
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+########### Lasso Model of CLL_PD and Cytokine response in IGHV U patients ################
+#make viability matrix for cytokine treatments for patients
+cyt_viab <- dplyr::select(dplyr::filter(df, Drug == "DMSO", Cytokine != "No Cytokine"), 
+                PatientID, 
+                Log, 
+                Cytokine) %>% spread(Cytokine, Log) %>% as.data.frame()
+
+#make PatID the row names
+rownames(cyt_viab) <- unlist(cyt_viab[,1]) # the first row will be the header
+cyt_viab <- dplyr::select(cyt_viab,-PatientID) 
+
+cyt_viab <- t(cyt_viab)
+
+#run scaleCytResp on viability matrix
+x <- scaleCytResp(cyt_viab)
+
+viabMat <-t(x)
+
+Upat <- patMeta %>% filter(IGHV.status == "U") %>% select(PatientID)
+
+PDmat <- 
+  filter(CLL_PD, PatientID %in% Upat$PatientID) %>%
+  dplyr::select(PatientID, CLL_PD) %>% 
+  #reshape data
+  spread(key = PatientID, value = CLL_PD) %>% 
+  data.frame() 
+  
+#get only viability values for aptients that have a PD
+viabMat <- viabMat[colnames(PDmat),]
+
+PDmat <- t(PDmat)
+
+#fit the model
+cvglmfit <- runGlm(viabMat, PDmat, method = "lasso", repeats = 30, folds = 3)
+    
+#collect the results for each stimulus in one object
+dataResult <- cvglmfit
+
+
+PDmat <- 
+  dplyr::select(CLL_PD, PatientID, CLL_PD) %>% 
+  #reshape data
+  spread(key = PatientID, value = CLL_PD) %>% 
+  data.frame() 
+  
+
+#make sample order same as in geneMatrix
+PDmat <- PDmat[,rownames(viabMat)]
+
+#get only viability values for aptients that have a PD
+viabMat <- viabMat[colnames(PDmat),]
+
+
+CLLPD_Lasso_U_patients<-lassoPlot_CLLPD(dataResult, 
+          viabMat, #use viab matrix for heatmap 
+          PDmat, #use CLL_PD matrix for scatter plot
+          freqCut = 0.75, #coefficients should be selected in <75% of bootstrapped model files
+          coefCut = 0.00) #no minimum value for coefficients 
+
+
+
+```
+
+
+```{r, fig.height=12, fig.width=8}
+wrap_elements(CLL_PD_Boxplot)+theme(plot.tag=element_text(size = 20))+
+wrap_elements(CLLPD_Lasso_all_patients)+theme(plot.tag=element_text(size = 20))+
+wrap_elements(CLLPD_Lasso_M_patients)+theme(plot.tag=element_text(size = 20))+
+wrap_elements(CLLPD_Lasso_U_patients)+theme(plot.tag=element_text(size = 20))+
+  
+  
+  plot_layout(nrow=4, heights = c(.8,1.05,.6,.7))+
+  plot_annotation(tag_levels = "A")
+  
+```
+
+
+**Appendix Figure XXX. CLL Proliferative Drive as defined by Lu et al., 2021^5^** Beeswarm Plot of Proliferative drive in the clusters defined by microenvironmental resonse. P-values are shown from student's t-tests. **(A)** Predictor profiles for stimuli response to represent CLL Proliferative Drive identified through multivariate analysis using Gaussian linear modelling with L1-penalty for all patient samples which were analysed **(B)**, for only IGHV mutated **(C)** and for only IGHV unmutated patient samples **(D)** Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate log(viability) values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot.  
+
 
 \newpage
-
-
 
 <!-- ###  Drug Response heatmap -->
 <!-- Heatmap of all scaled log(viability) values, for all patient samples and drugs. -->
@@ -1694,7 +2088,7 @@ volPlot
 
 ```
 
-**Appendix Figure XX. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.** Volcano plot of differentially expressed genes between Cluster 1 and Cluster 2. X axis indicates log2 fold change values, calculated using the Deseq package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05.
+**Appendix Figure XX. COmparison of gene expression between  Cluster 1 and Cluster 2.** Volcano plot of differentially expressed genes between Cluster 1 and Cluster 2. X axis indicates log2 fold change values, calculated using the Deseq package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05.
 
 \newpage
 
@@ -2447,6 +2841,8 @@ p1
 
 
 \newpage
+
+
 
 
 
