@@ -2365,7 +2365,7 @@ rm(plotTab)
 
 
 \newpage
-```{R, S11, fig.width=15, fig.height=20, message=FALSE }
+```{R, S11, fig.width=15, fig.height=12, message=FALSE }
 
 # Get significant peaks
 #filter ChipSeq data for peaks with significant score -log10(Qscore)>1.3
@@ -2476,7 +2476,7 @@ resTab$pvalue_SPIB <- round(resTab$pvalue_SPIB, digits = 3)
 resTab <- dplyr::filter(resTab, pvalue_SPIB==0)
 
 #filter for smallest p values and rank by number of targets = show this is still important 
-resTab_ranked <- top_n(resTab, 40, count_SPIB)
+resTab_ranked <- top_n(resTab, 20, count_SPIB)
 
 resTab_ranked <- resTab_ranked[order(-resTab_ranked$count_SPIB),]
 
@@ -2497,20 +2497,16 @@ ggtexttable(resTab_ranked, rows = NULL,
 )
 
 
-
-
-
 S11
 
 
        
 
 ```
-**Appendix Figure 11.  Over-representation tests of all KEGG and Reactome pathways in ChIPseq analysis of Spi-B binding in lymphoma cell lines. Results shown for pathways containing largest number of Spi-B targets (top 40). ** 
+**Appendix Figure 11.  Over-representation tests of all KEGG and Reactome pathways in ChIPseq analysis of Spi-B binding in lymphoma cell lines. Results shown for pathways containing the most Spi-B gene targets (top 20). ** 
 
 ```{r }
-
-#First check whether script for Figure 6 has been run, and if  fig6_data_for_supplement.RData exists.
+r#First check whether script for Figure 6 has been run, and if  fig6_data_for_supplement.RData exists.
 #fig6_data_for_supplement.RData object contains Lasso_Plots_Fig6, a list of TableGrobs and coeff.long.mat_Fig6, a dataframe (840*3) of drug - stimulus - gene combinations and their coefficients
 
 #generate coefficient matrix and predictor profiles if prework has not been done
