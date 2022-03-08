@@ -773,17 +773,18 @@ for (i in rownames(viabMatrix)){
 
 }
 
+save(dataResult, geneMatrix.complete, viabMatrix,  file = "../../data/fig3_data_for_lassoplots.RData")
+
 ```
 
 Get predictor profiles for stimuli of interest
 ```{r plotLasso3, message = FALSE, warning = FALSE}
 
-heatMaps_cyt <- lassoPlot(dataResult[c("IL-4","CpG ODN", "TGF-b1")] , 
+heatMaps_cyt <- lassoPlot(dataResult[c("IL-4","CpG ODN", "TGF-b1")] ,  # 
                           geneMatrix.complete, #use gene matrix for heatmap 
                           viabMatrix, #use viab matrix for scatter plot
                           freqCut = 0.75, #coefficients should be selected in <75% of bootstrapped model files
-                          coefCut = 0.00) #no minimum value for coefficients 
-
+                          coefCut = 0.02) #no minimum value for coefficients 
 
 ```
 
@@ -806,12 +807,13 @@ legends = makelegends(legendFor=c("G","I","M"),coldef)
 ```
 
 Assemble figure
-```{r Fig3B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=3, fig.width=8.5, message = FALSE, warning = FALSE}
+```{r Fig3B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=6, fig.width=8.5, message = FALSE, warning = FALSE}
 
 Fig3B_1 <- wrap_elements(grid.arrange( grobs = heatMaps_cyt[1], ncol =1))
 Fig3B_2 <- wrap_elements(grid.arrange( grobs = heatMaps_cyt[2], ncol =1))
 Fig3B_3 <- wrap_elements(grid.arrange( grobs = heatMaps_cyt[3], ncol =1))
 Fig3B_leg <- legends[["plot"]] %>% wrap_elements()
+
 
 ```
 
