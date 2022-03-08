@@ -1038,7 +1038,7 @@ patMeta %>%
 **Appendix Table 1. Patient samples included in the study.** List of patient samples and selected characteristics. For a full list of characteristics see [online vignette](https://github.com/Huber-group-EMBL/CLLCytokineScreen2021).
 \newpage
 
-```{r Appendix Table 2 OS ~ MES response}
+```{r Appendix Table 2 }
 
 clusters.surv<- left_join(Heatmap_clusters, survT, by = "PatientID")
 
@@ -1092,6 +1092,48 @@ cox_output %>%
 **Appendix Table 2. Multivariate survival analysis of response clusters.** Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference.
 
 
+```{r }
+
+clusters.surv<- left_join(Heatmap_clusters, survT, by = "PatientID")
+
+#Add meta data to heatmap clusters
+clusters.surv <- left_join(clusters.surv, CLL_PD, by="PatientID") 
+
+#run coxphmodel 
+c <- 
+  clusters.surv %>%
+  mutate(Cluster=factor(Cluster)) %>%
+  coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, "3")+ CLL_PD,  data=.)
+
+#tidy results, exponentiate coefficients and estimate 95% confidence intervals 
+cox_output<- tidy(c, conf.int = TRUE,  exponentiate = TRUE) %>%
+  dplyr::select(term, estimate, p.value, conf.low, conf.high)
+
+#tidy names
+cox_output$term<-
+  cox_output$term %>% 
+  gsub(pattern="factor2ind", "", .)%>% 
+  gsub(pattern="[()]", "", .)%>% 
+  gsub(pattern=":", " ", .)
+
+colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High")
+
+cox_output$HR <- round(cox_output$HR, 2)
+cox_output$p.value <- round(cox_output$p.value, 2)
+cox_output$CI.low <- round(cox_output$CI.low, 2)
+cox_output$CI.High <- round(cox_output$CI.High, 2)
+
+cox_output <- cox_output %>% 
+  dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
+
+
+colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
+
+cox_output %>%  
+  kable() %>%
+  kable_styling(latex_options = "striped") 
+
+```
 
 
 ```{r}
