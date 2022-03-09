@@ -1024,7 +1024,6 @@ colnames(Cytokine_labels) <- c("name", "Cytlabel")
 
 
 
-
 ```{r Appendix Table 1 Pat Characteristics}
 
 patMeta %>%
@@ -1036,6 +1035,63 @@ patMeta %>%
 
 ```
 **Appendix Table 1. Patient samples included in the study.** List of patient samples and selected characteristics. For a full list of characteristics see [online vignette](https://github.com/Huber-group-EMBL/CLLCytokineScreen2021).
+\newpage
+
+
+
+```{r}
+
+selected_mutations <- 
+  patMeta %>% 
+  mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
+  dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+  dplyr::select( -gender, 
+                 -diagnosis, 
+                 ) %>%
+  pivot_longer(-PatientID, 
+               names_to="Genetic_Alteration", 
+               values_to = "alteration_value") %>% 
+  dplyr::filter(alteration_value %in% c(1, "U")) %>% 
+  dplyr::group_by(Genetic_Alteration) %>% 
+  dplyr::count() %>% 
+  dplyr::filter(n>2) %>% 
+  dplyr::select(Genetic_Alteration) %>% 
+  unlist()
+
+ Table_of_alterations<-patMeta %>%
+  
+  ## Add Ras/Raf column, remove single columns
+  mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
+  dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+
+## remove unused columns from metadata
+  dplyr::select( -gender, 
+                 -diagnosis, 
+                 -treatment) %>% 
+  
+  ## transform data to long format
+  pivot_longer(cols=c(-PatientID), 
+               names_to = "Genetic_alt", 
+               values_to="alt_value") %>% 
+  
+  group_by(Genetic_alt, alt_value) %>% 
+  
+  count() %>% 
+  pivot_wider(names_from = alt_value, values_from = n) %>% 
+   
+   filter(Genetic_alt%in%selected_mutations) %>% 
+   rename(Genetic_alteration=Genetic_alt, 'Wildtype'="0", 'Mutated'="1", 'Not available'='NA', "IGHV Mutated"="M", "IGHV Unmutated"="U")%>% 
+   select_if(~sum(!is.na(.)) > 0)
+   
+  Table_of_alterations %>% 
+      kable( longtable = TRUE) %>%
+  row_spec(0,bold=TRUE) %>%
+    kable_styling(latex_options = c("hold_position", "repeat_header", "striped"), font_size=8)
+
+  
+```
+
+**Appendix Table XX. List of genetic alterations tested for their association with stimuli response in the univariate model of Figure 3A** Only genetic alterations with at least 3 positive cases were considered. 
 \newpage
 
 ```{r Appendix Table 2 }
