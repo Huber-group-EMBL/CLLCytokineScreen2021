@@ -1146,50 +1146,51 @@ cox_output %>%
 ```
 
 **Appendix Table 2. Multivariate survival analysis of response clusters.** Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference.
+\newpage
 
 
-```{r }
-
-clusters.surv<- left_join(Heatmap_clusters, survT, by = "PatientID")
-
-#Add meta data to heatmap clusters
-clusters.surv <- left_join(clusters.surv, CLL_PD, by="PatientID") 
-
-#run coxphmodel 
-c <- 
-  clusters.surv %>%
-  mutate(Cluster=factor(Cluster)) %>%
-  coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, "3")+ CLL_PD,  data=.)
-
-#tidy results, exponentiate coefficients and estimate 95% confidence intervals 
-cox_output<- tidy(c, conf.int = TRUE,  exponentiate = TRUE) %>%
-  dplyr::select(term, estimate, p.value, conf.low, conf.high)
-
-#tidy names
-cox_output$term<-
-  cox_output$term %>% 
-  gsub(pattern="factor2ind", "", .)%>% 
-  gsub(pattern="[()]", "", .)%>% 
-  gsub(pattern=":", " ", .)
-
-colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High")
-
-cox_output$HR <- round(cox_output$HR, 2)
-cox_output$p.value <- round(cox_output$p.value, 2)
-cox_output$CI.low <- round(cox_output$CI.low, 2)
-cox_output$CI.High <- round(cox_output$CI.High, 2)
-
-cox_output <- cox_output %>% 
-  dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
-
-
-colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
-
-cox_output %>%  
-  kable() %>%
-  kable_styling(latex_options = "striped") 
-
-```
+<!-- # ```{r } -->
+<!-- # -->
+<!-- # clusters.surv<- left_join(Heatmap_clusters, survT, by = "PatientID") -->
+<!-- # -->
+<!-- # #Add meta data to heatmap clusters -->
+<!-- # clusters.surv <- left_join(clusters.surv, CLL_PD, by="PatientID") -->
+<!-- # -->
+<!-- # #run coxphmodel -->
+<!-- # c <- -->
+<!-- #   clusters.surv %>% -->
+<!-- #   mutate(Cluster=factor(Cluster)) %>% -->
+<!-- #   coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, "3")+ CLL_PD,  data=.) -->
+<!-- # -->
+<!-- # #tidy results, exponentiate coefficients and estimate 95% confidence intervals -->
+<!-- # cox_output<- tidy(c, conf.int = TRUE,  exponentiate = TRUE) %>% -->
+<!-- #   dplyr::select(term, estimate, p.value, conf.low, conf.high) -->
+<!-- # -->
+<!-- # #tidy names -->
+<!-- # cox_output$term<- -->
+<!-- #   cox_output$term %>% -->
+<!-- #   gsub(pattern="factor2ind", "", .)%>% -->
+<!-- #   gsub(pattern="[()]", "", .)%>% -->
+<!-- #   gsub(pattern=":", " ", .) -->
+<!-- # -->
+<!-- # colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High") -->
+<!-- # -->
+<!-- # cox_output$HR <- round(cox_output$HR, 2) -->
+<!-- # cox_output$p.value <- round(cox_output$p.value, 2) -->
+<!-- # cox_output$CI.low <- round(cox_output$CI.low, 2) -->
+<!-- # cox_output$CI.High <- round(cox_output$CI.High, 2) -->
+<!-- # -->
+<!-- # cox_output <- cox_output %>% -->
+<!-- #   dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) -->
+<!-- # -->
+<!-- # -->
+<!-- # colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High") -->
+<!-- # -->
+<!-- # cox_output %>% -->
+<!-- #   kable() %>% -->
+<!-- #   kable_styling(latex_options = "striped") -->
+<!-- # -->
+<!-- # ``` -->
 
 
 ```{r}
@@ -1320,6 +1321,7 @@ p1+
   plot_layout(nrow=1, guides="collect", widths = c(0.7,0.3))
 ```
 **Appendix Figure 1. Genetic profiles of screened patient samples.**  Selected genetic alterations on y-axis and screened patient samples on x-axis.
+\newpage
 
 
 
@@ -1658,8 +1660,13 @@ CLL_PD_Boxplot<-CLL_PD %>%
   scale_fill_manual(values=colors[1:4]) +
   guides(fill="none") +
   ylab("CLL Proliferative Drive") +
-  stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=6, label.x = 1.3, label.y=3.1)+
-  coord_cartesian(clip="off")
+  stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=4, label.x = 1.3, label.y=3.1)+
+  coord_cartesian(clip="off")+
+  theme(axis.title.x = element_text(size=12),
+        axis.title.y = element_text(size=12),
+        axis.text.x = element_text(size=10),
+        axis.text.y = element_text(size=10), 
+        strip.text = element_text(size=12))
 
 
 ```
@@ -1867,21 +1874,77 @@ CLLPD_Lasso_U_patients<-lassoPlot_CLLPD(dataResult,
 
 ```
 
+```{r, fig.width=4, fig.height=8}
 
-```{r, fig.height=12, fig.width=8}
+IL1b_Scatterplot<-left_join(CLL_PD, filter(df, Drug=="DMSO"), by = "PatientID") %>% 
+  left_join(patMeta, by = "PatientID") %>% 
+  filter(Cytokine%in%c("IL-1b"), !is.na(IGHV.status)) %>% 
+  
+  ggplot(aes(x=CLL_PD, y=Log)) +
+  geom_smooth(method="lm", formula= 'y ~ x')+
+  geom_point(aes(color=IGHV.status))+
+  facet_wrap(.~IGHV.status,  nrow = 2, strip.position="right", labeller = labeller(IGHV.status = c("U" = "IGHV-U", "M" =  "IGHV-M")))+
+  stat_cor()+
+  guides(color="none")+
+  t2+
+  theme(axis.title.x = element_text(size=12),
+        axis.title.y = element_text(size=12),
+        axis.text.x = element_text(size=10),
+        axis.text.y = element_text(size=10), 
+        strip.text = element_text(size=12),
+        plot.title = element_text(size=14))+
+  ggtitle("IL1ß")+
+  ylab("Log(Viability)")
+
+Res_Scatterplot<-left_join(CLL_PD, filter(df, Drug=="DMSO"), by = "PatientID") %>% 
+  left_join(patMeta, by = "PatientID") %>% 
+  filter(Cytokine%in%c("Resiquimod"), !is.na(IGHV.status)) %>% 
+  
+  ggplot(aes(x=CLL_PD, y=Log)) +
+  geom_smooth(method="lm", formula= 'y ~ x')+
+  geom_point(aes(color=IGHV.status))+
+  facet_wrap(.~IGHV.status,  nrow = 2, strip.position="right", labeller = labeller(IGHV.status = c("U" = "IGHV-U", "M" =  "IGHV-M")))+
+  stat_cor()+
+  guides(color="none")+
+  t2+
+  theme(axis.title.x = element_text(size=12),
+        axis.title.y = element_text(size=12),
+        axis.text.x = element_text(size=10),
+        axis.text.y = element_text(size=10), 
+        strip.text = element_text(size=12),
+        plot.title = element_text(size=14))+
+  ggtitle("Resiquimod")+
+  ylab("Log(Viability)")
+  
+```
+
+
+```{r, fig.height=13, fig.width=10.5}
+
+design1<-"
+  15
+  25
+  26
+  36
+  46
+  "
+
 wrap_elements(CLL_PD_Boxplot)+theme(plot.tag=element_text(size = 20))+
 wrap_elements(CLLPD_Lasso_all_patients)+theme(plot.tag=element_text(size = 20))+
 wrap_elements(CLLPD_Lasso_M_patients)+theme(plot.tag=element_text(size = 20))+
 wrap_elements(CLLPD_Lasso_U_patients)+theme(plot.tag=element_text(size = 20))+
+  Res_Scatterplot+theme(plot.tag=element_text(size = 20))+
+  IL1b_Scatterplot+theme(plot.tag=element_text(size = 20))+
   
   
-  plot_layout(nrow=4, heights = c(.8,1.05,.6,.7))+
+  
+  plot_layout(design=design1, heights = c(.9,.8,.1,.7,.85), widths = c(2,.7))+
   plot_annotation(tag_levels = "A")
   
 ```
 
 
-**Appendix Figure XXX. CLL Proliferative Drive as defined by Lu et al., 2021^5^** Beeswarm Plot of Proliferative drive in the clusters defined by microenvironmental resonse. P-values are shown from student's t-tests. **(A)** Predictor profiles for stimuli response to represent CLL Proliferative Drive identified through multivariate analysis using Gaussian linear modelling with L1-penalty for all patient samples which were analysed **(B)**, for only IGHV mutated **(C)** and for only IGHV unmutated patient samples **(D)** Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate log(viability) values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot.  
+**Appendix Figure XXX. CLL Proliferative Drive as defined by Lu et al., 2021^5^** Beeswarm Plot of Proliferative drive in the clusters defined by microenvironmental resonse. P-values are shown from student's t-tests. **(A)** Predictor profiles for stimuli response to represent CLL Proliferative Drive identified through multivariate analysis using Gaussian linear modelling with L1-penalty for all patient samples which were analysed **(B)**, for only IGHV mutated **(C)** and for only IGHV unmutated patient samples **(D)** Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate log(viability) values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot.  Exemplary scatter plots devided by IGHV mutation status shown for Resiquimod **(E)** and IL1ß **(F)**. CLL-PD on x-axis and log normalised viability after microenvironmental stimulation on y-axis. Person correlation coefficients are shown with p-values. 
 
 
 \newpage
