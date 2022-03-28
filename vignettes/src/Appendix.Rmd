@@ -398,6 +398,205 @@ lassoPlot <- function(lassoOut, geneMatrix, betaMatrix, freqCut = 1, coefCut = 0
 ```
 
 
+```{r lassoPlot3Appendix}
+
+
+lassoPlot3Appendix <- function(lassoOut, geneMatrix, viabMatrix, freqCut = 1, coefCut = 0.01) {
+  
+  plotList <- list()
+  
+  for (seaName in names(lassoOut)) { 
+    ###FOR THE BAR PLOT
+    #extract coefMat for each stimulus
+    barValue <- rowMeans(lassoOut[[seaName]]$coefMat)
+    #extract proportion of repeats for which each coefficient is significant
+    freqValue <- rowMeans(abs(sign(lassoOut[[seaName]]$coefMat)))
+    #filter out coefficients that don't meet freqCut and coefCut thresholds
+    barValue <- barValue[abs(barValue) >= coefCut & freqValue >= freqCut] 
+    #arrange the bar values in numerical order
+    barValue <- barValue[order(barValue)]
+    #if there are no sig coefficients, don't plot
+    if(length(barValue) == 0) {
+      plotList[[seaName]] <- NA
+      next
+    }
+
+    ###FOR THE HEATMAP AND SCATTER PLOT
+    #get feature matrix and response matrix to plot
+    allData <- geneMatrix
+    viabValue <- unlist(viabMatrix[seaName,])
+    
+    #get feature matrix for sig coefficients only
+    tabValue <- allData[, names(barValue),drop=FALSE]
+    ord <- order(viabValue)
+    viabValue <- viabValue[ord]
+    tabValue <- tabValue[ord, ,drop=FALSE]
+    sampleIDs <- rownames(tabValue)
+    tabValue <- as_tibble(tabValue)
+    tabValue$Sample <- sampleIDs
+    
+    
+    #annotate mutations by mutation, methylation or IGHV
+    matValue <- gather(tabValue, key = "Var",value = "Value", -Sample)
+    matValue$Type <- "mut"
+    
+    #for Methylation Cluster
+    matValue$Type[grep("Methylation",matValue$Var)] <- "meth"
+    
+    #for IGHV status
+    matValue$Type[grep("IGHV",matValue$Var)] <- "ighv"
+    
+    #change the scale of the value so that IGHV, Methylation and Mutation do not overlap
+    matValue[matValue$Type == "mut",]$Value = matValue[matValue$Type == "mut",]$Value + 10
+    matValue[matValue$Type == "meth",]$Value = matValue[matValue$Type == "meth",]$Value + 20
+    matValue[matValue$Type == "ighv",]$Value = matValue[matValue$Type == "ighv",]$Value + 30
+    
+    #change continuous to categorical
+    matValue$Value <- factor(matValue$Value,levels = sort(unique(matValue$Value)))
+    
+    #arrange order of heatmap
+    matValue$Var <- factor(matValue$Var, levels = names(barValue))
+    matValue$Sample <- factor(matValue$Sample, levels = names(viabValue))
+    
+    #change labels if mutation is a Doehner mutation 
+    matValue$Var <- plyr::revalue(matValue$Var, c("del11q" = "del(11q)", "del13q" = "del(13q)", "del17p" = "del(17p)", "trisomy12" = "trisomy 12")) 
+    
+
+   
+     #plot the heatmap 
+      #title
+    if(seaName=="TGF-b1"){
+      thetitle <- "TGF-\u03B21"     
+      } else {
+        if(seaName=='IL-4'){ 
+          thetitle <- "IL4"  
+          } else {
+            thetitle <- seaName
+          }
+        }
+    
+      p1 <- ggplot(matValue, aes(x=Sample, y=Var)) + 
+            geom_tile(aes(fill=Value), color = "white") + #ghost white
+            theme_bw()+
+            scale_y_discrete(expand=c(0,0)) + 
+            theme(axis.title.y = element_text( size=14),
+                  axis.title.x = element_text( size=14),
+                  axis.text.x=element_text(hjust=0, size=11),
+                  axis.text.y=element_text(hjust=0.1, size=11),
+                  axis.ticks=element_blank(),
+                  panel.border=element_rect(colour="gainsboro"),  
+                  plot.title=element_text(face="bold", size = 18, margin = margin(t = -5, b = 1)), 
+                  panel.background=element_blank(),
+                  panel.grid.major=element_blank(), 
+                  panel.grid.minor=element_blank()) + 
+            xlab("Mutation status for each patient") + 
+            ylab("") + 
+            scale_fill_manual(name="Mutated", 
+                              values=c(`10`= offwhite,  #WT
+                                       `11`="#373A36", #Mutant
+                                       `20`= offwhite, #LP
+                                       `20.5`= "#707372", #IP
+                                       `21` = "#A8A99E", #HP
+                                       `30` = offwhite, #IGHV-U
+                                       `31` = "#707372"), #IGHV-M
+                                       guide="none") + 
+            ggtitle(thetitle)
+        
+
+         
+    #Plot the bar plot on the left of the heatmap 
+    barDF = data.frame(barValue, nm=factor(names(barValue),levels=names(barValue)))
+    
+    p2 <- ggplot(data=barDF, aes(x=nm, y=barValue)) + 
+      geom_bar(stat="identity", 
+               fill=ifelse(barValue<0,
+                           palblues[6],palreds[8]), 
+               colour="black", 
+               size=0.3) + 
+      scale_x_discrete(expand=c(0,0.5)) + 
+      scale_y_continuous(expand=c(0,0)) + 
+      coord_flip(ylim=c(-0.3,0.35)) + #changed from min(barValue) and max(barValue)
+      theme(panel.grid.major=element_blank(), 
+            panel.background=element_blank(), 
+            axis.ticks.y = element_blank(),
+            panel.grid.minor = element_blank(), 
+            axis.text=element_text(size=11, angle = 45, hjust = 1, vjust = 1),
+                axis.title = element_text(size=14), 
+            panel.border=element_blank()) +
+      ylab("Size of predictor") + 
+      geom_vline(xintercept=c(0.5), 
+                 color="black", 
+                 size=0.6)
+    
+    #Plot the scatter plot under the heatmap
+    scatterDF = data.frame(X=factor(names(viabValue), 
+                                    levels=names(viabValue)), 
+                           Y=unlist(viabValue))
+    
+    p3 <- 
+      ggplot(scatterDF, aes(x=X, y=Y)) + 
+      geom_point(shape=21, 
+                     fill="dimgrey", 
+                     colour="#707372", #dark grey
+                     size=1.2) + 
+      theme_bw() +
+      theme(panel.grid.minor=element_blank(), 
+                panel.grid.major.x=element_blank(), 
+                #axis.title.x=element_blank(), 
+                axis.ticks.x=element_blank(), 
+                axis.text.y=element_text(size=11), 
+                axis.title.x=element_text(size=14), 
+                panel.border=element_rect(colour="dimgrey", size=0.1),
+                panel.background=element_rect(fill="white")) +
+      xlab("Log(Viability) for each sample")
+    
+    
+    #Assemble all the plots togehter
+
+    # construct the gtable
+    wdths = c(0.2, 1.5, 0.2, 1.3*ncol(matValue), 1.5, 0.2)
+    hghts = c(0.2, 0.2, 0.0020*nrow(matValue), 0.3, 1, 0.2)
+    gt = gtable(widths=unit(wdths, "in"), heights=unit(hghts, "in"))
+    
+    ## make grobs
+    gg1 = ggplotGrob(p1)
+    gg2 = ggplotGrob(p2)
+    gg3 = ggplotGrob(p3)
+
+    ## fill in the gtable
+   
+    #HEATMAP
+    #5:1 = "PREDICTORS"
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "panel"), 3, 4) # add heatmap
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "panel"), 3, 4) #add legend
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "title"), 1, 4) #add title to plot
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "axis-l"), 3, 5) # variable names
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "xlab-b"), 2, 4) # axis title
+    
+    #BARPLOT
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "panel"), 3, 2) # add barplot
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "axis-b"), 4, 2) # y axis for barplot
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "xlab-b"), 2, 2) # y lab for barplot
+
+    
+    #SCATTER PLOT
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "panel"), 5, 4) # add scatterplot
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "xlab-b"), 6, 4) # x label for scatter plot
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "axis-l"), 5, 3) #  axis for scatter plot
+    
+   
+
+    
+    #plot
+    #grid.draw(gt)
+    plotList[[seaName]] <- gt
+  }
+  return(plotList)
+}
+
+
+```
+
 ```{r lassoPlot_CLLPD}
 
 
@@ -823,6 +1022,8 @@ colnames(Cytokine_labels) <- c("name", "Cytlabel")
 
 ```
 
+
+
 ```{r Appendix Table 1 Pat Characteristics}
 
 patMeta %>%
@@ -836,7 +1037,64 @@ patMeta %>%
 **Appendix Table 1. Patient samples included in the study.** List of patient samples and selected characteristics. For a full list of characteristics see [online vignette](https://github.com/Huber-group-EMBL/CLLCytokineScreen2021).
 \newpage
 
-```{r Appendix Table 2 OS ~ MES response}
+
+
+```{r}
+
+selected_mutations <- 
+  patMeta %>% 
+  mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
+  dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+  dplyr::select( -gender, 
+                 -diagnosis, 
+                 ) %>%
+  pivot_longer(-PatientID, 
+               names_to="Genetic_Alteration", 
+               values_to = "alteration_value") %>% 
+  dplyr::filter(alteration_value %in% c(1, "U")) %>% 
+  dplyr::group_by(Genetic_Alteration) %>% 
+  dplyr::count() %>% 
+  dplyr::filter(n>2) %>% 
+  dplyr::select(Genetic_Alteration) %>% 
+  unlist()
+
+ Table_of_alterations<-patMeta %>%
+  
+  ## Add Ras/Raf column, remove single columns
+  mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
+  dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+
+## remove unused columns from metadata
+  dplyr::select( -gender, 
+                 -diagnosis, 
+                 -treatment) %>% 
+  
+  ## transform data to long format
+  pivot_longer(cols=c(-PatientID), 
+               names_to = "Genetic_alt", 
+               values_to="alt_value") %>% 
+  
+  group_by(Genetic_alt, alt_value) %>% 
+  
+  count() %>% 
+  pivot_wider(names_from = alt_value, values_from = n) %>% 
+   
+   filter(Genetic_alt%in%selected_mutations) %>% 
+   rename(Genetic_alteration=Genetic_alt, 'Wildtype'="0", 'Mutated'="1", 'Not available'='NA', "IGHV Mutated"="M", "IGHV Unmutated"="U")%>% 
+   select_if(~sum(!is.na(.)) > 0)
+   
+  Table_of_alterations %>% 
+      kable( longtable = TRUE) %>%
+  row_spec(0,bold=TRUE) %>%
+    kable_styling(latex_options = c("hold_position", "repeat_header", "striped"), font_size=8)
+
+  
+```
+
+**Appendix Table XX. List of genetic alterations tested for their association with stimuli response in the univariate model of Figure 3A** Only genetic alterations with at least 3 positive cases were considered. 
+\newpage
+
+```{r Appendix Table 2 }
 
 clusters.surv<- left_join(Heatmap_clusters, survT, by = "PatientID")
 
@@ -888,8 +1146,51 @@ cox_output %>%
 ```
 
 **Appendix Table 2. Multivariate survival analysis of response clusters.** Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference.
+\newpage
 
 
+<!-- # ```{r } -->
+<!-- # -->
+<!-- # clusters.surv<- left_join(Heatmap_clusters, survT, by = "PatientID") -->
+<!-- # -->
+<!-- # #Add meta data to heatmap clusters -->
+<!-- # clusters.surv <- left_join(clusters.surv, CLL_PD, by="PatientID") -->
+<!-- # -->
+<!-- # #run coxphmodel -->
+<!-- # c <- -->
+<!-- #   clusters.surv %>% -->
+<!-- #   mutate(Cluster=factor(Cluster)) %>% -->
+<!-- #   coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, "3")+ CLL_PD,  data=.) -->
+<!-- # -->
+<!-- # #tidy results, exponentiate coefficients and estimate 95% confidence intervals -->
+<!-- # cox_output<- tidy(c, conf.int = TRUE,  exponentiate = TRUE) %>% -->
+<!-- #   dplyr::select(term, estimate, p.value, conf.low, conf.high) -->
+<!-- # -->
+<!-- # #tidy names -->
+<!-- # cox_output$term<- -->
+<!-- #   cox_output$term %>% -->
+<!-- #   gsub(pattern="factor2ind", "", .)%>% -->
+<!-- #   gsub(pattern="[()]", "", .)%>% -->
+<!-- #   gsub(pattern=":", " ", .) -->
+<!-- # -->
+<!-- # colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High") -->
+<!-- # -->
+<!-- # cox_output$HR <- round(cox_output$HR, 2) -->
+<!-- # cox_output$p.value <- round(cox_output$p.value, 2) -->
+<!-- # cox_output$CI.low <- round(cox_output$CI.low, 2) -->
+<!-- # cox_output$CI.High <- round(cox_output$CI.High, 2) -->
+<!-- # -->
+<!-- # cox_output <- cox_output %>% -->
+<!-- #   dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) -->
+<!-- # -->
+<!-- # -->
+<!-- # colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High") -->
+<!-- # -->
+<!-- # cox_output %>% -->
+<!-- #   kable() %>% -->
+<!-- #   kable_styling(latex_options = "striped") -->
+<!-- # -->
+<!-- # ``` -->
 
 
 ```{r}
@@ -1020,6 +1321,7 @@ p1+
   plot_layout(nrow=1, guides="collect", widths = c(0.7,0.3))
 ```
 **Appendix Figure 1. Genetic profiles of screened patient samples.**  Selected genetic alterations on y-axis and screened patient samples on x-axis.
+\newpage
 
 
 
@@ -1358,8 +1660,13 @@ CLL_PD_Boxplot<-CLL_PD %>%
   scale_fill_manual(values=colors[1:4]) +
   guides(fill="none") +
   ylab("CLL Proliferative Drive") +
-  stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=6, label.x = 1.3, label.y=3.1)+
-  coord_cartesian(clip="off")
+  stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=4, label.x = 1.3, label.y=3.1)+
+  coord_cartesian(clip="off")+
+  theme(axis.title.x = element_text(size=12),
+        axis.title.y = element_text(size=12),
+        axis.text.x = element_text(size=10),
+        axis.text.y = element_text(size=10), 
+        strip.text = element_text(size=12))
 
 
 ```
@@ -1435,6 +1742,7 @@ CLLPD_Lasso_all_patients<-lassoPlot_CLLPD(dataResult,
 
 
 ```
+
 
 
 ```{r, message=FALSE, warning=FALSE}
@@ -1566,21 +1874,77 @@ CLLPD_Lasso_U_patients<-lassoPlot_CLLPD(dataResult,
 
 ```
 
+```{r, fig.width=4, fig.height=8}
 
-```{r, fig.height=12, fig.width=8}
+IL1b_Scatterplot<-left_join(CLL_PD, filter(df, Drug=="DMSO"), by = "PatientID") %>% 
+  left_join(patMeta, by = "PatientID") %>% 
+  filter(Cytokine%in%c("IL-1b"), !is.na(IGHV.status)) %>% 
+  
+  ggplot(aes(x=CLL_PD, y=Log)) +
+  geom_smooth(method="lm", formula= 'y ~ x')+
+  geom_point(aes(color=IGHV.status))+
+  facet_wrap(.~IGHV.status,  nrow = 2, strip.position="right", labeller = labeller(IGHV.status = c("U" = "IGHV-U", "M" =  "IGHV-M")))+
+  stat_cor()+
+  guides(color="none")+
+  t2+
+  theme(axis.title.x = element_text(size=12),
+        axis.title.y = element_text(size=12),
+        axis.text.x = element_text(size=10),
+        axis.text.y = element_text(size=10), 
+        strip.text = element_text(size=12),
+        plot.title = element_text(size=14))+
+  ggtitle("IL1ß")+
+  ylab("Log(Viability)")
+
+Res_Scatterplot<-left_join(CLL_PD, filter(df, Drug=="DMSO"), by = "PatientID") %>% 
+  left_join(patMeta, by = "PatientID") %>% 
+  filter(Cytokine%in%c("Resiquimod"), !is.na(IGHV.status)) %>% 
+  
+  ggplot(aes(x=CLL_PD, y=Log)) +
+  geom_smooth(method="lm", formula= 'y ~ x')+
+  geom_point(aes(color=IGHV.status))+
+  facet_wrap(.~IGHV.status,  nrow = 2, strip.position="right", labeller = labeller(IGHV.status = c("U" = "IGHV-U", "M" =  "IGHV-M")))+
+  stat_cor()+
+  guides(color="none")+
+  t2+
+  theme(axis.title.x = element_text(size=12),
+        axis.title.y = element_text(size=12),
+        axis.text.x = element_text(size=10),
+        axis.text.y = element_text(size=10), 
+        strip.text = element_text(size=12),
+        plot.title = element_text(size=14))+
+  ggtitle("Resiquimod")+
+  ylab("Log(Viability)")
+  
+```
+
+
+```{r, fig.height=13, fig.width=10.5}
+
+design1<-"
+  15
+  25
+  26
+  36
+  46
+  "
+
 wrap_elements(CLL_PD_Boxplot)+theme(plot.tag=element_text(size = 20))+
 wrap_elements(CLLPD_Lasso_all_patients)+theme(plot.tag=element_text(size = 20))+
 wrap_elements(CLLPD_Lasso_M_patients)+theme(plot.tag=element_text(size = 20))+
 wrap_elements(CLLPD_Lasso_U_patients)+theme(plot.tag=element_text(size = 20))+
+  Res_Scatterplot+theme(plot.tag=element_text(size = 20))+
+  IL1b_Scatterplot+theme(plot.tag=element_text(size = 20))+
   
   
-  plot_layout(nrow=4, heights = c(.8,1.05,.6,.7))+
+  
+  plot_layout(design=design1, heights = c(.9,.8,.1,.7,.85), widths = c(2,.7))+
   plot_annotation(tag_levels = "A")
   
 ```
 
 
-**Appendix Figure XXX. CLL Proliferative Drive as defined by Lu et al., 2021^5^** Beeswarm Plot of Proliferative drive in the clusters defined by microenvironmental resonse. P-values are shown from student's t-tests. **(A)** Predictor profiles for stimuli response to represent CLL Proliferative Drive identified through multivariate analysis using Gaussian linear modelling with L1-penalty for all patient samples which were analysed **(B)**, for only IGHV mutated **(C)** and for only IGHV unmutated patient samples **(D)** Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate log(viability) values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot.  
+**Appendix Figure XXX. CLL Proliferative Drive as defined by Lu et al., 2021^5^** Beeswarm Plot of Proliferative drive in the clusters defined by microenvironmental resonse. P-values are shown from student's t-tests. **(A)** Predictor profiles for stimuli response to represent CLL Proliferative Drive identified through multivariate analysis using Gaussian linear modelling with L1-penalty for all patient samples which were analysed **(B)**, for only IGHV mutated **(C)** and for only IGHV unmutated patient samples **(D)** Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate log(viability) values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot.  Exemplary scatter plots devided by IGHV mutation status shown for Resiquimod **(E)** and IL1ß **(F)**. CLL-PD on x-axis and log normalised viability after microenvironmental stimulation on y-axis. Person correlation coefficients are shown with p-values. 
 
 
 \newpage
@@ -2124,6 +2488,48 @@ volPlot
 
 \newpage
 
+
+
+```{r, fig.width=12, fig.height=6, message=FALSE, warning=FALSE}
+load("../../data/fig3_data_for_lassoplots.RData")
+
+
+# Get predictor profiles for stimuli of interest
+
+heatMaps_cyt <- lassoPlot3Appendix(dataResult[c("Resiquimod","sCD40L+IL-4")] ,  # 
+                          geneMatrix.complete, #use gene matrix for heatmap 
+                          viabMatrix, #use viab matrix for scatter plot
+                          freqCut = 0.75, #coefficients should be selected in <75% of bootstrapped model files
+                          coefCut = 0.02) #no minimum value for coefficients 
+
+
+# Assemble legend for heatmaps
+
+#G = gene mutations, I = IGHV, M = Methylation Cluster
+legendFor = c("G", "I", "M")
+
+#assign colours for I, G and M
+coldef<-list()
+coldef["I"] <- list(c(offwhite,"#707372")) #U-CLL and M-CLL
+coldef["M"] <- list(c(offwhite, "#707372", "#A8A99E")) #IP, HP, LP
+coldef["G"] <- list(c(offwhite, "#373A36")) #WT and Mutated
+
+
+legends = makelegends(legendFor=c("G","I","M"),coldef)
+
+
+
+grid.arrange( grobs = heatMaps_cyt[1], ncol =1)
+grid.arrange( grobs = heatMaps_cyt[2], ncol =1)
+
+```
+
+**Appendix Figure XX. ** Predictor profiles to represent gene - stimulus associations for stimuli which are not shown in Figure 3B but have predictors >0.02 assigned by multivariate analysis using Gaussian linear modelling with L1-penalty. Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate log(viability) values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot. 
+
+\newpage
+
+
+
 ```{r S8 receptor expression, fig.width=10, fig.height=7, warning=F}
 
 #VST
@@ -2506,7 +2912,7 @@ S11
 **Appendix Figure 11.  Over-representation tests of all KEGG and Reactome pathways in ChIPseq analysis of Spi-B binding in lymphoma cell lines. Results shown for pathways containing the most Spi-B gene targets (top 20). ** 
 
 ```{r }
-r#First check whether script for Figure 6 has been run, and if  fig6_data_for_supplement.RData exists.
+#First check whether script for Figure 6 has been run, and if  fig6_data_for_supplement.RData exists.
 #fig6_data_for_supplement.RData object contains Lasso_Plots_Fig6, a list of TableGrobs and coeff.long.mat_Fig6, a dataframe (840*3) of drug - stimulus - gene combinations and their coefficients
 
 #generate coefficient matrix and predictor profiles if prework has not been done
