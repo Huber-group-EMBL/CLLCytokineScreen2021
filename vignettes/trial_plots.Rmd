@@ -45,7 +45,7 @@ library(biobroom)
 ```
 
 ```{r loadData, eval = TRUE}
-setwd("/Volumes/giles/projects/publications/cll_cytokinescreen2021/")
+setwd("/Volumes/huber/users/giles/projects/publications/cll_cytokinescreen2021/")
 #Data
 #df: tibble containing all screening viability data
 load("data/df.RData")
@@ -775,35 +775,7 @@ data <- plotCounts(dds_smp_full, gene="ENSG00000269404", #SPIB
                    returnData=TRUE) %>%
       filter(trisomy12 %in% c("0", "1"))
 data$data_type <- "rna"
-data$gene <- "SPIB"
-
-    
-df_tbl_prot <- 
-  wideFormat(multiomics_MAE["STAT6",,"proteomics"] ) %>% as_tibble()
-
-colnames(df_tbl_prot)[2] <- "protein"
-
-mae_mini <- multiomics_MAE[,,c("SNPs", "chrom_abber", "health_record_bin")]
-
-df_tbl_SNP <- wideFormat(mae_mini["trisomy12",,]) %>% as_tibble()
-colnames(df_tbl_SNP)[2] <- "alteration"
-df_tbl_SNP <- df_tbl_SNP %>% mutate(alteration=factor(alteration))
-df_tbl <- left_join(df_tbl_prot, df_tbl_SNP, by="primary" ) %>% column_to_rownames("primary")
-colnames(df_tbl) <- c("count", "trisomy12")
-df_tbl$data_type <- "proteomics"
-df_tbl$gene <- "STAT6"
-
-
-#join 
-facetPlot <- rbind(data,df_tbl)
-
-#SPI1
-data <- plotCounts(dds_smp_full, gene="ENSG00000066336", #SPI1
-                   intgroup=c("trisomy12"), 
-                   returnData=TRUE) %>%
-      filter(trisomy12 %in% c("0", "1"))
-data$data_type <- "rna"
-data$gene <- "SPI1"
+data$gene <- "Spi-B"
 
     
 df_tbl_prot <- 
@@ -819,10 +791,22 @@ df_tbl_SNP <- df_tbl_SNP %>% mutate(alteration=factor(alteration))
 df_tbl <- left_join(df_tbl_prot, df_tbl_SNP, by="primary" ) %>% column_to_rownames("primary")
 colnames(df_tbl) <- c("count", "trisomy12")
 df_tbl$data_type <- "proteomics"
-df_tbl$gene <- "SPI1"
+df_tbl$gene <- "PU.1"
+
+
+#join 
+facetPlot <- rbind(data,df_tbl)
+
+#SPI1
+data <- plotCounts(dds_smp_full, gene="ENSG00000066336", #SPI1
+                   intgroup=c("trisomy12"), 
+                   returnData=TRUE) %>%
+      filter(trisomy12 %in% c("0", "1"))
+data$data_type <- "rna"
+data$gene <- "PU.1"
+
 
 facetPlot <- rbind(facetPlot, data, df_tbl)
-
 
 facetPlot <- facetPlot[!is.na(facetPlot$trisomy12), ]
 
@@ -835,7 +819,7 @@ ggplot(facetPlot, aes(x = trisomy12, y = count, color=trisomy12)) +
       geom_boxplot() +
       geom_beeswarm() + 
       facet_wrap(gene ~ data_type, scales = "free", nrow = 2, labeller = labeller(data_type = labs)) +
-      ylab("Counts") +
+      ylab("Counts / Abundance") +
       xlab("trisomy 12") +
       
       t2 +
