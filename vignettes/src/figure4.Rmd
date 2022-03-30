@@ -190,6 +190,27 @@ source("../../R/themes_colors.R")
 
 ```
 
+## Define fucntions
+```{R}
+#sort chr by number 
+sortChrName <- function(chr.name) {
+    ## X, Y and M will cause warnings when change to number.
+    noChr <- suppressWarnings(as.numeric(sub("chr", "", chr.name)))
+    ## index of chromosome name are character, such as X, Y
+    ch.idx <- which(is.na(noChr))
+    
+    n.idx <- which(!is.na(noChr))
+    chr.n <- noChr[n.idx]
+
+    chr.sorted <- chr.name[n.idx][order(chr.n)]
+    if (length(ch.idx) != 0) {
+        chr.sorted <- c(chr.sorted, sort(chr.name[ch.idx]))
+    }
+         
+    return(chr.sorted)
+}
+
+```
 
 ## Plot Figures
 ### Figure 4A
@@ -198,7 +219,7 @@ TLR Response stratified by IGHV and trisomy 12
 
 #filter for Resiquimod-only treatment, only show patients who are annotated for IGHV and Trisomy12
 plotTab <- left_join(df, patMeta, by = "PatientID") %>% 
-  dplyr::filter(Cytokine=="Resiquimod",
+  dplyr::filter(Cytokine=="IL-4",
                 !is.na(trisomy12),
                 !is.na(IGHV.status))
 
@@ -223,7 +244,7 @@ Fig4A =
                      size=5)+
   xlab("") +
   ylab("Log(Viability)") +
-  ggtitle("Resiquimod") +
+  ggtitle("IL4") +
   scale_color_manual(values=c(palblues[3], palreds[8])) + 
   coord_cartesian(ylim = c(-1.5, 3.1), clip="off") +
   t1+
@@ -237,46 +258,36 @@ Fig4A
 
 ```
 
-
-
-
 ### Figure 4B
-Ibrutinib Response stratified by IGHV and trisomy 12
-```{r  Fig4B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 5.5, fig.width = 6}
+TGFbeta Response stratified by trisomy 12
+```{r, Fig4B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 5.5, fig.width = 6}
 
-#filter for Resiquimod-only treatment, only show patients who are annoyated for IGHV and Trisomy12
-plotTab <- left_join(df_complete, patMeta, by = "PatientID") %>% 
-  dplyr::filter(Cytokine=="No Cytokine", Drug=="Ibrutinib", Drug_Concentration=="High",
-                !is.na(trisomy12),
-                !is.na(IGHV.status))
+#filter for Resiquimod-only treatment, only show patients who are annotated for IGHV and Trisomy12
+plotTab <- left_join(df, patMeta, by = "PatientID") %>% 
+  dplyr::filter(Cytokine=="TGF-b1",
+                !is.na(trisomy12))
 
-Fig4B =
+Fig4B =  
  
   plotTab %>%
          
-  ggplot(aes(x=interaction(trisomy12, IGHV.status),
+  ggplot(aes(x=trisomy12,
                     y=Log,
-                    color=(IGHV.status)))+
+                    color=(trisomy12)))+
   geom_hline(yintercept = 0)+
   geom_boxplot()+
   geom_beeswarm(cex=1.5) +
   guides(color="none", shape="none")+
-  scale_x_discrete(labels=c("0.M"="IGHV-M\n WT",
-                            "0.U"="IGHV-U\n WT",
-                            "1.M"="IGHV-M\n trisomy 12",
-                            "1.U"="IGHV-U\n trisomy 12"))+
+ 
   stat_compare_means(method = "t.test",
                      label.x.npc = "center", 
-                     comparisons = list(c(3,4),c(1,3),c(1,2)),
                      size=5)+
   xlab("") +
   ylab("Log(Viability)") +
-  ggtitle("Ibrutinib") +
+  ggtitle("TGFBeta") +
   scale_color_manual(values=c(palblues[3], palreds[8])) + 
-  # coord_cartesian(ylim = c(-1.5, 3.1), clip="off") +
-  t1+
-  theme(axis.text.x = element_text(angle = 45, vjust =1))
-
+  #coord_cartesian(ylim = c(-1.5, 3.1), clip="off") +
+  t2
 
 rm(plotTab)
 
@@ -350,149 +361,10 @@ Fig4C
 ```
 
 ### Figure 4D
-Find top peaks 
-```{r}
-#filter for top peaks (all or up)
-TFBS <- peaklfc %>% dplyr::filter(l2FC >1)
 
-#remove Chr
-TFBS <- TFBS %>% 
-        #remove chr string
-        mutate_at(vars(TFBSID), list(~as.character(gsub("chr.*:", "", .)))) %>% 
-        #separate into start and end
-        separate(TFBSID, c("start", "end"))
-
-#Convert to a genomic ranges object
-
-
-peak<- 
-  TFBS %>%
-  dplyr::select(TF, chr, start, end, strand, l2FC, pval,  pval_adj) %>%
-  makeGRangesFromDataFrame(keep.extra.columns = TRUE)
-
-
-#Visualise where the bindng sites are and the size of the log2FC
-
-
-Fig4D <- covplot(peak, weightCol="l2FC")
-
-```
-
-
-### Figure 4E
-Here I use the annotatePeak function to find nearest gene to each of my SPIB binding sites, looking in the region ±3kb around the tss sites defined in the TxDB object. The resulting `peakAnno` object contains all the original information on my SPIB bding sites, along with information on the annotation of these sites (eg promoter/Exon/intron/intergenic) and the nearest gene and its function. 
-```{r}
-#get annotation database
-txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
-
-peakAnno <- annotatePeak(peak, 
-                         tssRegion=c(-3000, 3000), #region in whcih to look for genes
-                         TxDb=txdb, #define where to get transcript info
-                         annoDb="org.Hs.eg.db") #set annotation package to add ensembl, smbol and genames
-
-#peakAnno is a csAnno object - can convert:
-as.data.frame(peakAnno) %>%
-  DT::datatable()
-
-
-```
-
-Just KEGG
-```{r fig.width = 10}
-
-#get  KEGG pathways from msigdbr database
-kegg <- 
-  msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP:KEGG") %>% 
-  #select pathway name and entrez id 
-  dplyr::select(gs_name, entrez_gene)
-
-
-#subset for pathways that we want to test
-
-colnames(kegg) <- c("term", "gene")
-
-#tidy up terms - remove KEGG, underscore and put in lower cases
-kegg$term <- gsub("KEGG_", "",kegg$term )
-kegg$term <- gsub("_", " ",kegg$term )
-
-
-kegg$genesetDatabase <- "KEGG"
-
-
-#generate TERM2GENE dataframe to use in overrepresetation test
-#join kegg and reactome gene sets together - this defines the list of pathways we are interested in, and select term and gene columns
-term2gene <- kegg %>% dplyr::select(term, gene)
-
-##SPIB
-#run over-representation test, and extract all results and p values:
-#NB Bg ratio = number of genes in set / number of unique genes in term2gene, 
-#NB Gene ratio = number of SPIB targets in gene set being tested / total number of SPIB targets that overlap with genes in term to gene
-
-spibRes <- enricher(unique(as.data.frame(peakAnno)$geneId), 
-                    #Use pathways in term2gene
-                    TERM2GENE=term2gene, 
-                    #no cutoffs on reported results, we want to see all results and p values 
-                    minGSSize = 0,
-                    maxGSSize = 1000,
-                    pvalueCutoff = 1, 
-                    qvalueCutoff = 1)
-
-
-#get dataframe of results
-spibRes.df <- fortify(spibRes, 
-              showCategory = length(unique(term2gene$term)), #show all pathways tested
-              split=NULL)
-
-resTab.spib <-  
-  mutate(spibRes.df, genesetSize = BgRatio*length(unique(term2gene$gene))) %>%  #multiply BgRatio by total genes tested to get number of genes in set
-  dplyr::select(ID, pvalue, Count, genesetSize)
-
-colnames(resTab.spib) <- c("ID", "pvalue_SPIB","count_SPIB", "genesetSize")
-
-
-resTab <- resTab.spib
-
-#where count and p value is NA, put a 0 / 1 (ie there were no SPIB target genes in the set)
-resTab$count_SPIB[is.na(resTab$count_SPIB)] <- 0
-
-resTab$pvalue_SPIB[is.na(resTab$pvalue_SPIB)] <- 1
-
-#select columns of interest to show in figure
-resTab <- dplyr::select(resTab, ID, genesetSize,  count_SPIB, pvalue_SPIB)
-
-#adjust decimal places of p values
-resTab$pvalue_SPIB <- round(resTab$pvalue_SPIB, digits = 3)
-
-#get significant results
-resTab <- dplyr::filter(resTab, pvalue_SPIB<0.1)
-
-colnames(resTab) <- c("Pathway",
-              
-                      "Geneset\nSize",  
-                      
-                      #show the total number of SPIB targets in ChIPseq data 
-                      paste("Spi-B targets\n(/" ,length(unique(as.data.frame(peakAnno)$geneId)),")", sep= ""), 
-                      "SPIB\np-value")
-
-Fig4E <- 
-ggtexttable(resTab, rows = NULL, 
-           theme = ttheme(
-             colnames.style = colnames_style(color = "white", fill = palreds[7], size = 16),
-             tbody.style = tbody_style(color = "black",size = 18)
-           )
-)
-
-
-Fig4E
-
-```
-
-
-### Figure 4F
 Here, for Spi-B  ChIP peaks in an OCILY3 DLBCL cell line, we use the `clusterProfiler` package to annotate the nearest gene for each significant ChIPpeak (q<0.05). We filter the resulting gene list for those with a peak within ±1kb of the TSS and tested for over-representation of selected KEGG and Reactome pathways.     
 
-
-```{R, Fig4F,  fig.path = plotDir, dev = c("png", "cairo_pdf"), fig.width=15, fig.height=2, message=FALSE }
+```{R, Fig4D,  fig.path = plotDir, dev = c("png", "cairo_pdf"), fig.width=15, fig.height=2, message=FALSE }
 # Get significant peaks
 #filter ChipSeq data for peaks with significant score -log10(Qscore)>1.3
 #if q < 0.05, then Qlog >1.3
@@ -694,7 +566,7 @@ resTab <- dplyr::select(resTab, ID, genesetDatabase, genesetSize,  count_SPIB, p
 resTab$pvalue_SPIB <- round(resTab$pvalue_SPIB, digits = 3)
 
 #get significant results
-resTab <- dplyr::filter(resTab, pvalue_SPIB<0.05)
+resTab <- dplyr::filter(resTab, pvalue_SPIB<0.01)
 
 colnames(resTab) <- c("Pathway",
                       "Geneset\nDatabase" , 
@@ -704,7 +576,7 @@ colnames(resTab) <- c("Pathway",
                       paste("Spi-B targets\n(/" ,length(unique(as.data.frame(peakAnno.spib.1kb)$geneId)),")", sep= ""), 
                       "SPIB\np-value")
 
-Fig4F <- 
+Fig4D <- 
 ggtexttable(resTab, rows = NULL, 
            theme = ttheme(
              colnames.style = colnames_style(color = "white", fill = palreds[7], size = 16),
@@ -713,15 +585,265 @@ ggtexttable(resTab, rows = NULL,
 )
 
 
-Fig4F
+Fig4D
 
 ```
 
-### Figure 4G
-IBET-762 response stratified by trisomy 12
-```{r, Fig4E, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 5, fig.width = 5}
 
-Fig4G <- 
+### Figure 4E
+Find top peaks 
+```{r}
+#filter for top peaks (all or up)
+TFBS <- peaklfc %>% dplyr::filter(abs(l2FC) >1, pval_adj <0.1)
+
+
+#remove Chr
+TFBS <- TFBS %>% 
+        #remove chr string
+        mutate_at(vars(TFBSID), list(~as.character(gsub("chr.*:", "", .)))) %>% 
+        #separate into start and end
+        separate(TFBSID, c("start", "end"))
+
+```
+
+Convert to a genomic ranges object
+```{r}
+
+peak<- 
+  TFBS %>%
+  dplyr::select(TF, chr, start, end, strand, l2FC, pval,  pval_adj) %>%
+  makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+
+```
+```{r fig.width=15, fig.height=2}
+
+#get annotation database
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+
+#annoate all genes within 5kb
+peakAnno <- annotatePeak(peak, 
+                         tssRegion=c(-3000, 3000), #region in whcih to look for genes
+                         TxDb=txdb, #define where to get transcript info
+                         annoDb="org.Hs.eg.db", addFlankGeneInfo = TRUE) #set annotation package to add ensembl, smbol and genames
+
+#peakAnno is a csAnno onject - can convert:
+as.data.frame(peakAnno) %>%
+  DT::datatable()
+
+
+#get  KEGG pathways from msigdbr database
+kegg <- 
+  msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP:KEGG") %>% 
+  #select pathway name and entrez id 
+  dplyr::select(gs_name, entrez_gene)
+
+
+#subset for pathways that we want to test
+kegg <-
+  dplyr::filter(kegg, 
+         #All KEGG immune signaling pathways
+         gs_name %in% c("KEGG_B_CELL_RECEPTOR_SIGNALING_PATHWAY",
+                        "KEGG_CHEMOKINE_SIGNALING_PATHWAY",
+                        "KEGG_CYTOKINE_CYTOKINE_RECEPTOR_INTERACTION", 
+                        "KEGG_JAK_STAT_SIGNALING_PATHWAY" ,
+                        "KEGG_NOD_LIKE_RECEPTOR_SIGNALING_PATHWAY"  , 
+                        "KEGG_NOTCH_SIGNALING_PATHWAY", 
+                        "KEGG_RIG_I_LIKE_RECEPTOR_SIGNALING_PATHWAY", 
+                        "KEGG_TOLL_LIKE_RECEPTOR_SIGNALING_PATHWAY",
+                        "KEGG_T_CELL_RECEPTOR_SIGNALING_PATHWAY",
+                        #Control genesets
+                        "KEGG_OXIDATIVE_PHOSPHORYLATION",                  
+                        "KEGG_DNA_REPLICATION"
+         ))
+
+colnames(kegg) <- c("term", "gene")
+
+#tidy up terms - remove KEGG, underscore and put in lower cases
+kegg$term <- gsub("KEGG_", "",kegg$term )
+kegg$term <- gsub("_", " ",kegg$term )
+kegg$term <- gsub("B CELL RECEPTOR SIGNALING PATHWAY", 
+                  "BCR Signaling Pathway",kegg$term )
+kegg$term <- gsub("CHEMOKINE SIGNALING PATHWAY", 
+                  "Chemokine Signaling Pathway",kegg$term )
+kegg$term <- gsub("CYTOKINE CYTOKINE RECEPTOR INTERACTION", 
+                  "Cytokine Cytokine Receptor Interaction",kegg$term )
+kegg$term <- gsub("JAK STAT SIGNALING PATHWAY", 
+                  "JAK STAT signaling pathway",kegg$term )
+kegg$term <- gsub("NOD LIKE RECEPTOR SIGNALING PATHWAY", 
+                  "NLR Signaling Pathway",kegg$term )
+kegg$term <- gsub("NOTCH SIGNALING PATHWAY", 
+                  "Notch Signaling Pathway",kegg$term )
+kegg$term <- gsub("RIG I LIKE RECEPTOR SIGNALING PATHWAY", 
+                  "RLR Signaling Pathway",kegg$term )
+kegg$term <- gsub("TOLL LIKE RECEPTOR SIGNALING PATHWAY", 
+                  "TLR Signaling Pathway",kegg$term )
+
+kegg$term <- gsub("T CELL RECEPTOR SIGNALING PATHWAY", 
+                  "TCR Signaling Pathway",kegg$term )
+kegg$term <- gsub("OXIDATIVE PHOSPHORYLATION", 
+                  "Oxidative Phosphorylation",kegg$term )
+kegg$term <- gsub("P53 SIGNALING PATHWAY", 
+                  "P53 Signaling Pathway",kegg$term )
+kegg$term <- gsub("DNA REPLICATION", 
+                  "DNA Replication",kegg$term )
+
+kegg$genesetDatabase <- "KEGG"
+
+
+#get reactome pathways
+reactome <- 
+  msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP:REACTOME") %>% 
+  #select pathway name and entrez id
+  dplyr::select(gs_name, entrez_gene)
+
+#subset for pathways that we want to test
+reactome <-
+  dplyr::filter(reactome, 
+         gs_name %in% c(#selected immune pathways
+                        "REACTOME_SIGNALING_BY_TGF_BETA_RECEPTOR_COMPLEX",
+                        "REACTOME_TNF_SIGNALING",
+                        "REACTOME_INTERLEUKIN_1_SIGNALING",
+                        "REACTOME_INTERLEUKIN_10_SIGNALING",
+                        "REACTOME_INTERLEUKIN_15_SIGNALING",
+                        "REACTOME_INTERLEUKIN_2_SIGNALING",
+                        "REACTOME_INTERLEUKIN_4_AND_INTERLEUKIN_13_SIGNALING",
+                        "REACTOME_INTERLEUKIN_6_SIGNALING" ,
+                        "REACTOME_OTHER_INTERLEUKIN_SIGNALING",
+                        "REACTOME_SIGNALING_BY_INTERLEUKINS",
+                        "REACTOME_INTERFERON_ALPHA_BETA_SIGNALING" ,
+                        "REACTOME_INTERFERON_GAMMA_SIGNALING", 
+                        #Control genesets
+                        "REACTOME_CELL_CYCLE",                  
+                        "REACTOME_REGULATION_OF_TP53_ACTIVITY" 
+                        ))
+
+colnames(reactome) <- c("term", "gene")
+
+#tidy up terms
+reactome$term <- gsub("REACTOME_", "",reactome$term )
+reactome$term <- gsub("_", " ",reactome$term )
+
+
+#tidy up and put in lower case
+reactome$term <- gsub("CELL CYCLE", 
+                      "Cell Cycle",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 1 SIGNALING", 
+                      "Interleukin 1 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 10 SIGNALING", 
+                      "Interleukin 10 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 15 SIGNALING", 
+                      "Interleukin 15 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 2 SIGNALING", 
+                      "Interleukin 2 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 4 AND INTERLEUKIN 13 SIGNALING", 
+                      "Interleukin 4 and Interleukin 13 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 6 SIGNALING",
+                      "Interleukin 6 Signaling",reactome$term )
+reactome$term <- gsub("OTHER INTERLEUKIN SIGNALING", 
+                      "Other Interleukin Signaling",reactome$term )
+reactome$term <- gsub("SIGNALING BY INTERLEUKINS", 
+                      "Signaling by Interleukins",reactome$term )
+reactome$term <- gsub("REGULATION OF TP53 ACTIVITY", 
+                      "Regulation of TP53 Pathway",reactome$term )
+reactome$term <- gsub("SIGNALING BY TGF BETA RECEPTOR COMPLEX",
+                      # "Signaling by TGFbeta \nReceptor Complex", reactome$term )
+                      "Signaling by TGFbeta Receptor Complex", reactome$term )
+reactome$term <- gsub("TNF SIGNALING", 
+                      "TNF Signaling",reactome$term )
+reactome$term <- gsub("INTERFERON ALPHA BETA SIGNALING", 
+                      "Interferon Alpha Beta Signaling",reactome$term )
+
+reactome$term <- gsub("INTERFERON GAMMA SIGNALING", 
+                      "Interferon Gamma Signaling", reactome$term )
+
+#annotate which database these pathways come from 
+reactome$genesetDatabase <- "Reactome"
+
+```
+
+
+```{r fig.width =10}
+
+#generate TERM2GENE dataframe to use in overrepresetation test
+#join kegg and reactome gene sets together - this defines the list of pathways we are interested in, and select term and gene columns
+term2gene <- rbind(kegg, reactome) %>% dplyr::select(term, gene)
+
+#term2genesetdatabase - keep details of database source for each pathway 
+term2genesetdatabase <- rbind(kegg, reactome) %>% dplyr::select(term, genesetDatabase)
+colnames(term2genesetdatabase) <- c("term", "name")
+
+##SPIB
+#run over-representation test, and extract all results and p values:
+#NB Bg ratio = number of genes in set / number of unique genes in term2gene, 
+#NB Gene ratio = number of SPIB targets in gene set being tested / total number of SPIB targets that overlap with genes in term to gene
+
+spibRes <- enricher(unique(as.data.frame(peakAnno)$geneId), 
+                    #Use pathways in term2gene
+                    TERM2GENE=term2gene, 
+                    #assign description for each term, as its database source
+                    TERM2NAME = term2genesetdatabase, 
+                    #no cutoffs on reported results, we want to see all results and p values 
+                    minGSSize = 0,
+                    maxGSSize = 1000,
+                    pvalueCutoff = 1, 
+                    qvalueCutoff = 1)
+
+
+#get dataframe of results
+spibRes.df <- fortify(spibRes, 
+              showCategory = length(unique(term2gene$term)), #show all pathways tested
+              split=NULL)
+
+resTab.spib <-  
+  mutate(spibRes.df, genesetSize = BgRatio*length(unique(term2gene$gene))) %>%  #multiply BgRatio by total genes tested to get number of genes in set
+  dplyr::select(ID, Description, pvalue, Count, genesetSize)
+
+colnames(resTab.spib) <- c("ID", "genesetDatabase", "pvalue_SPIB","count_SPIB", "genesetSize")
+
+
+resTab <- resTab.spib
+
+#where count and p value is NA, put a 0 / 1 (ie there were no SPIB target genes in the set)
+resTab$count_SPIB[is.na(resTab$count_SPIB)] <- 0
+
+resTab$pvalue_SPIB[is.na(resTab$pvalue_SPIB)] <- 1
+
+#select columns of interest to show in figure
+resTab <- dplyr::select(resTab, ID, genesetDatabase, genesetSize,  count_SPIB, pvalue_SPIB)
+
+#adjust decimal places of p values
+resTab$pvalue_SPIB <- round(resTab$pvalue_SPIB, digits = 3)
+
+#get significant results
+resTab <- dplyr::filter(resTab, pvalue_SPIB<0.01)
+
+colnames(resTab) <- c("Pathway",
+                      "Geneset\nDatabase" , 
+                      "Geneset\nSize",  
+                      
+                      #show the total number of SPIB targets in ChIPseq data 
+                      paste("Spi-B targets\n(/" ,length(unique(as.data.frame(peakAnno)$geneId)),")", sep= ""), 
+                      "SPIB\np-value")
+
+Fig4E <- 
+ggtexttable(resTab, rows = NULL, 
+           theme = ttheme(
+             colnames.style = colnames_style(color = "white", fill = palreds[7], size = 16),
+             tbody.style = tbody_style(color = "black",size = 18)
+           )
+)
+
+
+Fig4E
+
+
+```
+
+### Figure 4F
+IBET-762 response stratified by trisomy 12
+```{r, Fig4F, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 5, fig.width = 5}
+
+Fig4F <- 
   left_join(df_complete, patMeta, by = "PatientID") %>% 
   dplyr::filter(Drug=="I-BET 762", Drug_Concentration == "High", Cytokine == "No Cytokine") %>%
       filter(!is.na(trisomy12)) %>%
@@ -745,15 +867,15 @@ Fig4G <-
                             "1"="trisomy 12"))+
   xlab("")
 
-Fig4G
+Fig4F
 
 ```
 
 
-### Figure 4H
+### Figure 4G
 Comparison of TF binding site accessibility in trisomy 12 vs non-trisomy 12 samples and in IBET vs control treated samples  
 
-```{r, Fig4H, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 12, fig.height=10}
+```{r, Fig4G, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 12, fig.height=10}
 
 colnames(ibet_TFs) <- c("Symbol", "ENSEMBL", "TF")
 
@@ -788,7 +910,7 @@ plotTab %<>% pivot_longer(c("ibet", "tri12"))
 colnames(plotTab) <- c("TF", "condition", "WMD")
 
 #plot figure
-Fig4H <-
+Fig4G <-
   ggplot(plotTab,
          aes(x=WMD,
              y=TF,
@@ -833,7 +955,7 @@ Fig4H <-
   
 
 
-Fig4H
+Fig4G 
 
 rm(plotTab)
 
@@ -843,11 +965,11 @@ rm(plotTab)
 ```{r Figure4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=17, fig.width=17, eval = TRUE}
 
 design1<-"
-  AC
-  BE
-  BE
-  BE
-  GH
+  AB
+  CC
+  DD
+  EE
+  FG
 "
 
 tp <- theme(plot.tag=element_text(size = 30, face="plain"))
@@ -858,9 +980,11 @@ Fig4 <-
  wrap_elements( Fig4A )+ tp +
  wrap_elements( Fig4B )+ tp +
  wrap_elements( Fig4C )+ tp + 
- wrap_elements( Fig4E )+ tp +  
+ wrap_elements( Fig4D )+ tp + 
+ wrap_elements( Fig4E )+ tp + 
+ wrap_elements( Fig4F )+ tp + 
  wrap_elements( Fig4G )+ tp +
- wrap_elements( Fig4H )+ tp +
+
     
   plot_annotation(tag_levels = "A", title="Figure 4", theme = theme(title=element_text(size = 20)))+
   plot_layout(design = design1, heights = c(1,0.3,0.4,0.3,1), width=c(1,2))
@@ -869,6 +993,39 @@ Fig4 <-
 Fig4
 
 ggsave("Fig4.pdf", height = 17, width= 17)
+```
+
+```{r Figure4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=17, fig.width=17, eval = TRUE}
+
+design1<-"
+  AD
+  AE
+  BF
+  CG
+  CG
+"
+
+tp <- theme(plot.tag=element_text(size = 30, face="plain"))
+
+Fig4 <-
+
+
+ wrap_elements( Fig4A )+ tp +
+ wrap_elements( Fig4B )+ tp +
+ wrap_elements( Fig4C )+ tp + 
+ wrap_elements( Fig4D )+ tp + 
+ wrap_elements( Fig4E )+ tp + 
+ wrap_elements( Fig4F )+ tp + 
+ wrap_elements( Fig4G )+ tp +
+
+    
+  plot_annotation(tag_levels = "A", title="Figure 4", theme = theme(title=element_text(size = 20)))+
+  plot_layout(design = design1, heights = c(1,0.3,0.4,0.3,1), width=c(1,2))
+
+
+Fig4
+
+ggsave("/Volumes/huber/users/giles/Fig4.pdf", height = 17, width= 17)
 ```
 
 ## Appendix
