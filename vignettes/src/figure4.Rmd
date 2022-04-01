@@ -215,11 +215,11 @@ sortChrName <- function(chr.name) {
 ## Plot Figures
 ### Figure 4A
 TLR Response stratified by IGHV and trisomy 12
-```{r, Fig4A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 5.5, fig.width = 6}
+```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 5.5, fig.width = 6}
 
 #filter for Resiquimod-only treatment, only show patients who are annotated for IGHV and Trisomy12
 plotTab <- left_join(df, patMeta, by = "PatientID") %>% 
-  dplyr::filter(Cytokine=="IL-4",
+  dplyr::filter(Cytokine=="Resiquimod",
                 !is.na(trisomy12),
                 !is.na(IGHV.status))
 
@@ -244,11 +244,11 @@ Fig4A =
                      size=5)+
   xlab("") +
   ylab("Log(Viability)") +
-  ggtitle("IL4") +
+  ggtitle("Resiquimod") +
   scale_color_manual(values=c(palblues[3], palreds[8])) + 
   coord_cartesian(ylim = c(-1.5, 3.1), clip="off") +
-  t1+
-  theme(axis.text.x = element_text(angle = 45, vjust =1))
+  t2
+  # theme(axis.text.x = element_text(angle = 45, vjust =1))
 
 
 rm(plotTab)
@@ -257,6 +257,47 @@ Fig4A
 
 
 ```
+
+
+```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 5.5, fig.width = 6}
+
+#filter for IL4-only treatment, only show patients who are annotated for Trisomy12
+plotTab <- left_join(df, patMeta, by = "PatientID") %>% 
+  dplyr::filter(Cytokine=="IL-4",
+                !is.na(trisomy12))
+
+IL4inTrisomy12 =  
+ 
+  plotTab %>%
+         
+  ggplot(aes(x=interaction(trisomy12),
+                    y=Log,
+                    color=(trisomy12)))+
+  geom_hline(yintercept = 0)+
+  geom_boxplot()+
+  geom_beeswarm(cex=1.5) +
+  guides(color="none", shape="none")+
+  scale_x_discrete(labels=c("0"="WT",
+                            "1"="trisomy 12"))+
+  stat_compare_means(method = "t.test",
+                     label.x.npc = "center", 
+                     comparisons = list(c(1,2)),
+                     size=5)+
+  xlab("") +
+  ylab("Log(Viability)") +
+  coord_cartesian( clip="off") +
+  ggtitle("IL4") +
+  scale_color_manual(values=c(palblues[3], palreds[8])) + 
+  t2
+
+
+rm(plotTab)
+
+IL4inTrisomy12
+
+
+```
+
 
 ### Figure 4B
 TGFbeta Response stratified by trisomy 12
@@ -962,7 +1003,7 @@ rm(plotTab)
 ```
 
 ## Assemble Figure 4
-```{r Figure4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=17, fig.width=17, eval = TRUE}
+```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=17, fig.width=17, eval = TRUE}
 
 design1<-"
   AB
@@ -995,7 +1036,7 @@ Fig4
 ggsave("Fig4.pdf", height = 17, width= 17)
 ```
 
-```{r Figure4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=17, fig.width=17, eval = TRUE}
+```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=17, fig.width=17, eval = TRUE}
 
 design1<-"
   AD
@@ -1025,7 +1066,96 @@ Fig4 <-
 
 Fig4
 
-ggsave("/Volumes/huber/users/giles/Fig4.pdf", height = 17, width= 17)
+```
+
+```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=17, fig.width=15, eval = TRUE}
+
+design1<-"
+  ABB
+  CCC
+  DDE
+"
+
+tp <- theme(plot.tag=element_text(size = 30, face="plain"))
+
+Fig4 <-
+
+
+ wrap_elements( IL4inTrisomy12 )+ tp +
+ wrap_elements( Fig4B )+ tp +
+ wrap_elements( Fig4G )+ tp + 
+ # wrap_elements( Fig4C )+ tp + 
+ wrap_elements( Fig4E )+ tp + 
+ # wrap_elements( Fig4E )+ tp + 
+ wrap_elements( Fig4F )+ tp + 
+
+    
+  plot_annotation(tag_levels = "A", title="Figure 4", theme = theme(title=element_text(size = 20)))+
+  plot_layout(design = design1, heights = c(1,1.3,1), width=c(2,.5,1.5))
+
+
+Fig4
+
+```
+
+
+```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=20, fig.width=16, eval = TRUE}
+
+design1<-"
+  ABB
+  CCC
+  DDF
+  EEF
+"
+
+tp <- theme(plot.tag=element_text(size = 30, face="plain"))
+
+Fig4 <-
+
+
+ wrap_elements( Fig4A )+ tp +
+ wrap_elements( IL4inTrisomy12 )+ tp +
+ wrap_elements( Fig4G )+ tp + 
+ wrap_elements( Fig4D )+ tp +
+ wrap_elements( Fig4E )+ tp + 
+ wrap_elements( Fig4F )+ tp + 
+
+    
+  plot_annotation(tag_levels = "A", title="Figure 4", theme = theme(title=element_text(size = 20)))+
+  plot_layout(design = design1, heights = c(1,1.3,.6,.4), width=c(2,.5,1.5))
+
+
+Fig4
+
+```
+
+
+```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=18, fig.width=14, eval = TRUE}
+
+design1<-"
+  ABB
+  CCD
+  EEE
+"
+
+tp <- theme(plot.tag=element_text(size = 30, face="plain"))
+
+Fig4 <-
+
+
+ wrap_elements( Fig4A )+ tp +
+ wrap_elements( IL4inTrisomy12 )+ tp +
+ wrap_elements( Fig4C )+ tp + 
+ wrap_elements( Fig4F )+ tp + 
+ wrap_elements( Fig4G )+ tp +
+
+    
+  plot_annotation(tag_levels = "A", title="Figure 4", theme = theme(title=element_text(size = 20)))+
+  plot_layout(design = design1, heights = c(.8,1,1.1), width=c(1.7,.3,1))
+
+
+Fig4
+
 ```
 
 ## Appendix
