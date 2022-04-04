@@ -1091,7 +1091,7 @@ selected_mutations <-
   
 ```
 
-**Appendix Table XX. List of genetic alterations tested for their association with stimuli response in the univariate model of Figure 3A** Only genetic alterations with at least 3 positive cases were considered. 
+**Appendix Table 2. List of genetic alterations tested for their association with stimuli response in the univariate model of Figure 3A** Only genetic alterations with at least 3 positive cases were considered. 
 \newpage
 
 ```{r Appendix Table 2 }
@@ -1145,52 +1145,9 @@ cox_output %>%
 
 ```
 
-**Appendix Table 2. Multivariate survival analysis of response clusters.** Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference.
+**Appendix Table 3. Multivariate survival analysis of response clusters.** Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference.
 \newpage
 
-
-<!-- # ```{r } -->
-<!-- # -->
-<!-- # clusters.surv<- left_join(Heatmap_clusters, survT, by = "PatientID") -->
-<!-- # -->
-<!-- # #Add meta data to heatmap clusters -->
-<!-- # clusters.surv <- left_join(clusters.surv, CLL_PD, by="PatientID") -->
-<!-- # -->
-<!-- # #run coxphmodel -->
-<!-- # c <- -->
-<!-- #   clusters.surv %>% -->
-<!-- #   mutate(Cluster=factor(Cluster)) %>% -->
-<!-- #   coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, "3")+ CLL_PD,  data=.) -->
-<!-- # -->
-<!-- # #tidy results, exponentiate coefficients and estimate 95% confidence intervals -->
-<!-- # cox_output<- tidy(c, conf.int = TRUE,  exponentiate = TRUE) %>% -->
-<!-- #   dplyr::select(term, estimate, p.value, conf.low, conf.high) -->
-<!-- # -->
-<!-- # #tidy names -->
-<!-- # cox_output$term<- -->
-<!-- #   cox_output$term %>% -->
-<!-- #   gsub(pattern="factor2ind", "", .)%>% -->
-<!-- #   gsub(pattern="[()]", "", .)%>% -->
-<!-- #   gsub(pattern=":", " ", .) -->
-<!-- # -->
-<!-- # colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High") -->
-<!-- # -->
-<!-- # cox_output$HR <- round(cox_output$HR, 2) -->
-<!-- # cox_output$p.value <- round(cox_output$p.value, 2) -->
-<!-- # cox_output$CI.low <- round(cox_output$CI.low, 2) -->
-<!-- # cox_output$CI.High <- round(cox_output$CI.High, 2) -->
-<!-- # -->
-<!-- # cox_output <- cox_output %>% -->
-<!-- #   dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) -->
-<!-- # -->
-<!-- # -->
-<!-- # colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High") -->
-<!-- # -->
-<!-- # cox_output %>% -->
-<!-- #   kable() %>% -->
-<!-- #   kable_styling(latex_options = "striped") -->
-<!-- # -->
-<!-- # ``` -->
 
 
 ```{r}
@@ -1239,7 +1196,56 @@ cox_output %>%
   kable_styling(latex_options = "striped") 
 
 ```
-**Appendix Table 3. Survival analysis of microenvironmental response clusters comparing Cluster 3 to the other Clusters.** 
+**Appendix Table 4. Survival analysis of microenvironmental response clusters comparing Cluster 3 to the other Clusters.** 
+
+
+```{r}
+######Arrange data######
+clusters.surv <- left_join(Heatmap_clusters, survT, by = "PatientID")
+
+#Add meta data to heatmap clusters
+clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
+
+
+coxph <- clusters.surv%>%
+  filter(Cluster%in%c(1,2,3)) %>% 
+  mutate(Cluster3vs12=ifelse(Cluster%in%c(1,2), "1_2", "3")) %>% 
+  mutate(Cluster3vs12=factor(Cluster3vs12))%>%
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster3vs12, "3"), data=.) 
+
+# cox_outputcoxph_summ$coefficients
+
+#tidy results, exponentiate coefficients and estimate 95% confidence intervals 
+cox_output<- tidy(coxph, conf.int = TRUE,  exponentiate = TRUE) %>%
+  dplyr::select(term, estimate, p.value, conf.low, conf.high)
+
+#tidy names
+cox_output$term<-
+  cox_output$term %>% 
+  gsub(pattern="factor2ind", "", .)%>% 
+  gsub(pattern="[()]", "", .)%>% 
+  gsub(pattern=":", " ", .)%>% 
+  gsub(pattern="Cluster3vs12", "Cluster 3 vs combined Clusters 1 and 2 ", .)
+
+colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High")
+
+cox_output$HR <- round(cox_output$HR, 2)
+cox_output$p.value <- round(cox_output$p.value, 2)
+cox_output$CI.low <- round(cox_output$CI.low, 2)
+cox_output$CI.High <- round(cox_output$CI.High, 2)
+
+cox_output <- cox_output %>% 
+  dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
+
+
+colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
+
+cox_output %>%  
+  kable() %>%
+  kable_styling(latex_options = "striped") 
+
+```
+**Appendix Table 5. Survival analysis of microenvironmental response clusters comparing Cluster 3 to the coombined Cluster 1 and 2.** 
 
 
 \newpage
@@ -1944,7 +1950,7 @@ wrap_elements(CLLPD_Lasso_U_patients)+theme(plot.tag=element_text(size = 20))+
 ```
 
 
-**Appendix Figure XXX. CLL Proliferative Drive as defined by Lu et al., 2021^5^** Beeswarm Plot of Proliferative drive in the clusters defined by microenvironmental resonse. P-values are shown from student's t-tests. **(A)** Predictor profiles for stimuli response to represent CLL Proliferative Drive identified through multivariate analysis using Gaussian linear modelling with L1-penalty for all patient samples which were analysed **(B)**, for only IGHV mutated **(C)** and for only IGHV unmutated patient samples **(D)** Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate log(viability) values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot.  Exemplary scatter plots devided by IGHV mutation status shown for Resiquimod **(E)** and IL1ß **(F)**. CLL-PD on x-axis and log normalised viability after microenvironmental stimulation on y-axis. Person correlation coefficients are shown with p-values. 
+**Appendix Figure XXX. CLL Proliferative Drive as defined by Lu et al., 2021^5^.** Beeswarm Plot of Proliferative drive in the clusters defined by microenvironmental resonse. P-values are shown from student's t-tests. **(A)** Predictor profiles for stimuli response to represent CLL Proliferative Drive identified through multivariate analysis using Gaussian linear modelling with L1-penalty for all patient samples which were analysed **(B)**, for only IGHV mutated **(C)** and for only IGHV unmutated patient samples **(D)** Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate log(viability) values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot.  Exemplary scatter plots devided by IGHV mutation status shown for Resiquimod **(E)** and IL1ß **(F)**. CLL-PD on x-axis and log normalised viability after microenvironmental stimulation on y-axis. Person correlation coefficients are shown with p-values. 
 
 
 \newpage
