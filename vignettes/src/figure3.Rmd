@@ -579,7 +579,7 @@ Fig3A <-
         legend.text = element_text(size=18)) +
   guides(colour = guide_legend(nrow=3, title = "Mutations"), 
          shape = guide_legend(ncol = 1)) +
-  scale_color_manual(name = "Mutations", values = colors, labels=c("IGHV.status"="IGHV status", "del9p"="del(9p)", "trisomy12"="trisomy 12", "gain17q"="gain(17q)", "gain2p"="gain(2p)","gain19p"="gain(19p)","gain19q"="gain(19q)", "del7q"="del(7q)","del9q"="del(9q)", "del4p"= "del(4p)", "SPEN"="SPEN", "del11q"="del(11q)", "del1q" = "del(1q)")) +
+  # scale_color_manual(name = "Mutations", values = colors, labels=c("IGHV.status"="IGHV status", "del9p"="del(9p)", "trisomy12"="trisomy 12", "gain17q"="gain(17q)", "gain2p"="gain(2p)","gain19p"="gain(19p)","gain19q"="gain(19q)", "del7q"="del(7q)","del9q"="del(9q)", "del4p"= "del(4p)", "SPEN"="SPEN", "del11q"="del(11q)", "del1q" = "del(1q)")) +
   scale_y_continuous(expression("BH-adjusted  "* italic(p)*"-value"), 
                      breaks=seq(0,10,5),
                      labels=math_format(expr=10^.x)(-seq(0,10,5)))+
@@ -588,6 +588,88 @@ Fig3A <-
 Fig3A
 
 ```
+
+```{r}
+data_tmp<-dplyr::select(df, PatientID, Log, Cytokine) %>%
+
+  ## Join Screening data with metadata
+  left_join(patMeta, by = "PatientID") %>%
+
+  ## Add Ras/Raf column, remove single columns
+  mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>%
+  dplyr::select(-BRAF, -KRAS, -NRAS) %>%
+
+## remove unused columns from metadata
+  dplyr::select( -gender,
+                 -diagnosis,
+                 -treatment) %>%
+
+  filter(Cytokine=="TGF-b1", !is.na(SPEN))
+
+var.test(Log ~ SPEN, data_tmp, alternative = "two.sided")
+
+  ggplot(data_tmp, aes(x=SPEN, y=Log))+
+  geom_boxplot()+
+    geom_beeswarm()+
+    
+  stat_compare_means(comparisons = list(c(1,2)), method = "t.test", method.args = list(var.equal = T))+
+  t2+
+    ggtitle("TGF-b1 effect by SPEN mutation status.\nT-test with equal variance.")
+```
+
+```{r}
+  ## Select columns from screening data 
+  var_test<-dplyr::select(df, PatientID, Log, Cytokine) %>% 
+  
+  ## Join Screening data with metadata
+  left_join(patMeta, by = "PatientID") %>%
+  
+  ## Add Ras/Raf column, remove single columns
+  mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
+  dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+
+## remove unused columns from metadata
+  dplyr::select( -gender, 
+                 -diagnosis, 
+                 -treatment) %>% 
+  
+  ## transform data to long format
+  pivot_longer(cols=c(-PatientID, -Log, -Cytokine), 
+               names_to = "Genetic_alt", 
+               values_to="alt_value") %>% 
+  
+  ## filter to selected mutations (see above)
+  dplyr::filter(Genetic_alt%in%selected_mutations) %>% 
+  
+  
+  ## group by Cytokine and Genetic alteration  
+  dplyr::group_by(Cytokine, Genetic_alt) %>% 
+  
+  ## Perform t.test on every combination of Cytokine and genetic alteration
+  do(tidy(var.test(Log ~ alt_value, data = .,alternative = "two.sided"))) %>% 
+  
+  ## ungroup before adjusting p-value
+  ungroup() %>% 
+  
+  ## adjust p-values to multiple testing using BH method 
+  mutate(adj.p.value=p.adjust(p.value, method = "BH"))
+  
+  ggplot(var_test, aes(x=p.value))+
+  geom_histogram(bins=100, aes(fill=ifelse(adj.p.value<0.05, "p-value<0.05", "p-value>0.05")))+
+  guides(fill="none")+
+  t2+
+    ggtitle("Variance testing for all associations between \ngenetic alterations and stimuli. \nHistogram of non-adjusted p-values.\nAdj.p.values <0.05 colored red.") 
+  
+  var_test %>% 
+  dplyr::filter(adj.p.value<0.1) %>% 
+  dplyr::select(Cytokine, Genetic_alt,adj.p.value, p.value) %>% 
+  dplyr::arrange(adj.p.value) %>% 
+  DT::datatable()
+  
+```
+
+
+
 
 #### Adjusted Figure 3A with FDR of 5%
 ```{r, fig.height = 8, fig.width = 9.5}
