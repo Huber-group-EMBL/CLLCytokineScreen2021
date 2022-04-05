@@ -932,6 +932,165 @@ Fig2D<-Coef_Perc_Table %>%
   Fig2D
 ```
 
+### Fisher Test
+```{r}
+fisher_tab<-colnames(patMeta_cl) %>% 
+  as_data_frame() 
+
+# i=10
+  
+  for(i in 8:121){
+
+fisher_test<-patMeta_cl %>% 
+  select(Cluster, i)
+
+colnames(fisher_test)[2]<-"Gen_Alt" 
+  
+fisher_test<-  group_by(fisher_test, Cluster, Gen_Alt) %>% 
+  filter(!is.na(Gen_Alt)) %>% 
+  count() 
+
+if(nrow(fisher_test)>4){
+  
+ fisher_test<- fisher_test %>% 
+    ungroup() %>% 
+  pivot_wider(names_from = Gen_Alt, values_from = n) %>% 
+  mutate(`1`=ifelse(is.na(`1`), 0, `1`)) %>%
+  column_to_rownames("Cluster") %>% 
+  as.matrix() %>% 
+  stats::fisher.test()
+
+
+fisher_tab[i,2]<-fisher_test$p.value
+}
+
+}
+
+
+fisher_test<-patMeta_cl %>% 
+  select(Cluster, IGHV.status) %>% 
+  group_by( Cluster, IGHV.status) %>% 
+  filter(!is.na(IGHV.status)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = IGHV.status, values_from = n) %>% 
+  column_to_rownames("Cluster") %>% 
+  as.matrix() %>% 
+  stats::fisher.test()
+
+fisher_tab[which(fisher_tab$value=="IGHV.status"),2]<-fisher_test$p.value
+
+
+
+fisher_test<-patMeta_cl %>% 
+  select(Cluster, Methylation_Cluster) %>% 
+  group_by( Cluster, Methylation_Cluster) %>% 
+  filter(!is.na(Methylation_Cluster)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = Methylation_Cluster, values_from = n) %>% 
+  column_to_rownames("Cluster") %>% 
+  as.matrix() %>% 
+  stats::fisher.test(simulate.p.value=TRUE)
+
+fisher_tab[which(fisher_tab$value=="Methylation_Cluster"),2]<-fisher_test$p.value
+
+fisher_tab %>% 
+  rename(Gen_Alt=value, fisher_p_value=`...2`) %>% 
+  filter(!is.na(fisher_p_value)) %>% 
+  mutate(adj_fisher_p_value=p.adjust(fisher_p_value, method = "BH")) %>% 
+  arrange(fisher_p_value) %>% 
+  DT::datatable()
+```
+
+IGHV.status
+```{r}
+patMeta_cl %>% 
+  select(Cluster, IGHV.status) %>% 
+  group_by( Cluster, IGHV.status) %>% 
+  filter(!is.na(IGHV.status)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = IGHV.status, values_from = n)
+```
+
+del11q
+```{r}
+patMeta_cl %>% 
+  select(Cluster, del11q) %>% 
+  group_by( Cluster, del11q) %>% 
+  filter(!is.na(del11q)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = del11q, values_from = n)
+```
+
+Methylation_Cluster
+```{r}
+patMeta_cl %>% 
+  select(Cluster, Methylation_Cluster) %>% 
+  group_by( Cluster, Methylation_Cluster) %>% 
+  filter(!is.na(Methylation_Cluster)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = Methylation_Cluster, values_from = n) 
+```
+
+trisomy12
+```{r}
+patMeta_cl %>% 
+  select(Cluster, trisomy12) %>% 
+  group_by( Cluster, trisomy12) %>% 
+  filter(!is.na(trisomy12)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = trisomy12, values_from = n) 
+```
+
+POT1
+```{r}
+patMeta_cl %>% 
+  select(Cluster, POT1) %>% 
+  group_by( Cluster, POT1) %>% 
+  filter(!is.na(POT1)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = POT1, values_from = n) 
+```
+
+SF3B1
+```{r}
+patMeta_cl %>% 
+  select(Cluster, SF3B1) %>% 
+  group_by( Cluster, SF3B1) %>% 
+  filter(!is.na(SF3B1)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = SF3B1, values_from = n) 
+```
+
+gain8q
+```{r}
+patMeta_cl %>% 
+  select(Cluster, gain8q) %>% 
+  group_by( Cluster, gain8q) %>% 
+  filter(!is.na(gain8q)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = gain8q, values_from = n) 
+```
+
+TP53
+```{r}
+patMeta_cl %>% 
+  select(Cluster, TP53) %>% 
+  group_by( Cluster, TP53) %>% 
+  filter(!is.na(TP53)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = TP53, values_from = n) 
+```
+
 
 ### Figure 2E
 GSEA of differentially expressed genes between clusters.    
