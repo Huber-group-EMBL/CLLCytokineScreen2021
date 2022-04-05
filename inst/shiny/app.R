@@ -93,7 +93,7 @@ thedrugs <- unique(df_patmeta$Drug) %>% setdiff("DMSO")
 thecytokines <- unique(df_patmeta$Cytokine) %>% setdiff("No Cytokine")
 
 geneticData <- patMeta[c(5, 7:ncol(patMeta))]
-geneticData <- geneticData[, colSums(geneticData == 1|geneticData=="M", na.rm = TRUE) > 3]  
+geneticData <- geneticData[, colSums(geneticData == 1|geneticData=="M", na.rm = TRUE) > 2]  
 geneticData <- geneticData[,names(sort(colSums(geneticData == 1|geneticData=="M", na.rm = TRUE), decreasing = TRUE))]
 thegenes <-   colnames(geneticData)
 
@@ -606,7 +606,8 @@ server <- function(input, output) {
             geom_beeswarm(cex=1.5) +
             
             stat_compare_means(method = "t.test", 
-                               label.x.npc= "centre")+ 
+                               label.x.npc= "centre", 
+                               method.args = list(var.equal = T))+ 
             
             #Aesthetics
             guides(color="none") +
