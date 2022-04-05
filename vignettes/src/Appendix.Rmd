@@ -48,7 +48,6 @@ output:
       self_contained: yes
 ---
 
-
 \newpage
 
 # Appendix Methods
@@ -68,13 +67,21 @@ The experiment in Appendix Fig. 20, was performed as detailed in the main method
 \newpage
 <!-- Set up  -->
 ```{R setUp_supp, echo = FALSE}
+
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, out.extra = "")
+
+```
+
+<!-- Set plot directory-->
+```{r plotDirApp, message=FALSE}
+
+plotDir = ifelse(exists(".standalone"), "", "../../inst/figs/")
+if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
 
 ```
 
 <!-- Load Libraries -->
 ```{r loadLibraries_supp,  warning=FALSE}
-
 
 #Libraries
 library(maxstat)
@@ -115,7 +122,7 @@ library(ggh4x)
 library(magick)
 ```
 
-<!-- Define Functions -->
+<!-- # Define Functions -->
 ```{r factor2ind_supp}
 
 factor2ind <- function(x, baseline)
@@ -893,6 +900,9 @@ load( "../../data/diffTF_small.RData")
 #diffTF_wochr12: tibble containing results from running diffTF package without reads from chromosome 12
 load( "../../data/diffTF_wochr12.RData")
 
+#diffTF_wochr12_big: tibble containing results from running diffTF package without reads from chromosome 12 for the Rendeiro et al dataset. 
+load( "../../data/diffTF_wochr12_big.RData")
+
 
 #ChIPseq data for SPIB and PU1 binding in OCILY3 cell line (downloaded from GEO)
 
@@ -918,7 +928,6 @@ patMeta$treatment <- as.factor(patMeta$treatment)
 
 #survT: tibble containing patient clinical outcomes
 load( "../../data/survT.RData")
-
 
 #CLL PD 
 load( "../../data/CLL_PD.RData")
@@ -1273,7 +1282,7 @@ cox_output %>%
 
 # Appendix Figures 
 
-```{r, fig.width=10, fig.height=5, fig.pos="H"}
+```{r S1, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=10, fig.height=5, fig.pos="H"}
 
 theme_temp<-theme(
   plot.background = element_blank(),
@@ -1356,8 +1365,6 @@ Selected genetic alterations on y-axis and screened patient samples on x-axis.
 
 
 
-
-
 ```{r}
 order_Cytokines<-df%>%
   dplyr::filter(Drug=="DMSO") %>%
@@ -1372,7 +1379,7 @@ df$Cytlabel<-factor(df$Cytlabel, levels=order_Cytokines)
 ```
 
 
-```{r, fig.pos="H", fig.height=8, fig.width=16}
+```{r S2,fig.path=plotDir, dev=c("png", "cairo_pdf"),  fig.pos="H", fig.height=8, fig.width=16}
 
 t_tests = df %>%
   dplyr::filter(Drug=="DMSO") %>%
@@ -1427,7 +1434,7 @@ p2<-df_patMeta%>%
 Viability after 48h incubation with microenvironmental stimuli. Log transformed viabilities, normalized to DMSO solvent controls, stratified by IGHV status.  BH-adjusted p-values are shown from one-sample t-tests of all patient samples. (p<0.00001=&#42;&#42;&#42;&#42;&#42;, p<0.0001=&#42;&#42;&#42;&#42;, p>0.05=ns) 
 
 
-```{r, fig.pos="H", fig.width=11, fig.height=11}
+```{r S3, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.pos="H", fig.width=11, fig.height=11}
 
 example_cyt<-c("IL1\u03B2","Resiquimod", "TGF\u03B21","soluble anti-IgM",  "sCD40L",  "BAFF", "CpG ODN","sCD40L + IL4","IL6","SDF-1\u03B1","IL15", "IL4","IL21", "HS-5 CM", "Interferon \u03B3","IL2","IL10")
 
@@ -1471,7 +1478,7 @@ df %>%
 ## Appendix Figure 3. Stimuli response by clusters.
 Log transformed viabilities after treatment with stimuli, faceted by cluster. BH-adjusted p-values from student's t-tests are shown.
 
-```{r, fig.pos="H", fig.width=9, fig.height=10, warning=F, message=F}
+```{r S4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.pos="H", fig.width=9, fig.height=10, warning=F, message=F}
 
 # Run model with OS
 coxph_summ <- clusters.surv%>%
@@ -1587,7 +1594,7 @@ Kaplan-Meier Curves of time to first treatment with p-value from univariate Cox 
 
 
 <!-- Coefficients (feature importance) for each cluster -->
-```{r, dev=c("png", "cairo_pdf"), fig.height=7, fig.width=7}
+```{r, S5, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=7, fig.width=7}
 load("../../data/multinominal_regression_Clusters_Fig2D.RData" )
 
 #average remaining coefficients in dataframe for plotting
@@ -1649,7 +1656,7 @@ Multinomial regression with lasso penalisation to identify enrichment or depleti
 
 \newpage
 
-```{r, fig.height=5}
+```{r S6, fig.path=plotDir, dev=c("png", "cairo_pdf"),fig.height=5}
 patMeta_Cluster %>% 
   group_by(Cluster, Methylation_Cluster) %>% 
   count() %>% 
@@ -1671,7 +1678,7 @@ Barplot of methylation profiles in the four clusters of microenvironmental respo
 \newpage
 
 <!-- ### Additional Figure of CLL_PD and Clusters of Microenvironmental response -->
-```{r, fig.height=5}
+```{r fig.height=5}
 
 CLL_PD_Boxplot<-CLL_PD %>% 
   left_join( patMeta_Cluster, by="PatientID") %>% 
@@ -1944,7 +1951,7 @@ Res_Scatterplot<-left_join(CLL_PD, filter(df, Drug=="DMSO"), by = "PatientID") %
 ```
 
 
-```{r, fig.height=13, fig.width=10.5}
+```{r S7, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=13, fig.width=10.5}
 
 design1<-"
   15
@@ -2093,7 +2100,7 @@ breaks <- breaks %>% `names<-`(
 
 
 
-```{r , dev=c("png", "cairo_pdf"), fig.width=14.5, fig.height=11, warning = FALSE}
+```{r S8, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=14.5, fig.height=11, warning = FALSE}
 Cluster_for_Heatmap<-patMeta_Cluster %>% select(PatientID, Cluster) %>%
   column_to_rownames("PatientID") %>%
   as.data.frame()
@@ -2259,7 +2266,7 @@ Heatmap showing the log normalised viability after drug treatment.  Rows represe
 
 
 
-```{r, fig.width=11, fig.height=12}
+```{r S9, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=11, fig.height=12}
 
 Drug_order<-c("BAY-11-7085","Fludarabine","Everolimus","Nutlin-3a","Idelalisib","Ralimetinib","Ibrutinib","I-BET 762","PRT062607","Pyridone-6","Selumetinib","Luminespib")
   
@@ -2307,9 +2314,7 @@ Log transformed viabilities after treatment with drugs, faceted by cluster. BH-a
 
 
 
-
-
-```{r S6 GSEA, fig.height= 14, fig.width = 12, warning=F, message=F, cache=FALSE}
+```{r S10, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 14, fig.width = 12, warning=F, message=F, cache=FALSE}
 
 cytSeq <- dds_smp
 
@@ -2442,11 +2447,11 @@ tp <- theme(plot.tag=element_text(size = 30))
 ```
 
 ## Appendix Figure 10. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.
-Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 **(A)**. X axis indicates log2 fold change values, calculated using the Deseq package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software.
+Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 **(A)**. X axis indicates log2 fold change values, calculated using the DESeq2 package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software.
 
 \newpage
 
-```{r, fig.height= 7, fig.width = 12, warning=F, message=F, cache=FALSE}
+```{r S11, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 7, fig.width = 12, warning=F, message=F, cache=FALSE}
 
 cytSeq <- dds_smp
 
@@ -2512,12 +2517,12 @@ volPlot
 
 ```
 
-## Appendix Figure 11. Comparison of gene expression between  Cluster 1 and 2.
+## Appendix Figure 11. Comparison of gene expression between Cluster 1 and 2.
 Volcano plot of differentially expressed genes between Cluster 1 and Cluster 2. X axis indicates log2 fold change values, calculated using the DESeq package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05.
 
 \newpage
 
-```{r, fig.width=12, fig.height=4, message=FALSE, warning=FALSE}
+```{r S12,fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=12, fig.height=4, message=FALSE, warning=FALSE}
 load("../../data/fig3_data_for_lassoplots.RData")
 
 
@@ -2559,7 +2564,7 @@ Stimuli which are not shown in Figure 3B but have predictors >0.02 assigned by m
 
 
 
-```{r, fig.width=10, fig.height=7, warning=F}
+```{r S13, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=10, fig.height=7, warning=F}
 
 #VST
 vsd <- vst(dds_smp, blind=TRUE)
@@ -2678,7 +2683,7 @@ The effects of the microenvironmental stimuli on viability were largely independ
 
 \newpage
 
-```{r Ibrutinib Resiquimod in trisomy 12 and IGHV, fig.height=7, fig.width=12}
+```{r S14,fig.path=plotDir, dev=c("png", "cairo_pdf"),  fig.height=7, fig.width=12}
 tri12.labs <- c("0" = "Non-\ntrisomy 12", "1" = "trisomy 12")
 ighv.labs <- c("U" = "IGHV-U", "M" =  "IGHV-M")
 
@@ -2725,11 +2730,11 @@ rm(plotTab)
 ```
 
 ## Appendix Figure 14. BCR inhibition by ibrutinib counters the protective effect of TLR stimulation in all genetic subgroups of IGHV and trisomy 12.
-Log normalized viability after treatment with resiquimod with and without ibrutinib. Faceted by IGHV mutation status and trisomy 12.
+Log normalised viability after treatment with Resiquimod with and without ibrutinib. Faceted by IGHV mutation status and trisomy 12.
 
 \newpage
 
-```{r S9 tri12atac_2v2, fig.height = 6, fig.width = 10}
+```{r S15, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 6, fig.width = 10}
 
 plotTab <- diffTF_small %>%  filter(!is.na(pvalueAdj))
 
@@ -2769,7 +2774,47 @@ Volcano plot shows change in inferred TF activity (x axis) against adjusted p-va
 
 \newpage
 
-```{r S10 tri12atac_2v2, fig.height = 6, fig.width = 10}
+```{r S16, fig.path=plotDir, dev=c("png", "cairo_pdf") fig.height = 6, fig.width = 10, eval = FALSE}
+
+plotTab <- diffTF_Beekman %>%  filter(!is.na(pvalueAdj))
+
+#make naming consistent with text
+plotTab$TF <- gsub("SPI1", "PU1", plotTab$TF)
+
+atac.plot =
+  ggplot(data = plotTab,
+         aes(x = weighted_meanDifference, y = -log10(pvalueAdj+0.000001))) +
+
+  geom_point(aes(alpha=0.4, colour = ifelse(-log10(pvalueAdj) > 2,"black","grey")),size=3) +
+  geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 4&abs(weighted_meanDifference)>0.15,
+                                    as.character(TF),''),
+                       colour=ifelse(weighted_meanDifference>0,
+                                     palreds[1],
+                                     palblues[1])),
+                   size=7, max.overlaps=20)+
+  scale_colour_manual(values=c(palblues[3], palreds[8], "black", "grey")) +
+  t2 +
+  ggtitle("ATAC seq: Tri12 v WT") +
+  xlab("Change in inferred TF activity") +
+  guides(color="none", alpha="none") +
+  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))
+
+
+atac.plot
+
+rm(plotTab)
+
+#check number of upregulated TFs
+# nrow(filter(diffTF_small, weighted_meanDifference>0, pvalueAdj <0.05))
+```
+
+## Appendix Figure 16. ATACseq comparing trisomy 12 and non-trisomy 12 CLL samples.
+Volcano plot shows change in inferred TF activity (x axis) against adjusted p-values (y axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in analytic mode and adjusted by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.15, and adjusted p-value < 0.01. Data from Beekman et al 2018. 
+
+\newpage
+
+
+```{r S17, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 6, fig.width = 10}
 
 plotTab <- diffTF_wochr12 %>%  filter(!is.na(pvalueAdj))
 
@@ -2795,16 +2840,47 @@ atac.plot =
   scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))
 
 
-atac.plot
+
 
 rm(plotTab)
 
-#check number of upregulated TFs
-# nrow(filter(diffTF_small, weighted_meanDifference>0, pvalueAdj <0.05))
+plotTab <- diffTF_wochr12_big %>%  filter(!is.na(pvalueAdj))
+
+#make naming consistent with text
+plotTab$TF <- gsub("SPI1", "PU1", plotTab$TF)
+
+atac.plot.big =
+  ggplot(data = plotTab,
+         aes(x = weighted_meanDifference, y = -log10(pvalueAdj + 0.000001))) +
+
+  geom_point(aes(alpha=0.4, colour = ifelse(-log10(pvalueAdj) > 1,"black","grey")),size=3) +
+  geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 1&abs(weighted_meanDifference)>0.05,
+                                    as.character(TF),''),
+                       colour=ifelse(weighted_meanDifference>0,
+                                     palreds[1],
+                                     palblues[1])),
+                   size=7, max.overlaps=20)+
+  scale_colour_manual(values=c(palblues[3], palreds[8], "black", "grey")) +
+  t2 +
+  ggtitle("ATAC seq: Tri12 v WT") +
+  xlab("Change in inferred TF activity") +
+  guides(color="none", alpha="none") +
+  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))
+
+rm(plotTab)
+
+
+
+tp <- theme(plot.tag=element_text(size = 30, face="plain"))
+
+wrap_elements( atac.plot )+ tp +
+wrap_elements( atac.plot.big )+ tp +
+plot_annotation(tag_levels = "A", theme = theme(title=element_text(size = 20)))
+
 ```
 
-## Appendix Figure 16. ATACseq comparing trisomy 12 and non-trisomy 12 CLL samples, without including TF binding sites on chromosome 12.
-Volcano plot shows change in inferred TF activity (x axis) against adjusted p-values (y axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference.  p-values are obtained through diffTF in analytic mode and adjusted by the Benjamini-Hochberg procedure. TFs are labelled where absolute weighted mean difference > 0.15, and adjusted p-value < 0.01.
+## Appendix Figure 17. ATACseq comparing trisomy 12 and non-trisomy 12 CLL samples, without including TF binding sites on chromosome 12.
+Volcano plot shows change in inferred TF activity (x axis) against adjusted p-values (y axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference.  p-values are obtained through diffTF in analytic mode and adjusted by the Benjamini-Hochberg procedure. TFs are labelled where absolute weighted mean difference > 0.15, and adjusted p-value < 0.01. (A) For the two versus two comparison (B) For the Nine versus 42 comparison based on the data from Rendeiro et al. 2016. 
 
 
 \newpage
