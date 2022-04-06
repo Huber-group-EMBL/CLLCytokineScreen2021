@@ -473,6 +473,37 @@ Fig2A
 
 ```
 
+```{r, fig.width=6, fig.height=4}
+# Reduced figure for synopsis image 
+
+Heatmap_Annotation_short<-select(Heatmap_Annotation, Cluster)
+
+pheatmap(viab.mat.lims,  
+         scale = "none",
+         clustering_method = "complete", 
+         cluster_cols = TRUE,
+         show_colnames = FALSE,
+         show_rownames = FALSE,
+         legend = FALSE,
+         cutree_cols = 4,
+         clustering_distance_cols = cluster_matrix,
+         annotation_col = Heatmap_Annotation_short,
+         annotation_colors = ann_colors,
+         annotation_legend=FALSE,
+         annotation_names_col=FALSE,
+         treeheight_col=20,
+         treeheight_row=0,
+         # cellheight = 22,
+         # cellwidth = 4,
+         breaks = breaks,
+         color= names(breaks),
+         border_color=NA,
+         fontsize=10,
+         fontsize_row=16,
+         legend_breaks = c(-3,0,3) ) 
+```
+
+
 
 ### Figure 2B
 Lymphoctye doubling times (LDT) stratified by patient clusters
