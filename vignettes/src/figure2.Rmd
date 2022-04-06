@@ -383,7 +383,7 @@ Heatmap_Annotation <- dplyr::select(patMeta_cl,
 #Rename columns for legend
 colnames(Heatmap_Annotation) <- c("PatientID", 
                                   "IGHV status",
-                                  "Methylation Cluster",
+                                  "DNA Methylation",
                                   "trisomy 12", 
                                   "TP53", 
                                   "ATM",
@@ -418,7 +418,7 @@ breaks <- c(seq(-3, 3, length.out = 101)) %>% `names<-`(
    list(
     "IGHV status" = c("Unmutated"=IGHV[1],
                       "Mutated"=IGHV[2]),
-    "Methylation Cluster"= c("Low"=Methylation_cluster[1],
+    "DNA Methylation"= c("Low"=Methylation_cluster[1],
                              "Intermediate"=Methylation_cluster[2],
                              "High"=Methylation_cluster[3]),
     "Sex" = c("Female"=Sex[1],
@@ -438,7 +438,7 @@ breaks <- c(seq(-3, 3, length.out = 101)) %>% `names<-`(
 ```
 
 Plot Figure
-```{r Fig2A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=8, warning = FALSE}
+```{r Fig2A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=12, warning = FALSE}
 
 rownames(viab.mat.lims)<-rownames(viab.mat.lims) %>% 
   gsub("IL-1b","IL1\u03B2",.)%>% 
@@ -606,8 +606,9 @@ Plot figure
 fit <- survfit(Surv(TTT, treatedAfter)~Cluster, clusters.surv)
 
 
-t_plot<-  t2+theme(plot.title=element_blank(), axis.title.x=element_blank(), legend.key = element_blank())
-t_table<- t2+theme(plot.title=element_blank(), panel.grid.major.x = element_blank())
+t_plot<-  t2+theme(plot.title=element_blank(), axis.title.x=element_blank(), legend.key = element_blank(), legend.text= element_text(size=14))
+t_table<- t2+theme(plot.title=element_blank(), panel.grid.major.x = element_blank(), 
+                   text = element_text(size=14))
 
 Fig2_KM_surv <- 
   ggsurvplot(fit,
