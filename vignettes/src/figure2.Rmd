@@ -383,7 +383,7 @@ Heatmap_Annotation <- dplyr::select(patMeta_cl,
 #Rename columns for legend
 colnames(Heatmap_Annotation) <- c("PatientID", 
                                   "IGHV status",
-                                  "Methylation Cluster",
+                                  "DNA Methylation",
                                   "trisomy 12", 
                                   "TP53", 
                                   "ATM",
@@ -418,7 +418,7 @@ breaks <- c(seq(-3, 3, length.out = 101)) %>% `names<-`(
    list(
     "IGHV status" = c("Unmutated"=IGHV[1],
                       "Mutated"=IGHV[2]),
-    "Methylation Cluster"= c("Low"=Methylation_cluster[1],
+    "DNA Methylation"= c("Low"=Methylation_cluster[1],
                              "Intermediate"=Methylation_cluster[2],
                              "High"=Methylation_cluster[3]),
     "Sex" = c("Female"=Sex[1],
@@ -438,7 +438,7 @@ breaks <- c(seq(-3, 3, length.out = 101)) %>% `names<-`(
 ```
 
 Plot Figure
-```{r Fig2A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=8, warning = FALSE}
+```{r Fig2A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=16, fig.height=12, warning = FALSE}
 
 rownames(viab.mat.lims)<-rownames(viab.mat.lims) %>% 
   gsub("IL-1b","IL1\u03B2",.)%>% 
@@ -463,7 +463,7 @@ pheatmap(viab.mat.lims,
          breaks = breaks,
          color= names(breaks),
          border_color=NA,
-         fontsize=10,
+         fontsize=9.5,
          fontsize_row=16,
          legend_breaks = c(-3,0,3) ) 
         
@@ -472,6 +472,37 @@ Fig2A
 
 
 ```
+
+```{r, fig.width=6, fig.height=4}
+# Reduced figure for synopsis image 
+
+Heatmap_Annotation_short<-select(Heatmap_Annotation, Cluster)
+
+pheatmap(viab.mat.lims,  
+         scale = "none",
+         clustering_method = "complete", 
+         cluster_cols = TRUE,
+         show_colnames = FALSE,
+         show_rownames = FALSE,
+         legend = FALSE,
+         cutree_cols = 4,
+         clustering_distance_cols = cluster_matrix,
+         annotation_col = Heatmap_Annotation_short,
+         annotation_colors = ann_colors,
+         annotation_legend=FALSE,
+         annotation_names_col=FALSE,
+         treeheight_col=20,
+         treeheight_row=0,
+         # cellheight = 22,
+         # cellwidth = 4,
+         breaks = breaks,
+         color= names(breaks),
+         border_color=NA,
+         fontsize=10,
+         fontsize_row=16,
+         legend_breaks = c(-3,0,3) ) 
+```
+
 
 
 ### Figure 2B
@@ -606,8 +637,9 @@ Plot figure
 fit <- survfit(Surv(TTT, treatedAfter)~Cluster, clusters.surv)
 
 
-t_plot<-  t2+theme(plot.title=element_blank(), axis.title.x=element_blank(), legend.key = element_blank())
-t_table<- t2+theme(plot.title=element_blank(), panel.grid.major.x = element_blank())
+t_plot<-  t2+theme(plot.title=element_blank(), axis.title.x=element_blank(), legend.key = element_blank(), legend.text= element_text(size=14))
+t_table<- t2+theme(plot.title=element_blank(), panel.grid.major.x = element_blank(), 
+                   text = element_text(size=14))
 
 Fig2_KM_surv <- 
   ggsurvplot(fit,
@@ -643,6 +675,42 @@ Fig2C
 
 ```
 
+
+```{r, fig.width=6, fig.height=4}
+
+Fig2_KM_surv_minimal <- 
+  ggsurvplot(fit,
+             # surv.median.line = "hv", # Add medians survival
+             legend.title = "Cluster",# Change legends: title & labels
+             legend.labs = c("1", "2","3","4"),
+             pval = FALSE,
+             risk.table = TRUE,
+             palette = c(colors[1], colors[2], colors[3], colors[4]),
+             ggtheme = t_plot,
+             tables.theme = t_table,
+             legend = "bottom",
+             xlab="Time in years",
+             ylab="Time to next treatment (probability)",
+             break.time.by=1, 
+             xlim=c(0,6.8))
+
+
+
+Fig2_KM_surv_minimal$plot +
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.grid.major.x=element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank())+
+  guides(color="none")
+
+
+
+```
 
 
 ### Figure 2D
@@ -873,22 +941,100 @@ Coef_Perc_Table<-  patMeta_cl %>%
 
 ```
 
+<!-- ```{r, fig.height=8, fig.width=8} -->
+<!-- plotTab <- -->
+<!--   coefTab %>% -->
+<!--   dplyr::group_by(feature, cluster) %>%  -->
+<!--   dplyr::summarise(meanCoef = mean(coef), -->
+<!--                    sdCoef = sd(coef)) %>% -->
+<!--   dplyr::arrange(desc(meanCoef)) %>%  -->
+<!--   ungroup() -->
+
+<!-- #update labelling  -->
+<!-- plotTab <- plotTab %>% mutate(feature = ifelse(feature == "IGHV", "IGHV status",  -->
+<!--                                    ifelse(feature == "trisomy12", "trisomy 12",  -->
+<!--                                       ifelse(feature == "gain8q", "gain(8q)", feature)))) -->
+
+<!-- plotTab$feature <- factor(plotTab$feature, -->
+<!--                           levels=c("IGHV status",  -->
+<!--                                    "trisomy 12", -->
+<!--                                    "SF3B1",  -->
+<!--                                    "POT1", -->
+<!--                                    "ATM",  -->
+<!--                                    "TP53", -->
+<!--                                    "RAS/RAF", -->
+<!--                                    "gain(8q)")) -->
+
+
+<!-- plotTab_for_Perc<- plotTab %>%  -->
+<!--   mutate(feature=case_when(feature=="IGHV status"~"IGHV.mutated", -->
+<!--                            feature=="trisomy 12"~"trisomy12_positive", -->
+<!--                            feature=="POT1"~"POT1_mut", -->
+<!--                            feature=="SF3B1"~"SF3B1_mut", -->
+<!--                            feature=="gain(8q)"~"gain8q_positive", -->
+<!--                            feature=="RAS/RAF"~"RAS_RAF_mut", -->
+<!--                            feature=="TP53"~"TP53_mut", -->
+<!--                            feature=="ATM"~"ATM_mut")) -->
+
+<!-- Fig2D<-Coef_Perc_Table %>%  -->
+<!--   pivot_longer(IGHV.mutated:gain8q_positive, names_to = "feature", values_to = "Percentage" ) %>%  -->
+<!--   left_join(plotTab_for_Perc, by=c("Cluster"="cluster", "feature")) %>%  -->
+<!--   mutate(meanCoef=if_else(is.na(meanCoef), 0, meanCoef)) %>%  -->
+<!--   mutate(Cluster=factor(Cluster, levels = rev(c(1,2,3,4))), -->
+<!--          feature= factor(feature,  -->
+<!--                          levels=c("IGHV.mutated","trisomy12_positive","POT1_mut","SF3B1_mut", "gain8q_positive","RAS_RAF_mut","TP53_mut","ATM_mut"),  -->
+<!--                          labels=c("IGHV mutated","trisomy 12","POT1","SF3B1","gain8q","KRAS, BRAF or NRAS","TP53","ATM" ))) %>%  -->
+
+<!--   ggplot(aes(y=Cluster, x=feature))+ -->
+<!--   geom_tile(aes(fill=meanCoef),color = "grey")+ -->
+<!--    scale_fill_gradient2(low ="#003DA5",  mid ="white",  high = "#A6093D", midpoint = 0)+ -->
+<!--    geom_text(aes( label=paste0(Percentage, "%")), size=7 )+ -->
+<!--     t1+ -->
+<!--    t.leg+ -->
+<!--   theme(legend.position = "bottom",  -->
+<!--         legend.key.width = unit(1.7, "cm"), -->
+<!--          axis.text.x= element_text(size=fontsize+4, angle=45, vjust=1))+ -->
+<!--   labs(fill="Coefficient", x="Genetic alteration")+ -->
+<!--   guides(fill="none") -->
+
+<!--   Fig2D -->
+<!-- ``` -->
+
+### Alternative Fig 4D
+Multinomial regression with lasso penalisation to identify enrichment or depletion of genetic features within each cluster.
+
+
+
 ```{r, fig.height=8, fig.width=8}
+# load("../../data/multinominal_regression_Clusters_Fig2D.RData" )
+
+
+patMeta_cl %>% 
+  select(Cluster, TP53) %>% 
+  group_by( Cluster, TP53) %>% 
+  filter(!is.na(TP53)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==4)
+
+#average remaining coefficients in dataframe for plotting
+#ie show all sig features, the cluster they predict, and the average coefficient 
 plotTab <-
   coefTab %>%
   dplyr::group_by(feature, cluster) %>% 
   dplyr::summarise(meanCoef = mean(coef),
-                   sdCoef = sd(coef)) %>%
+                   sdCoef = sd(coef), 
+                   .groups="keep") %>%
   dplyr::arrange(desc(meanCoef)) %>% 
   ungroup()
 
 #update labelling 
-plotTab <- plotTab %>% mutate(feature = ifelse(feature == "IGHV", "IGHV status", 
+plotTab <- plotTab %>% mutate(feature = ifelse(feature == "IGHV", "IGHV mutated", 
                                    ifelse(feature == "trisomy12", "trisomy 12", 
                                       ifelse(feature == "gain8q", "gain(8q)", feature))))
 
 plotTab$feature <- factor(plotTab$feature,
-                          levels=c("IGHV status", 
+                          levels=c("IGHV mutated", 
                                    "trisomy 12",
                                    "SF3B1", 
                                    "POT1",
@@ -898,39 +1044,133 @@ plotTab$feature <- factor(plotTab$feature,
                                    "gain(8q)"))
 
 
-plotTab_for_Perc<- plotTab %>% 
-  mutate(feature=case_when(feature=="IGHV status"~"IGHV.mutated",
-                           feature=="trisomy 12"~"trisomy12_positive",
-                           feature=="POT1"~"POT1_mut",
-                           feature=="SF3B1"~"SF3B1_mut",
-                           feature=="gain(8q)"~"gain8q_positive",
-                           feature=="RAS/RAF"~"RAS_RAF_mut",
-                           feature=="TP53"~"TP53_mut",
-                           feature=="ATM"~"ATM_mut"))
+Cluster.labs <- c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4")
+names(Cluster.labs) <- c(1, 2, 3, 4)
+```
 
-Fig2D<-Coef_Perc_Table %>% 
-  pivot_longer(IGHV.mutated:gain8q_positive, names_to = "feature", values_to = "Percentage" ) %>% 
-  left_join(plotTab_for_Perc, by=c("Cluster"="cluster", "feature")) %>% 
-  mutate(meanCoef=if_else(is.na(meanCoef), 0, meanCoef)) %>% 
-  mutate(Cluster=factor(Cluster, levels = rev(c(1,2,3,4))),
-         feature= factor(feature, 
-                         levels=c("IGHV.mutated","trisomy12_positive","POT1_mut","SF3B1_mut", "gain8q_positive","RAS_RAF_mut","TP53_mut","ATM_mut"), 
-                         labels=c("IGHV mutated","trisomy 12","POT1","SF3B1","gain8q","KRAS, BRAF or NRAS","TP53","ATM" ))) %>% 
-  
-  ggplot(aes(y=Cluster, x=feature))+
-  geom_tile(aes(fill=meanCoef),color = "grey")+
-   scale_fill_gradient2(low ="#003DA5",  mid ="white",  high = "#A6093D", midpoint = 0)+
-   geom_text(aes( label=paste0(Percentage, "%")), size=7 )+
+
+```{r, eval=FALSE}
+patMeta_cl %>% 
+  select(Cluster, IGHV.status) %>% 
+  group_by( Cluster, IGHV.status) %>% 
+  filter(!is.na(IGHV.status)) %>% 
+  count() %>% 
+  ungroup()
+
+patMeta_cl %>% 
+  select(Cluster, trisomy12) %>% 
+  group_by( Cluster, trisomy12) %>% 
+  filter(!is.na(trisomy12)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==2) 
+
+patMeta_cl %>% 
+  select(Cluster, SF3B1) %>% 
+  group_by( Cluster, SF3B1) %>% 
+  filter(!is.na(SF3B1)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==2) 
+
+patMeta_cl %>% 
+  select(Cluster, POT1) %>% 
+  group_by( Cluster, POT1) %>% 
+  filter(!is.na(POT1)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==3) 
+
+patMeta_cl %>% 
+  select(Cluster, ATM) %>% 
+  group_by( Cluster, ATM) %>% 
+  filter(!is.na(ATM)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==4) 
+
+patMeta_cl %>% 
+  select(Cluster, TP53) %>% 
+  group_by( Cluster, TP53) %>% 
+  filter(!is.na(TP53)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==4) 
+
+patMeta_cl %>% 
+  select(Cluster, RAS_RAF) %>% 
+  group_by( Cluster, RAS_RAF) %>% 
+  filter(!is.na(RAS_RAF)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==4) 
+
+patMeta_cl %>% 
+  select(Cluster, gain8q) %>% 
+  group_by( Cluster, gain8q) %>% 
+  filter(!is.na(gain8q)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==4)
+```
+
+
+```{r}
+plotTab$label<-NA
+plotTab[which(plotTab$feature=="IGHV mutated"&plotTab$cluster=="1"),which(colnames(plotTab)=="label")]<-"20/71"
+plotTab[which(plotTab$feature=="IGHV mutated"&plotTab$cluster=="2"),which(colnames(plotTab)=="label")]<-"6/25"
+plotTab[which(plotTab$feature=="IGHV mutated"&plotTab$cluster=="3"),which(colnames(plotTab)=="label")]<-"28/37"
+plotTab[which(plotTab$feature=="IGHV mutated"&plotTab$cluster=="4"),which(colnames(plotTab)=="label")]<-"45/49"
+plotTab[which(plotTab$feature=="trisomy 12"&plotTab$cluster=="2"),which(colnames(plotTab)=="label")]<-"9/21"
+plotTab[which(plotTab$feature=="SF3B1"&plotTab$cluster=="2"),which(colnames(plotTab)=="label")]<-"6/25"
+plotTab[which(plotTab$feature=="POT1"&plotTab$cluster=="3"),which(colnames(plotTab)=="label")]<-"3/37"
+plotTab[which(plotTab$feature=="ATM"&plotTab$cluster=="4"),which(colnames(plotTab)=="label")]<-"1/46"
+plotTab[which(plotTab$feature=="TP53"&plotTab$cluster=="4"),which(colnames(plotTab)=="label")]<-"2/49"
+plotTab[which(plotTab$feature=="RAS/RAF"&plotTab$cluster=="4"),which(colnames(plotTab)=="label")]<-"0/49"
+plotTab[which(plotTab$feature=="gain(8q)"&plotTab$cluster=="4"),which(colnames(plotTab)=="label")]<-"0/47"
+
+    
+plotTab$yposition<-NA
+plotTab[which(plotTab$feature=="IGHV mutated"&plotTab$cluster=="1"),which(colnames(plotTab)=="yposition")]<-.5
+plotTab[which(plotTab$feature=="IGHV mutated"&plotTab$cluster=="2"),which(colnames(plotTab)=="yposition")]<-.5
+plotTab[which(plotTab$feature=="IGHV mutated"&plotTab$cluster=="3"),which(colnames(plotTab)=="yposition")]<--.5
+plotTab[which(plotTab$feature=="IGHV mutated"&plotTab$cluster=="4"),which(colnames(plotTab)=="yposition")]<--.5
+plotTab[which(plotTab$feature=="trisomy 12"&plotTab$cluster=="2"),which(colnames(plotTab)=="yposition")]<--.5
+plotTab[which(plotTab$feature=="SF3B1"&plotTab$cluster=="2"),which(colnames(plotTab)=="yposition")]<--.5
+plotTab[which(plotTab$feature=="POT1"&plotTab$cluster=="3"),which(colnames(plotTab)=="yposition")]<--.5
+plotTab[which(plotTab$feature=="ATM"&plotTab$cluster=="4"),which(colnames(plotTab)=="yposition")]<-0.5
+plotTab[which(plotTab$feature=="TP53"&plotTab$cluster=="4"),which(colnames(plotTab)=="yposition")]<-0.5
+plotTab[which(plotTab$feature=="RAS/RAF"&plotTab$cluster=="4"),which(colnames(plotTab)=="yposition")]<-0.5
+plotTab[which(plotTab$feature=="gain(8q)"&plotTab$cluster=="4"),which(colnames(plotTab)=="yposition")]<-0.5
+```
+
+```{r, fig.height=6, fig.width=7}
+Fig2D<-   ggplot(plotTab, aes(x=feature, y=meanCoef))+ 
+    geom_bar(stat= "identity", aes(fill = cluster))+
+    geom_errorbar(aes(ymin = meanCoef - sdCoef, 
+                      ymax = meanCoef + sdCoef))+
+    ggtitle("") +
+    coord_cartesian(ylim=c(-1.5, 1.75))+
+    geom_hline(yintercept=0)+
+    ylab("Depleted / Enriched\n")+
+    xlab("")+
+    scale_fill_manual(values=colors[1:4])+
     t1+
    t.leg+
-  theme(legend.position = "bottom", 
-        legend.key.width = unit(1.7, "cm"),
-         axis.text.x= element_text(size=fontsize+4, angle=45, vjust=1))+
-  labs(fill="Coefficient", x="Genetic alteration")+
-  guides(fill="none")
 
-  Fig2D
+   theme(strip.text = element_text(size = fontsize),
+         axis.text.x= element_text(size=fontsize+4, angle=45, vjust=1))+
+    facet_wrap(~cluster, 
+               nrow=4, 
+               strip.position = "right", 
+               labeller = labeller(cluster = Cluster.labs))+
+      geom_text(aes(y=yposition, label=label), color="black", size=5 , fontface="bold")+
+   guides(fill = "none")
+ 
+ Fig2D
+
 ```
+
 
 
 ### Figure 2E
@@ -1134,22 +1374,6 @@ Figure2 <-
 Figure2
 
 ```
-
-## Additional figures for Revision
-
-```{r}
-library(ggmosaic)
-
-
-patMeta_cl %>% 
-  select(PatientID, Cluster, IGHV.status, trisomy12, POT1, SF3B1, gain8q, RAS_RAF, TP53, ATM) %>% 
-  
-  ggplot()+
-    ggmosaic::geom_mosaic(aes(x = product(Cluster), fill=IGHV.status))
-```
-
-
-
 
 ## Appendix
 ```{r appendix2}
