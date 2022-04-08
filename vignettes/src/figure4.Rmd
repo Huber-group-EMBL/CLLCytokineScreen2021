@@ -233,7 +233,7 @@ Fig4B
 TGFbeta response stratified by trisomy 12
 ```{r, Fig4C, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 5.5, fig.width = 6, warning = FALSE}
 
-#filter for Resiquimod-only treatment, only show patients who are annotated for IGHV and Trisomy12
+#filter for TGFbeta-only treatment, only show patients who are annotated for IGHV and Trisomy12
 plotTab <- left_join(df, patMeta, by = "PatientID") %>% 
   dplyr::filter(Cytokine=="TGF-b1",
                 !is.na(trisomy12))
@@ -252,6 +252,7 @@ Fig4C =
  
   stat_compare_means(method = "t.test",
                      label.x.npc = "center", 
+                     comparisons = list(c(1,2)),
                      size=5)+
   scale_x_discrete(labels=c("0"="WT",
                             "1"="trisomy 12"))+
@@ -363,7 +364,7 @@ Fig4E
 
 
 ### Figure 4F
-Comparison of TF binding site accessibility in trisomy 12 vs non-trisomy 12 samples and in IBET vs control treated samples  
+Comparison of TF binding site accessibility in trisomy 12 vs non-trisomy 12 samples and in IBET vs control treated samples
 
 ```{r, Fig4F, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 12, fig.height=10}
 
@@ -384,72 +385,41 @@ diffTF.ibet$TF <- gsub("SPI1", "PU1", diffTF.ibet$TF)
 plotTab.diffTF.ibet <- diffTF.ibet %>% filter(TF %in%  plotTab.diffTF$TF)
 
 #order by weighted mean difference
-idx <- order(plotTab.diffTF.ibet[["weighted_meanDifference"]], decreasing = TRUE)
-plotTab.diffTF.ibet$TF <- factor(plotTab.diffTF.ibet$TF,levels=rev(unique(plotTab.diffTF.ibet$TF[idx])))
+idx <- order(plotTab.diffTF[["weighted_meanDifference"]], decreasing = TRUE)
+plotTab.diffTF.ibet$TF <- factor(plotTab.diffTF.ibet$TF,levels=rev(unique(plotTab.diffTF$TF[idx])))
 
 
-#make plotting table 
-ibet_plot <- plotTab.diffTF.ibet %>% select(TF, weighted_meanDifference)
-colnames(ibet_plot) <- c("TF", "ibet")
-untreated <- plotTab.diffTF %>% select(TF, weighted_meanDifference)
-colnames(untreated) <- c("TF", "tri12")
-
-
-plotTab <- left_join(untreated, ibet_plot, by = "TF")
-plotTab %<>% pivot_longer(c("ibet", "tri12"))
-colnames(plotTab) <- c("TF", "condition", "WMD")
-
-#plot figure
 Fig4F <-
-  ggplot(plotTab,
-         aes(x=WMD,
+  ggplot(plotTab.diffTF.ibet,
+         aes(x=weighted_meanDifference,
              y=TF,
-             fill=condition)) +
-  geom_bar(position = "dodge", stat = "identity", width = 0.75) +
+             fill= ifelse(weighted_meanDifference>0,
+                          palreds[5], palblues[1]))) +
+  geom_bar(stat = "identity", width = 0.75) +
   xlim(c(-0.2, 0.175)) +
-  
+
   #colours and theme
-  scale_fill_manual(values = c(colors[1], colors[3]), labels = c("tri12"="Trisomy 12 versus WT", "ibet"="IBET-762 versus Control")) +
-  t1 + 
+  scale_fill_manual(values = c(palblues[1], palreds[8]), guide = "none") +
+  t1 +
   theme(axis.text.x = element_text(angle = 45, vjust =1))+
-   theme(legend.position="bottom",
-        legend.title = element_text(face='bold', hjust = 1, size=14),
-        legend.key = element_blank(),
-        legend.text = element_text(size=15)
-        )+
-  
+
   #Labels
-  ylab("") + 
+  ylab("") +
   xlab("Change in inferred TF activity") +
-  ggtitle("Diffential TF binding site accessibility in trisomy 12 CLL and after IBET-762 treatment") + 
-  
-  #Add annotations
-  #arrow 1
-  annotate("segment", x = -0.15, xend = -0.15, y = 8.4, yend = 0.75, 
-           colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) + 
-  #arrow 2
-  annotate("segment", x = -0.15, xend = -0.15, y = 8.6, yend = 17, 
-           colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) + 
- 
-   #2 arrow labels
-  annotate("text", x = c(-0.185,-0.185), y = c(4.8,12.5), 
-          label = c("Lower in trisomy 12 CLL / \nHigher after IBET-762 treatment", 
-                    "Higher in trisomy 12 CLL / \nLower after IBET-762 treatment") , 
-          color="black", 
-          size=5 , fontface="bold") + theme(legend.title = element_text(face = "bold"))+
+  ggtitle("Diffential TF binding site accessibility in IBET-762-treated CLL") +
+
+
 
   #flip plot
-  coord_flip() +
-  theme(legend.position="bottom")+
-  guides(fill=guide_legend(title="diffTF comparison"))
-  
+  coord_flip()
 
 
-Fig4F 
+Fig4F
 
-rm(plotTab)
 
 ```
+
+
 
 ## Assemble Figure 4
 
@@ -459,7 +429,7 @@ rm(plotTab)
 design1<-"
   ABC
   DDE
-  FFF
+  FFG
 "
 
 tp <- theme(plot.tag=element_text(size = 30, face="plain"))
@@ -473,6 +443,7 @@ Fig4 <-
  wrap_elements( Fig4D )+ tp + 
  wrap_elements( Fig4E )+ tp +
  wrap_elements( Fig4F )+ tp +
+ plot_spacer() + 
 
     
  plot_annotation(tag_levels = "A", title="Figure 4", theme = theme(title=element_text(size = 20)))+
