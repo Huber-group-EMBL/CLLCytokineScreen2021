@@ -1303,7 +1303,7 @@ cox_output %>%
 ```
 
 ## Appendix Table 5. Survival analysis of microenvironmental response clusters comparing Cluster 3 to the combined Cluster 1 and 2.
-
+\blandscape
 \newpage
 
 ```{r message=FALSE}
@@ -1746,7 +1746,7 @@ resTab %>%
 Spi-B gene targets defined as nearest gene to each Spi-B binding site. Spi-B binding sites determined using ChIPseq data from Care et al 2014. 
 
 
-
+\elandscape
 \newpage
 
 # Appendix Figures 
@@ -3378,7 +3378,6 @@ chr_length<-filter(human.hg19.genome, V1%in%levels(peak_df$chr)) %>%
   xlab("Chromosome Size (Mbp)") + 
   ylab("Chromosome") + 
    scale_y_reverse(breaks=c(1:22))+
-   coord_cartesian(ylim=c(22,1))+
   ggtitle("Change in inferred TF activity by Chromosome") + 
   t2+
    theme(panel.grid.major.x=element_blank())
