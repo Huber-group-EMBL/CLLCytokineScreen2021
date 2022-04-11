@@ -218,8 +218,7 @@ Fig4B =
   coord_cartesian( clip="off") +
   ggtitle("IL4") +
   scale_color_manual(values=c(palblues[3], palreds[8]))+
-  t2 + 
-  theme(axis.title.y = element_blank())
+  t2 
 
 
 rm(plotTab)
@@ -262,8 +261,7 @@ Fig4C =
   ggtitle("TGF\u03B2") +
   scale_color_manual(values=c(palblues[3], palreds[8])) + 
   coord_cartesian(clip="off")+
-  t2+
-  theme(axis.title.y = element_blank())
+  t2
 
 rm(plotTab)
 
@@ -358,8 +356,7 @@ Fig4E <-
   t2+
   scale_x_discrete(labels=c("0"="WT",
                             "1"="trisomy 12"))+
-  xlab("")+
-  theme(axis.title.y = element_blank())
+  xlab("")
 
 Fig4E
 
@@ -447,12 +444,12 @@ Fig4F
 ## Assemble Figure 4
 
 
-```{r Fig4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=15, fig.width=14, eval = TRUE, warning = FALSE}
+```{r Fig4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=16, fig.width=14, eval = TRUE, warning = FALSE}
 
 design1<-"
-  ABCE
-  DDDD
-  FFFF
+  AAB
+  CDD
+  EFF
 "
 
 tp <- theme(plot.tag=element_text(size = 30, face="plain"))
@@ -460,17 +457,16 @@ tp <- theme(plot.tag=element_text(size = 30, face="plain"))
 Fig4 <-
 
 
- wrap_elements( Fig4A )+ tp +
- wrap_elements( Fig4B )+ tp +
- wrap_elements( Fig4C )+ tp + 
- wrap_elements( Fig4D )+ tp + 
- wrap_elements( Fig4E )+ tp +
- wrap_elements( Fig4F )+ tp +
- plot_spacer() + 
+ ( Fig4A )+ tp +
+ ( Fig4B )+ tp +
+ ( Fig4C )+ tp + 
+ ( Fig4D )+ tp + 
+ ( Fig4E )+ tp +
+ ( Fig4F )+ tp +
 
     
  plot_annotation(tag_levels = "A", title="Figure 4", theme = theme(title=element_text(size = 20)))+
-  plot_layout(design = design1, heights = c(.8,1,1), width=c(1.5,1,1,1))
+  plot_layout(design = design1, heights = c(.8,1,1), width=c(.9,.7,1.4))
 
 
 Fig4
