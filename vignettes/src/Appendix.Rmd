@@ -82,8 +82,8 @@ if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
 
 <!-- Load Libraries -->
 ```{r loadLibraries_supp,  warning=FALSE}
-
 #Libraries
+library(survival)
 library(maxstat)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(ChIPseeker)
@@ -97,7 +97,6 @@ library(xlsx)
 library(fgsea)
 library(DESeq2)
 library(biobroom)
-library(survival)
 library(survminer)
 library(patchwork)
 library(data.table)
@@ -120,6 +119,7 @@ library(gridExtra)
 library(cowplot)
 library(ggh4x)
 library(magick)
+
 ```
 
 <!-- # Define Functions -->
@@ -3348,6 +3348,45 @@ S18
 
 ```
 
+
+```{r , fig.path=plotDir, dev=c("cairo_pdf"), fig.height = 12, fig.width = 9, warning = FALSE}
+
+#get a dataframe of all SPIB binding sites that show sig Log2FC
+peak_df <- 
+  TFBS %>%
+  dplyr::select(TF, chr, start, end, strand, l2FC, pval,  pval_adj)
+
+#make factors / numeric
+chr.sorted <- unique(sortChrName(peak_df$chr))
+peak_df$chr <- factor(peak_df$chr, levels = chr.sorted)
+peak_df$start <- as.numeric(peak_df$start)
+peak_df$end <- as.numeric(peak_df$end)
+
+peak_df<-peak_df %>% 
+  mutate(chr_num=as.numeric(gsub("chr","",chr)))
+
+chr_length<-filter(human.hg19.genome, V1%in%levels(peak_df$chr)) %>% 
+         mutate(V1=factor(V1, levels = rev(levels(peak_df$chr)))) %>% 
+          mutate(chr_num=as.numeric(gsub("chr","",V1)))
+
+ ggplot(peak_df)+
+  geom_segment(data= chr_length, aes(y=chr_num, yend=chr_num, x=0, xend=V2/10^6))+
+  geom_segment(aes(y=chr_num, yend=chr_num-(l2FC/4),  x = start/10^6, xend= end/10^6,
+                color = ifelse(l2FC<0, palreds[5], palblues[1]))) +
+  scale_fill_manual(values = c(palreds[5], palblues[1]), guide = "none") +
+  scale_color_manual(values = c(palreds[5], palblues[1]), guide = "none") +
+  xlab("Chromosome Size (Mbp)") + 
+  ylab("Chromosome") + 
+   scale_y_reverse(breaks=c(1:22))+
+   coord_cartesian(ylim=c(22,1))+
+  ggtitle("Change in inferred TF activity by Chromosome") + 
+  t2+
+   theme(panel.grid.major.x=element_blank())
+
+
+
+```
+
 ## Appendix Figure 17. Chromosomal locations of Spi-B binding sites that show differential accessibility between trisomy 12 and non-trisomy 12 CLL. 
 Log2 fold changes are plotted (y axis) Spi-B binding sites that show an absolute Log2 fold change > 1 and a p value < 0.1, as calculated using the diffTF package for all Spi-B binding sites defined in the HOCOMOCO database. Data shown is the 9 versus 42 comparison based on the data from Rendeiro et al. 2016.  
 
@@ -3679,7 +3718,7 @@ Heatmap depicting overview of genetic predictors of drug - stimulus interactions
 
 \newpage
 
-```{r S19, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 10, fig.height =4,  eval = FALSE}
+```{r S19, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 10, fig.height =4,  eval = TRUE}
 
 # Plot predictor profile for Ibrutinib + IL4
  grid.arrange(grobs = Lasso_Plots_Fig6["Ibrutinib + IL-4"], ncol = 1)
