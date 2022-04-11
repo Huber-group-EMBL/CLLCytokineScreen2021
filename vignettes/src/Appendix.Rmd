@@ -73,7 +73,7 @@ knitr::opts_chunk$set(echo = FALSE, message=FALSE, out.extra = "")
 ```
 
 <!-- Set plot directory-->
-```{r plotDirApp, message=FALSE}
+```{r plotDirApp, message=FALSE, warning=FALSE}
 
 plotDir = ifelse(exists(".standalone"), "", "../../inst/figs/")
 if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
@@ -1117,6 +1117,8 @@ selected_mutations <-
   ## Add Ras/Raf column, remove single columns
   mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
   dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+  mutate(IGHV.status=as.factor(case_when(IGHV.status=="U"~0, 
+                               IGHV.status=="M"~1))) %>% 
 
 ## remove unused columns from metadata
   dplyr::select( -gender, 
@@ -1134,7 +1136,7 @@ selected_mutations <-
   pivot_wider(names_from = alt_value, values_from = n) %>% 
    
    filter(Genetic_alt%in%selected_mutations) %>% 
-   rename(Genetic_alteration=Genetic_alt, 'Wildtype'="0", 'Mutated'="1", 'Not available'='NA', "IGHV Mutated"="M", "IGHV Unmutated"="U")%>% 
+   rename(Genetic_alteration=Genetic_alt, 'Wildtype/IGHV unmutated'="0", 'Mutated/ IGHV Mutated'="1", 'Not available'='NA')%>% #, "IGHV Mutated"="M", "IGHV Unmutated"="U"
    select_if(~sum(!is.na(.)) > 0)
    
   Table_of_alterations %>% 
@@ -1301,6 +1303,8 @@ cox_output %>%
 ```
 
 ## Appendix Table 5. Survival analysis of microenvironmental response clusters comparing Cluster 3 to the combined Cluster 1 and 2.
+
+\newpage
 
 ```{r message=FALSE}
 
@@ -1547,7 +1551,9 @@ resTab %>%
 
 ```   
 
-## Appendix Table 6. Over-representation test of immune signalling pathways (and control pathways) amongst Spi-B gene targets, based on primary CLL ATACseq data.  Spi-B gene targets defined as nearest gene to each Spi-B binding site. Spi-B binding sites subset from all Spi-B sites defined in the HOCOMOCO database, and subset for those that   that show an absolute Log2 fold change > 1 and a p value < 0.1 in trisomy 12 versus non-trisomy 12 CLL. Log2FC values and p values calculated using the diffTF package based on the CLL ATACseq data from Rendeiro et al. 2016.
+## Appendix Table 6. Over-representation test of immune signalling pathways (and control pathways) amongst Spi-B gene targets, based on primary CLL ATACseq data.
+
+Spi-B gene targets defined as nearest gene to each Spi-B binding site. Spi-B binding sites subset from all Spi-B sites defined in the HOCOMOCO database, and subset for those that   that show an absolute Log2 fold change > 1 and a p value < 0.1 in trisomy 12 versus non-trisomy 12 CLL. Log2FC values and p values calculated using the diffTF package based on the CLL ATACseq data from Rendeiro et al. 2016.
 
 ```{R, T7, fig.width=15, fig.height=2, message=FALSE }
 
@@ -1736,7 +1742,8 @@ resTab %>%
   kable_styling(latex_options = c("striped", "HOLD_position", "scale_down")) 
 
 ```
-## Appendix Table 7. Over-representation test of immune signalling pathways (and control pathways) amongst Spi-B gene targets, based on DLBCL ChIPseq data.  Spi-B gene targets defined as nearest gene to each Spi-B binding site. Spi-B binding sites determined using ChIPseq data from Care et al 2014. 
+## Appendix Table 7. Over-representation test of immune signalling pathways (and control pathways) amongst Spi-B gene targets, based on DLBCL ChIPseq data. 
+Spi-B gene targets defined as nearest gene to each Spi-B binding site. Spi-B binding sites determined using ChIPseq data from Care et al 2014. 
 
 
 
@@ -1744,7 +1751,7 @@ resTab %>%
 
 # Appendix Figures 
 
-```{r S1, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=10, fig.height=5, fig.pos="H"}
+```{r S1, fig.path=plotDir, dev=c("cairo_pdf"), fig.width=10, fig.height=5, fig.pos="H"}
 
 theme_temp<-theme(
   plot.background = element_blank(),
@@ -1826,7 +1833,6 @@ Selected genetic alterations on y-axis and screened patient samples on x-axis.
 \newpage
 
 
-
 ```{r}
 order_Cytokines<-df%>%
   dplyr::filter(Drug=="DMSO") %>%
@@ -1841,7 +1847,7 @@ df$Cytlabel<-factor(df$Cytlabel, levels=order_Cytokines)
 ```
 
 
-```{r S2,fig.path=plotDir, dev=c("png", "cairo_pdf"),  fig.pos="H", fig.height=8, fig.width=16}
+```{r S2,fig.path=plotDir, dev=c("cairo_pdf"),  fig.pos="H", fig.height=8, fig.width=16}
 
 t_tests = df %>%
   dplyr::filter(Drug=="DMSO") %>%
@@ -1896,7 +1902,8 @@ p2<-df_patMeta%>%
 Viability after 48h incubation with microenvironmental stimuli. Log transformed viabilities, normalized to DMSO solvent controls, stratified by IGHV status.  BH-adjusted p-values are shown from one-sample t-tests of all patient samples. (p<0.00001=&#42;&#42;&#42;&#42;&#42;, p<0.0001=&#42;&#42;&#42;&#42;, p>0.05=ns) 
 
 
-```{r S3, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.pos="H", fig.width=11, fig.height=11}
+
+```{r S3, fig.path=plotDir, dev=c( "cairo_pdf"), fig.pos="H", fig.width=11, fig.height=11}
 
 example_cyt<-c("IL1\u03B2","Resiquimod", "TGF\u03B21","soluble anti-IgM",  "sCD40L",  "BAFF", "CpG ODN","sCD40L + IL4","IL6","SDF-1\u03B1","IL15", "IL4","IL21", "HS-5 CM", "Interferon \u03B3","IL2","IL10")
 
@@ -3134,7 +3141,7 @@ Log normalised viability after treatment with Resiquimod with and without ibruti
 
 \newpage
 
-```{r S14, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 6, fig.width = 10}
+```{r S14, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 8, fig.width = 10}
 
 plotTab <- diffTF_small %>%  filter(!is.na(pvalueAdj))
 
@@ -3146,18 +3153,20 @@ atac.plot =
          aes(x = weighted_meanDifference, y = -log10(pvalueAdj+0.000001))) +
 
   geom_point(aes(alpha=0.4, colour = ifelse(-log10(pvalueAdj) > 2,"black","grey")),size=3) +
+  
   geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 4&abs(weighted_meanDifference)>0.15,
                                     as.character(TF),''),
                        colour=ifelse(weighted_meanDifference>0,
                                      palreds[1],
                                      palblues[1])),
-                   size=7, max.overlaps=20)+
+                   size=5, max.overlaps=20)+
   scale_colour_manual(values=c(palblues[3], palreds[8], "black", "grey")) +
   t2 +
   ggtitle("ATAC seq: Tri12 v WT") +
   xlab("Change in inferred TF activity") +
   guides(color="none", alpha="none") +
-  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))
+  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))+
+  coord_cartesian(ylim = c(0,6.5))
 
 
 atac.plot
@@ -3236,7 +3245,8 @@ atac.plot =
   ggtitle("ATAC seq: Tri12 v WT") +
   xlab("Change in inferred TF activity") +
   guides(color="none", alpha="none") +
-  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))
+  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))+
+  coord_cartesian(ylim = c(0,6.5))
 
 
 
@@ -3258,13 +3268,14 @@ atac.plot.big =
                        colour=ifelse(weighted_meanDifference>0,
                                      palreds[1],
                                      palblues[1])),
-                   size=7, max.overlaps=20)+
+                   size=7, max.overlaps=25)+
   scale_colour_manual(values=c(palblues[3], palreds[8], "black", "grey")) +
   t2 +
   ggtitle("ATAC seq: Tri12 v WT") +
   xlab("Change in inferred TF activity") +
   guides(color="none", alpha="none") +
-  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))
+  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))+
+  coord_cartesian(ylim = c(0,1.7))
 
 rm(plotTab)
 
@@ -3302,7 +3313,7 @@ peak <-
 
 ```
 
-```{r S17, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 15, fig.width = 10, warning = FALSE}
+```{r S17, fig.path=plotDir, dev=c("cairo_pdf"), fig.height = 15, fig.width = 10, warning = FALSE}
 
 #get a dataframe of all SPIB binding sites that show sig Log2FC
 peak_df <- 
@@ -3337,7 +3348,8 @@ S18
 
 ```
 
-## Appendix Figure 17. Chromosomal locations of Spi-B binding sites that show differential accessibility between trisomy 12 and non-trisomy 12 CLL. Log2 fold changes are plotted (y axis) Spi-B binding sites that show an absolute Log2 fold change > 1 and a p value < 0.1, as calculated using the diffTF package for all Spi-B binding sites defined in the HOCOMOCO database. Data shown is the 9 versus 42 comparison based on the data from Rendeiro et al. 2016.  
+## Appendix Figure 17. Chromosomal locations of Spi-B binding sites that show differential accessibility between trisomy 12 and non-trisomy 12 CLL. 
+Log2 fold changes are plotted (y axis) Spi-B binding sites that show an absolute Log2 fold change > 1 and a p value < 0.1, as calculated using the diffTF package for all Spi-B binding sites defined in the HOCOMOCO database. Data shown is the 9 versus 42 comparison based on the data from Rendeiro et al. 2016.  
 
 
 
@@ -3625,7 +3637,7 @@ coeff.long.mat_Fig6 <- coeff.long.mat
 }
 ```
 
-```{r s18, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=19.5, fig.width=16}
+```{r s18, fig.path=plotDir, dev=c("cairo_pdf"), fig.height=19.5, fig.width=16}
 colnames(Cytokine_labels) <- c("Stimulus", "label")
 
 coeff.long.mat_Fig6 %>%
@@ -3667,7 +3679,7 @@ Heatmap depicting overview of genetic predictors of drug - stimulus interactions
 
 \newpage
 
-```{r S19, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 10, fig.height =4,  eval = TRUE}
+```{r S19, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 10, fig.height =4,  eval = FALSE}
 
 # Plot predictor profile for Ibrutinib + IL4
  grid.arrange(grobs = Lasso_Plots_Fig6["Ibrutinib + IL-4"], ncol = 1)
