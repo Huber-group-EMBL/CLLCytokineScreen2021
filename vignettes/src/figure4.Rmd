@@ -174,7 +174,7 @@ Fig4A =
                      size=5)+
   xlab("") +
   ylab("Log(Viability)") +
-  ggtitle("Resiquimod (TLR)") +
+  ggtitle("Resiquimod (TLR 7/8 agonist)") +
   scale_color_manual(values=c(palblues[3], palreds[8])) + 
   coord_cartesian(ylim = c(-1.5, 3.1), clip="off") +
   t2
@@ -418,23 +418,23 @@ Fig4F <-
 
 
   #flip plot
-  coord_flip()+
+  coord_flip()#+
 
   
   #Add annotations
-  #arrow 1
-  annotate("segment", x = arrow_height, xend = arrow_height, y = 8.4, yend = 0.75,
-           colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) +
-  #arrow 2
-  annotate("segment", x = arrow_height, xend = arrow_height, y = 8.6, yend = 17,
-           colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) +
-
-   #2 arrow labels
-  annotate("text", x = c(text_height,text_height), y = c(4.8,12.5),
-          label = c("Lower after IBET-762 treatment",
-                    "Higher after IBET-762 treatment") ,
-          color="black",
-          size=5 , fontface="bold")
+  # #arrow 1
+  # annotate("segment", x = arrow_height, xend = arrow_height, y = 8.4, yend = 0.75,
+  #          colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) +
+  # #arrow 2
+  # annotate("segment", x = arrow_height, xend = arrow_height, y = 8.6, yend = 17,
+  #          colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) +
+  # 
+  #  #2 arrow labels
+  # annotate("text", x = c(text_height,text_height), y = c(4.8,12.5),
+  #         label = c("Lower after IBET-762 treatment",
+  #                   "Higher after IBET-762 treatment") ,
+  #         color="black",
+  #         size=5 , fontface="bold")
 
 
 Fig4F
