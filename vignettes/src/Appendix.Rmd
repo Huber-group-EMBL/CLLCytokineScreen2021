@@ -3350,7 +3350,7 @@ S18
 
 
 ```{r , fig.path=plotDir, dev=c("cairo_pdf"), fig.height = 12, fig.width = 9, warning = FALSE}
-
+library(cicero)
 #get a dataframe of all SPIB binding sites that show sig Log2FC
 peak_df <- 
   TFBS %>%
