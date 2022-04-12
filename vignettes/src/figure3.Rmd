@@ -589,133 +589,6 @@ Fig3A
 
 ```
 
-<!-- ```{r} -->
-<!-- data_tmp<-dplyr::select(df, PatientID, Log, Cytokine) %>% -->
-
-<!--   ## Join Screening data with metadata -->
-<!--   left_join(patMeta, by = "PatientID") %>% -->
-
-<!--   ## Add Ras/Raf column, remove single columns -->
-<!--   mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% -->
-<!--   dplyr::select(-BRAF, -KRAS, -NRAS) %>% -->
-
-<!-- ## remove unused columns from metadata -->
-<!--   dplyr::select( -gender, -->
-<!--                  -diagnosis, -->
-<!--                  -treatment) %>% -->
-
-<!--   filter(Cytokine=="TGF-b1", !is.na(SPEN)) -->
-
-<!-- var.test(Log ~ SPEN, data_tmp, alternative = "two.sided") -->
-
-<!--   ggplot(data_tmp, aes(x=SPEN, y=Log))+ -->
-<!--   geom_boxplot()+ -->
-<!--     geom_beeswarm()+ -->
-
-<!--   stat_compare_means(comparisons = list(c(1,2)), method = "t.test", method.args = list(var.equal = T))+ -->
-<!--   t2+ -->
-<!--     ggtitle("TGF-b1 effect by SPEN mutation status.\nT-test with equal variance.") -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!--   ## Select columns from screening data  -->
-<!--   var_test<-dplyr::select(df, PatientID, Log, Cytokine) %>%  -->
-
-<!--   ## Join Screening data with metadata -->
-<!--   left_join(patMeta, by = "PatientID") %>% -->
-
-<!--   ## Add Ras/Raf column, remove single columns -->
-<!--   mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>%  -->
-<!--   dplyr::select(-BRAF, -KRAS, -NRAS) %>%  -->
-
-<!-- ## remove unused columns from metadata -->
-<!--   dplyr::select( -gender,  -->
-<!--                  -diagnosis,  -->
-<!--                  -treatment) %>%  -->
-
-<!--   ## transform data to long format -->
-<!--   pivot_longer(cols=c(-PatientID, -Log, -Cytokine),  -->
-<!--                names_to = "Genetic_alt",  -->
-<!--                values_to="alt_value") %>%  -->
-
-<!--   ## filter to selected mutations (see above) -->
-<!--   dplyr::filter(Genetic_alt%in%selected_mutations) %>%  -->
-
-
-<!--   ## group by Cytokine and Genetic alteration   -->
-<!--   dplyr::group_by(Cytokine, Genetic_alt) %>%  -->
-
-<!--   ## Perform t.test on every combination of Cytokine and genetic alteration -->
-<!--   do(tidy(var.test(Log ~ alt_value, data = .,alternative = "two.sided"))) %>%  -->
-
-<!--   ## ungroup before adjusting p-value -->
-<!--   ungroup() %>%  -->
-
-<!--   ## adjust p-values to multiple testing using BH method  -->
-<!--   mutate(adj.p.value=p.adjust(p.value, method = "BH")) -->
-
-<!--   ggplot(var_test, aes(x=p.value))+ -->
-<!--   geom_histogram(bins=100, aes(fill=ifelse(adj.p.value<0.05, "p-value<0.05", "p-value>0.05")))+ -->
-<!--   guides(fill="none")+ -->
-<!--   t2+ -->
-<!--     ggtitle("Variance testing for all associations between \ngenetic alterations and stimuli. \nHistogram of non-adjusted p-values.\nAdj.p.values <0.05 colored red.")  -->
-
-<!--   var_test %>%  -->
-<!--   dplyr::filter(adj.p.value<0.1) %>%  -->
-<!--   dplyr::select(Cytokine, Genetic_alt,adj.p.value, p.value) %>%  -->
-<!--   dplyr::arrange(adj.p.value) %>%  -->
-<!--   DT::datatable() -->
-
-<!-- ``` -->
-
-
-
-
-#### Adjusted Figure 3A with FDR of 5%
-```{r, fig.height = 8, fig.width = 9.5}
-############################# Define FDR cutoff #################################
-fdr = 0.05
-  
-
-############################################ Plot ########################################
-p_values %<>% 
-  mutate(Cytokine=factor(Cytokine, levels = Cytokine_order)) %>% 
-  mutate(Genetic_alt=factor(Genetic_alt, levels = Genetic_alt_order))
-  
-
-  ggplot(dplyr::filter(p_values, adj.p.value>fdr), 
-         aes(x = Cytokine, y = -log10(adj.p.value))) +
-  geom_point(color = "lightgrey", size=3) +
-  geom_beeswarm(data = dplyr::filter(p_values, adj.p.value<=fdr), 
-                aes( color=Genetic_alt), size=5, cex=1.7) +
-  ##FDR line  
-  geom_hline(yintercept = -log10(fdr),linetype="dashed", size=0.3)+
-  
-  ##Main Theme
-  t1 +
-  
-  theme(axis.text.x = element_text(angle=45, 
-                                   size=18, 
-                                   face="bold",
-                                   hjust=1, 
-                                   vjust=1),
-        axis.title.x=element_blank()) +
-  ##Legend Theme
-  theme(legend.position="bottom", 
-        legend.title = element_text(face='bold', hjust = 0, size=18), 
-        legend.key = element_blank(),  
-        legend.text = element_text(size=18)) +
-  guides(colour = guide_legend(nrow=3, title = "Mutations"), 
-         shape = guide_legend(ncol = 1)) +
-  scale_color_manual(name = "Mutations", values = colors, labels=c("IGHV.status"="IGHV status", "del9p"="del(9p)", "trisomy12"="trisomy 12", "gain17q"="gain(17q)", "gain2p"="gain(2p)","gain19p"="gain(19p)","gain19q"="gain(19q)", "del7q"="del(7q)","del9q"="del(9q)", "del4p"= "del(4p)", "SPEN"="SPEN", "del11q"="del(11q)", "del1q" = "del(1q)")) +
-  scale_y_continuous(expression("BH-adjusted  "* italic(p)*"-value"), 
-                     breaks=seq(0,10,5),
-                     labels=math_format(expr=10^.x)(-seq(0,10,5)))+
-  scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))
-
-```
-
-
 Print significant p-values for text reference. 
 ```{r arrange_pvals3}
 
@@ -933,6 +806,192 @@ Fig3 <-
 Fig3
 
 # ggsave(Fig3, device = cairo_pdf, filename = "../../inst/figs/Fig3.pdf", width = 20, height = 13, units="in", dpi="screen")
+
+
+```
+
+
+
+## Additional Figure for Revision 
+### Adjusted Figure 3A with FDR of 5%
+```{r, fig.height = 8, fig.width = 9.5}
+############################# Define FDR cutoff #################################
+fdr = 0.05
+  
+
+############################################ Plot ########################################
+p_values %<>% 
+  mutate(Cytokine=factor(Cytokine, levels = Cytokine_order)) %>% 
+  mutate(Genetic_alt=factor(Genetic_alt, levels = Genetic_alt_order))
+  
+
+  ggplot(dplyr::filter(p_values, adj.p.value>fdr), 
+         aes(x = Cytokine, y = -log10(adj.p.value))) +
+  geom_point(color = "lightgrey", size=3) +
+  geom_beeswarm(data = dplyr::filter(p_values, adj.p.value<=fdr), 
+                aes( color=Genetic_alt), size=5, cex=1.7) +
+  ##FDR line  
+  geom_hline(yintercept = -log10(fdr),linetype="dashed", size=0.3)+
+  
+  ##Main Theme
+  t1 +
+  
+  theme(axis.text.x = element_text(angle=45, 
+                                   size=18, 
+                                   face="bold",
+                                   hjust=1, 
+                                   vjust=1),
+        axis.title.x=element_blank()) +
+  ##Legend Theme
+  theme(legend.position="bottom", 
+        legend.title = element_text(face='bold', hjust = 0, size=18), 
+        legend.key = element_blank(),  
+        legend.text = element_text(size=18)) +
+  guides(colour = guide_legend(nrow=3, title = "Mutations"), 
+         shape = guide_legend(ncol = 1)) +
+  scale_color_manual(name = "Mutations", values = colors, labels=c("IGHV.status"="IGHV status", "del9p"="del(9p)", "trisomy12"="trisomy 12", "gain17q"="gain(17q)", "gain2p"="gain(2p)","gain19p"="gain(19p)","gain19q"="gain(19q)", "del7q"="del(7q)","del9q"="del(9q)", "del4p"= "del(4p)", "SPEN"="SPEN", "del11q"="del(11q)", "del1q" = "del(1q)")) +
+  scale_y_continuous(expression("BH-adjusted  "* italic(p)*"-value"), 
+                     breaks=seq(0,10,5),
+                     labels=math_format(expr=10^.x)(-seq(0,10,5)))+
+  scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))
+
+```
+
+### Fig3A including Complex Karyotype
+
+```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 10, fig.width = 10, message = FALSE, warning = FALSE}
+##################### List of mutations with >2 postive cases #############################
+selected_mutations <- 
+  patMeta %>% 
+  mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
+  dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+  dplyr::select( -gender, 
+                 -diagnosis, 
+                 ) %>%
+  pivot_longer(-PatientID, 
+               names_to="Genetic_Alteration", 
+               values_to = "alteration_value") %>% 
+  dplyr::filter(alteration_value %in% c(1, "U")) %>% 
+  dplyr::group_by(Genetic_Alteration) %>% 
+  dplyr::count() %>% 
+  dplyr::filter(n>2) %>% 
+  dplyr::select(Genetic_Alteration) %>% 
+  unlist()
+
+
+## Calculate number of CNVs for each patient with compelte CNV annotation
+CNVs<-  patMeta %>% 
+    select(PatientID, del10p:trisomy12) %>% 
+    pivot_longer(cols=del10p:trisomy12, names_to = "Chr_Aberration", values_to = "Value") %>% 
+    mutate(Value=as.numeric(levels(Value))[Value]) %>% 
+    group_by(PatientID) %>% 
+    summarise(CNVs=sum(Value)) %>% 
+  mutate(Complex_Karyotype3=as.factor(case_when(CNVs>2~1, CNVs<=2~0)),
+         Complex_Karyotype5=as.factor(case_when(CNVs>4~1, CNVs<=4~0)),
+         CNVs=NULL)  
+  
+
+##################### t tests and p-value adjustment ###############################  
+p_values <-
+  ## Select columns from screening data 
+  dplyr::select(df, PatientID, Log, Cytokine) %>% 
+  
+  ## Join Screening data with metadata
+  left_join(patMeta, by = "PatientID") %>%
+  
+  ## Add Ras/Raf column, remove single columns
+  mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
+  dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+  
+    ## Add Complex Caryotype column, remove single columns
+  left_join(CNVs, by = "PatientID") %>% 
+  
+## remove unused columns from metadata
+  dplyr::select( -gender, 
+                 -diagnosis, 
+                 -treatment) %>% 
+  
+  ## transform data to long format
+  pivot_longer(cols=c(-PatientID, -Log, -Cytokine), 
+               names_to = "Genetic_alt", 
+               values_to="alt_value") %>% 
+  
+  ## filter to selected mutations (see above)
+  dplyr::filter(Genetic_alt%in%c(selected_mutations, "Complex_Karyotype3")) %>% 
+  
+  
+  ## group by Cytokine and Genetic alteration  
+  dplyr::group_by(Cytokine, Genetic_alt) %>% 
+  
+  ## Perform t.test on every combination of Cytokine and genetic alteration
+  do(tidy(t.test(Log ~ alt_value, data = ., var.equal = T))) %>% 
+  
+  ## ungroup before adjusting p-value
+  ungroup() %>% 
+  
+  ## adjust p-values to multiple testing using BH method 
+  mutate(adj.p.value=p.adjust(p.value, method = "BH"))
+  
+
+################################## Order of cytokines by descending significance ############################
+Cytokine_order <-
+  p_values %>% 
+  dplyr::group_by(Cytokine) %>% 
+  dplyr::arrange(adj.p.value) %>% 
+  dplyr::filter(row_number()==1) %>% 
+  ungroup() %>% 
+  dplyr::arrange(adj.p.value) %>% 
+  dplyr::select(Cytokine) %>% 
+  unlist()
+
+Genetic_alt_order <-
+  p_values %>% 
+  dplyr::group_by(Genetic_alt) %>% 
+  dplyr::arrange(adj.p.value) %>% 
+  dplyr::filter(row_number()==1) %>% 
+  ungroup() %>% 
+  dplyr::arrange(adj.p.value) %>% 
+  dplyr::select(Genetic_alt) %>% 
+  unlist()
+
+############################# Define FDR cutoff #################################
+fdr = 0.1
+  
+
+############################################ Plot ########################################
+p_values %<>% 
+  mutate(Cytokine=factor(Cytokine, levels = Cytokine_order)) %>% 
+  mutate(Genetic_alt=factor(Genetic_alt, levels = Genetic_alt_order))
+   
+  ggplot(dplyr::filter(p_values, adj.p.value>fdr), 
+         aes(x = Cytokine, y = -log10(adj.p.value))) +
+  geom_point(color = "lightgrey", size=3) +
+  geom_beeswarm(data = dplyr::filter(p_values, adj.p.value<=fdr), 
+                aes( color=Genetic_alt), size=5, cex=1.7) +
+  ##FDR line  
+  geom_hline(yintercept = -log10(fdr),linetype="dashed", size=0.3)+
+  
+  ##Main Theme
+  t1 +
+  
+  theme(axis.text.x = element_text(angle=45, 
+                                   size=18, 
+                                   face="bold",
+                                   hjust=1, 
+                                   vjust=1),
+        axis.title.x=element_blank()) +
+  ##Legend Theme
+  theme(legend.position="bottom", 
+        legend.title = element_text(face='bold', hjust = 0, size=18), 
+        legend.key = element_blank(),  
+        legend.text = element_text(size=18)) +
+  guides(colour = guide_legend(nrow=4, title = "Mutations"), 
+         shape = "none") +
+  scale_color_manual(name = "Mutations", values = c(colors, "black"), labels=c("IGHV.status"="IGHV status", "del9p"="del(9p)", "trisomy12"="trisomy 12", "gain17q"="gain(17q)", "gain2p"="gain(2p)","gain19p"="gain(19p)","gain19q"="gain(19q)", "del7q"="del(7q)","del9q"="del(9q)", "del4p"= "del(4p)", "SPEN"="SPEN", "del11q"="del(11q)", "del1q" = "del(1q)", "Complex_Karyotype3"="Complex Karyotype")) +
+  scale_y_continuous(expression("BH-adjusted  "* italic(p)*"-value"), 
+                     breaks=seq(0,10,5),
+                     labels=math_format(expr=10^.x)(-seq(0,10,5)))+
+  scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))
 
 
 ```
