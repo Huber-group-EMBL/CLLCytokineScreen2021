@@ -3359,8 +3359,10 @@ S18
 
 ```
 
+## Appendix Figure 17. Chromosomal locations of Spi-B binding sites that show differential accessibility between trisomy 12 and non-trisomy 12 CLL. 
+Log2 fold changes are plotted (y axis) Spi-B binding sites that show an absolute Log2 fold change > 1 and a p value < 0.1, as calculated using the diffTF package for all Spi-B binding sites defined in the HOCOMOCO database. Data shown is the 9 versus 42 comparison based on the data from Rendeiro et al. 2016.  
 
-```{r , fig.path=plotDir, dev=c("cairo_pdf"), fig.height = 12, fig.width = 9, warning = FALSE}
+```{r , fig.path=plotDir, dev=c("cairo_pdf"), fig.height = 14, fig.width = 9, warning = FALSE}
 library(cicero)
 #get a dataframe of all SPIB binding sites that show sig Log2FC
 peak_df <- 
@@ -3389,7 +3391,7 @@ chr_length<-filter(human.hg19.genome, V1%in%levels(peak_df$chr)) %>%
   xlab("Chromosome Size (Mbp)") + 
   ylab("Chromosome") + 
    scale_y_reverse(breaks=c(1:22))+
-  ggtitle("Change in inferred TF activity by Chromosome") + 
+  ggtitle("Change in inferred TF activity for Spi-B binding sites by Chromosome") + 
   t2+
    theme(panel.grid.major.x=element_blank())
 
@@ -3397,8 +3399,8 @@ chr_length<-filter(human.hg19.genome, V1%in%levels(peak_df$chr)) %>%
 
 ```
 
-## Appendix Figure 17. Chromosomal locations of Spi-B binding sites that show differential accessibility between trisomy 12 and non-trisomy 12 CLL. 
-Log2 fold changes are plotted (y axis) Spi-B binding sites that show an absolute Log2 fold change > 1 and a p value < 0.1, as calculated using the diffTF package for all Spi-B binding sites defined in the HOCOMOCO database. Data shown is the 9 versus 42 comparison based on the data from Rendeiro et al. 2016.  
+### Alternative Appendix Figure 17. Chromosomal locations of Spi-B binding sites that show differential accessibility between trisomy 12 and non-trisomy 12 CLL. 
+Log2 fold changes are plotted of Spi-B binding sites that show an absolute Log2 fold change > 1 and a p value < 0.1, as calculated using the diffTF package for all Spi-B binding sites defined in the HOCOMOCO database. The Analysis is based on the data of Rendeiro et al. 2016.  
 
 
 
