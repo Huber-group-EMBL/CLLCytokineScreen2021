@@ -992,8 +992,15 @@ p_values %<>%
                      breaks=seq(0,10,5),
                      labels=math_format(expr=10^.x)(-seq(0,10,5)))+
   scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))
+```
 
 
+```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 10, fig.width = 10, message = FALSE, warning = FALSE}
+p_values %>% 
+  filter(Genetic_alt=="Complex_Karyotype3") %>%
+  select(Cytokine, Genetic_alt, p.value, adj.p.value) %>% 
+  arrange(adj.p.value)%>% 
+  DT::datatable()
 ```
 
 ## Appendix
