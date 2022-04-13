@@ -680,7 +680,7 @@ geneMatrix.complete <-
 geneMatrix.complete <- 
   geneMatrix.complete[, colnames(geneMatrix.complete) != "NRAS"]
 
-
+str(geneMatrix.complete)
 ```
 
 Set up viability response matrix
