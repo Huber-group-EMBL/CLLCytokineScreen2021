@@ -837,17 +837,19 @@ ighv.labs <- c("U" = "IGHV-U", "M" =  "IGHV-M")
 #join viability and genetic data tables
 df.patMeta <- left_join(df, patMeta, by = "PatientID")
 
-Fig6C <-
 
+plotTab<-
   df.patMeta %>% 
   #filter for drug:stimulus combinations of interest, make sure no NAs in genetic data
   dplyr::filter(DCK%in%c("DMSO:CpG ODN","Fludarabine:CpG ODN","Fludarabine:No Cytokine"),
                 !is.na(trisomy12),
                 !is.na(IGHV.status)) %>%
-    mutate(DCK=factor(DCK, levels=c("DMSO:CpG ODN","Fludarabine:No Cytokine","Fludarabine:CpG ODN"))) %>% 
-  
+    mutate(DCK=factor(DCK, levels=c("DMSO:CpG ODN","Fludarabine:No Cytokine","Fludarabine:CpG ODN"))) 
+
+    
+Fig6C <-
   #plot treatment combination against viability 
-  ggplot(aes(x = DCK,y = Viability,color= DCK))+
+  ggplot(plotTab, aes(x = DCK,y = Viability,color= DCK))+
   geom_hline(yintercept = 0)+
   geom_boxplot()+
   geom_beeswarm(cex=1.5) +
@@ -879,6 +881,8 @@ Fig6C <-
         axis.text.x = element_text(size=fontsize+4, angle = 35, hjust = 1, vjust = 1))
  
 Fig6C 
+
+length(unique(plotTab$PatientID))
 
 ```
 
