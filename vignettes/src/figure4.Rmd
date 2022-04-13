@@ -171,7 +171,8 @@ Fig4A =
   stat_compare_means(method = "t.test",
                      label.x.npc = "center", 
                      comparisons = list(c(3,4),c(1,3),c(1,2)),
-                     size=5)+
+                     size=5,
+                     method.args = list(paired=FALSE, alternative="two.sided"))+
   xlab("") +
   ylab("Log(Viability)") +
   ggtitle("Resiquimod (TLR 7/8 agonist)") +
@@ -181,11 +182,12 @@ Fig4A =
   # theme(axis.text.x = element_text(angle = 45, vjust =1))
 
 
-rm(plotTab)
-
 Fig4A
 
+plotTab %>%
+  count()
 
+rm(plotTab)
 ```
 
 ### Figure 4B
@@ -212,7 +214,8 @@ Fig4B =
   stat_compare_means(method = "t.test",
                      label.x.npc = "center", 
                      comparisons = list(c(1,2)),
-                     size=5)+
+                     size=5,
+                     method.args = list(paired=FALSE, alternative="two.sided"))+
   xlab("") +
   ylab("Log(Viability)") +
   coord_cartesian( clip="off") +
@@ -220,6 +223,9 @@ Fig4B =
   scale_color_manual(values=c(palblues[3], palreds[8]))+
   t2 
 
+
+plotTab %>%
+  count()
 
 rm(plotTab)
 
@@ -253,7 +259,8 @@ Fig4C =
   stat_compare_means(method = "t.test",
                      label.x.npc = "center", 
                      comparisons = list(c(1,2)),
-                     size=5)+
+                     size=5,
+                     method.args = list(paired=FALSE, alternative="two.sided"))+
   scale_x_discrete(labels=c("0"="WT",
                             "1"="trisomy 12"))+
   xlab("") +
@@ -262,6 +269,10 @@ Fig4C =
   scale_color_manual(values=c(palblues[3], palreds[8])) + 
   coord_cartesian(clip="off")+
   t2
+
+
+plotTab %>%
+  count()
 
 rm(plotTab)
 
@@ -334,12 +345,12 @@ Fig4D
 IBET-762 response stratified by trisomy 12
 ```{r, Fig4E, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 5, fig.width = 5}
 
-Fig4E <- 
+plotTab <- 
   left_join(df_complete, patMeta, by = "PatientID") %>% 
   dplyr::filter(Drug=="I-BET 762", Drug_Concentration == "High", Cytokine == "No Cytokine") %>%
-      filter(!is.na(trisomy12)) %>%
-         
-  ggplot(aes(x = trisomy12, y = Log, color = (trisomy12)))+
+      filter(!is.na(trisomy12))
+Fig4E <-          
+  ggplot(plotTab, aes(x = trisomy12, y = Log, color = (trisomy12)))+
   geom_hline(yintercept = 0)+
   geom_boxplot()+
   geom_beeswarm(cex=1.5) +
@@ -347,7 +358,8 @@ Fig4E <-
   stat_compare_means(method = "t.test",
                      label.x.npc = "center", 
                      size=5,
-                     comparisons = list(c(1,2)))+
+                     comparisons = list(c(1,2)),
+                     method.args = list(paired=FALSE, alternative="two.sided"))+
   ylab("Log(Viability)") +
   ggtitle("IBET-762") +
   scale_color_manual(values=c(colors[1], colors[2])) + 
@@ -358,7 +370,13 @@ Fig4E <-
                             "1"="trisomy 12"))+
   xlab("")
 
+
+plotTab %>%
+  count()
+
 Fig4E
+
+rm(plotTab)
 
 ```
 
