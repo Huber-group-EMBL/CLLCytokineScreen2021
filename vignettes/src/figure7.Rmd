@@ -39,7 +39,7 @@ if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
 Raw
 ```{r loadData7}
 
-#ihc_patient_data: 596 x 7 tibble containing IHC staining intensities forpIRAK4, pSTAT6 and STAT6 staining in CLL and healthy tissue 
+#ihc_patient_data: 596 x 7 tibble containing IHC staining intensities for pIRAK4, pSTAT6 and STAT6 staining in CLL and healthy tissue 
 load( "../../data/ihc_patient_data.RData")
 
 #ihc_surv_data: 200 x 15 tibble containing IHC staining intensities for pIRAK4, pSTAT6 and STAT6 staining in CLL and healthy tissue, along with meta data (including clinical outcomes) on each patient sample
@@ -66,6 +66,8 @@ Process
 #convert stain type to factor
 ihc_patient_data$Stain <- factor(ihc_patient_data$Stain, levels = c("pSTAT6", "STAT6" , "pIRAK4"))
 
+ihc_patient_data<-filter(ihc_patient_data, !is.na(Diagnosis))
+
 ```
 
 
@@ -81,13 +83,14 @@ source("../../R/themes_colors.R")
 ### Figure 7A
 Beeswarm-boxplot of mean staining intensities of pSTAT6, for healthy and CLL LN samples
 ```{r, Fig7A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=5, fig.height=7}
-
-Fig7A <-
+plotTab<-
   ihc_patient_data %>%
   #get staining intensities for pSTAT6 only
-  dplyr::filter(Stain %in% c("pSTAT6")) %>%
+  dplyr::filter(Stain %in% c("pSTAT6"))
+ 
+Fig7A <- 
   #plot staining intensity, stratified by CLL / Healthy LN
-  ggplot(aes(x = Tissue, y = Intensity)) +
+  ggplot(plotTab, aes(x = Tissue, y = Intensity)) +
   geom_boxplot() +
   geom_beeswarm(aes(color=Tissue), alpha=1, cex=2) +
   #add p values
@@ -103,6 +106,11 @@ Fig7A <-
 
 Fig7A
 
+
+plotTab %>% 
+  group_by(Tissue) %>% 
+  count()
+  
 ```
 
 ### Figure 7B
@@ -131,6 +139,12 @@ Fig7B <-
 
 
 Fig7B
+
+ ihc_patient_data %>%
+  #filter for pIRAK4 staining intensities only
+  dplyr::filter(Stain%in%c("pIRAK4"))  %>% 
+  group_by(Diagnosis) %>% 
+  count()
 
 ```
 
