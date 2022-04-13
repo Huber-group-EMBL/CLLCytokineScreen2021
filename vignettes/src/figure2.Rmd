@@ -525,7 +525,7 @@ Fig2B <-
   guides(fill="none") +
   ylab("LDT in years") +
   t2 +
-  stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=6, label.x = 1.3, label.y=2.1)
+  stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=6, label.x = 1.3, label.y=2.1, method.args=list(paired=FALSE, alternative="two.sided"))
 
 
 Fig2B
@@ -533,6 +533,7 @@ Fig2B
 
 
 ```
+
 #### Print median LDT of clusters for text reference
 ```{r}
   patMeta_cl %>%
@@ -541,7 +542,7 @@ Fig2B
   dplyr::filter(!is.na(doubling.time)) %>%
   dplyr::mutate(Cluster=as.factor(Cluster)) %>%
   group_by(Cluster) %>% 
-  summarize(median.doubling.time=round(median(doubling.time), 2))
+  summarize(median.doubling.time=round(median(doubling.time), 2), numberofsamples=n())
   
 ```
 
@@ -1199,6 +1200,9 @@ cytSeq.34$IGHV.status <- factor(cytSeq.34$IGHV.status,
 
 design(cytSeq.34) <- ~ IGHV.status + Cluster
 
+
+cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(3)]
+cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(4)]
 ```
 
 Run DESeq
