@@ -473,7 +473,7 @@ Fig2A
 
 ```
 
-```{r, fig.width=6, fig.height=4}
+```{r, fig.width=3, fig.height=1.5, eval=FALSE}
 # Reduced figure for synopsis image 
 
 Heatmap_Annotation_short<-select(Heatmap_Annotation, Cluster)
