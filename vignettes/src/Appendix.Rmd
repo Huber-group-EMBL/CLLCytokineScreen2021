@@ -1080,10 +1080,25 @@ List of patient samples and selected characteristics. For a full list of charact
 
 ```{r, fig.pos="H"}
 
+CNVs<-  patMeta %>% 
+    select(PatientID, del10p:trisomy12) %>% 
+    pivot_longer(cols=del10p:trisomy12, names_to = "Chr_Aberration", values_to = "Value") %>% 
+    mutate(Value=as.numeric(levels(Value))[Value]) %>% 
+    group_by(PatientID) %>% 
+    summarise(CNVs=sum(Value)) %>% 
+  mutate(Complex_Karyotype=as.factor(case_when(CNVs>2~1, CNVs<=2~0)),
+         Complex_Karyotype5=as.factor(case_when(CNVs>4~1, CNVs<=4~0)),
+         CNVs=NULL)  %>% 
+  select(PatientID, Complex_Karyotype)
+
 selected_mutations <- 
   patMeta %>% 
   mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
   dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+  
+      ## Add Complex Caryotype column, remove single columns
+  left_join(CNVs, by = "PatientID") %>% 
+  
   dplyr::select( -gender, 
                  -diagnosis, 
                  ) %>%
@@ -1104,6 +1119,9 @@ selected_mutations <-
   dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
   mutate(IGHV.status=as.factor(case_when(IGHV.status=="U"~0, 
                                IGHV.status=="M"~1))) %>% 
+   
+       ## Add Complex Caryotype column, remove single columns
+  left_join(CNVs, by = "PatientID") %>% 
 
 ## remove unused columns from metadata
   dplyr::select( -gender, 
@@ -1812,6 +1830,18 @@ p1+
   p2+
   plot_layout(nrow=1, guides="collect", widths = c(0.7,0.3))
 ```
+
+
+```{r, fig.width=6, fig.height=6, eval=FALSE}
+p1+
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y= element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank())+
+guides(fill="none")
+```
+
 
 ## Appendix Figure 1. Genetic profiles of screened patient samples.
 Selected genetic alterations on y-axis and screened patient samples (n=192) on x-axis.
@@ -2832,7 +2862,7 @@ ggplot( aes(x=log2FoldChange, y=-log10(padj))) +
       geom_point(aes(alpha=0.4, colour = ifelse(-log10(padj)>sgncuoff,"black","grey"))) +
       theme(legend.position = "none") +
       geom_label_repel(aes(label=ifelse(-log10(padj)>sgncuoff&abs(log2FoldChange)>2,as.character(symbol),''),
-                           colour=ifelse(log2FoldChange>0, palreds[2], palblues[4])),
+                           colour=ifelse(log2FoldChange>0, palreds[2], palblues[4])), fill="#FDFDFD",
                        size=3.5, max.overlaps=30)+
       scale_colour_manual(values=c(palblues[2], palreds[4], "black", "grey"))+
       t2 +
@@ -2860,6 +2890,22 @@ tp <- theme(plot.tag=element_text(size = 30))
 # cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(4)]  
   
 ```
+
+```{r, fig.width=4, fig.height=4}
+volPlot+
+  theme(title = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        panel.grid.major= element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        )+
+  ggtitle("")
+```
+
 
 ## Appendix Figure 9. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.
 Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 (C3: n=9; C4: n=12) **(A)**. X axis indicates log2 fold change values, calculated using the DESeq2 package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software. 
@@ -3338,31 +3384,51 @@ peak_df$start <- as.numeric(peak_df$start)
 peak_df$end <- as.numeric(peak_df$end)
 
 
-S18 <- ggplot(peak_df, aes(start, l2FC))+
-  geom_rect(aes(xmin = start, ymin = 0, xmax = end, ymax = l2FC,
+chr_length<-filter(human.hg19.genome, V1%in%levels(peak_df$chr)) %>% 
+         mutate(V1=factor(V1, levels = rev(levels(peak_df$chr)))) %>% 
+          mutate(chromosome=gsub("chr","Chromosome ",V1)) %>% 
+  rename(chr_length=V2) %>% 
+  select(-V1)
+
+# S18 <- 
+  
+peak_df%>% 
+  mutate(chromosome=gsub("chr","Chromosome ",chr)) %>% 
+  left_join(chr_length, by="chromosome") %>%
+  mutate(chromosome=factor(chromosome, levels = c(paste0("Chromosome ", 1:22)))) %>% 
+
+ggplot(aes(start/10^6, l2FC))+
+  geom_segment(aes(y=0, yend=0, x=0, xend=chr_length/10^6))+
+  geom_rect(aes(xmin = start/10^6, ymin = 0, xmax = end/10^6, ymax = l2FC,
                 color = ifelse(l2FC<0, palreds[5], palblues[1]), 
                 fill= ifelse(l2FC<0, palreds[5], palblues[1]))) +
   scale_fill_manual(values = c(palreds[5], palblues[1]), guide = "none") +
   scale_color_manual(values = c(palreds[5], palblues[1]), guide = "none") +
-  facet_grid(chr ~ ., scales = "fixed", space = "fixed")+ 
-  xlab("Chromosome Size (bp)") + 
-  ylab("L2FC") + 
-  ggtitle("L2FCs for Spi-B binding sites")+
-  t2 + theme(strip.text.y = element_text(angle = 360)) + 
-  ylim(-3, 3) + 
-  geom_hline(yintercept=0)
+  facet_grid(chromosome ~ ., scales = "fixed", space = "fixed")+ 
+  xlab("Chromosome Size (Mbp)") + 
+  ylab("log 2 fold change of TF accessibility") + 
+  ggtitle("Change in inferred TF activity for Spi-B binding sites by Chromosome")+
+  t2 + 
+  theme(strip.text.y = element_text(angle = 360, hjust = 0),
+        strip.background.y = element_blank(),
+        axis.text.y = element_text(size=10),
+        axis.ticks.length.y = unit(3, "pt"),
+        panel.grid.major.x=element_blank(),
+        panel.spacing = unit(0.1, "lines")) + 
+  ylim(-3, 3) 
 
   
 
-S18
+# S18
 
 
 ```
 
 ## Appendix Figure 17. Chromosomal locations of Spi-B binding sites that show differential accessibility between trisomy 12 and non-trisomy 12 CLL. 
-Log2 fold changes are plotted (y axis) Spi-B binding sites that show an absolute Log2 fold change > 1 and a p value < 0.1, as calculated using the diffTF package for all Spi-B binding sites defined in the HOCOMOCO database. Data shown is the 9 versus 42 comparison based on the data from Rendeiro et al. 2016^1^.  
+Log2 fold changes are plotted (y axis) Spi-B binding sites that show an absolute Log2 fold change > 1 and a p value < 0.1, as calculated using the diffTF package for all Spi-B binding sites defined in the HOCOMOCO database. Data shown is the 9 versus 42 comparison based on the data from Rendeiro et al. 2016^1^.
 
-```{r , fig.path=plotDir, dev=c("cairo_pdf"), fig.height = 14, fig.width = 9, warning = FALSE}
+
+```{r , fig.path=plotDir, dev=c("cairo_pdf"), fig.height = 3, fig.width = 3, warning = FALSE, eval=FALSE}
 
 
 #get a dataframe of all SPIB binding sites that show sig Log2FC
@@ -3389,21 +3455,21 @@ chr_length<-filter(human.hg19.genome, V1%in%levels(peak_df$chr)) %>%
                 color = ifelse(l2FC<0, palreds[5], palblues[1]))) +
   scale_fill_manual(values = c(palreds[5], palblues[1]), guide = "none") +
   scale_color_manual(values = c(palreds[5], palblues[1]), guide = "none") +
-  xlab("Chromosome Size (Mbp)") + 
-  ylab("Chromosome") + 
    scale_y_reverse(breaks=c(1:22))+
-  ggtitle("Change in inferred TF activity for Spi-B binding sites by Chromosome") + 
   t2+
-   theme(panel.grid.major.x=element_blank())
+   theme(panel.grid.major.x=element_blank(),
+         axis.title.y = element_blank(),
+         axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y= element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x= element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank())
 
 
 
 ```
-
-### Alternative Appendix Figure 17. Chromosomal locations of Spi-B binding sites that show differential accessibility between trisomy 12 and non-trisomy 12 CLL. 
-Log2 fold changes are plotted of Spi-B binding sites that show an absolute Log2 fold change > 1 and a p value < 0.1, as calculated using the diffTF package for all Spi-B binding sites defined in the HOCOMOCO database. The Analysis is based on the data of Rendeiro et al. 2016^1^ (n=51).  
-
-
 
 \newpage
 
