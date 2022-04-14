@@ -2971,7 +2971,7 @@ legends = makelegends(legendFor=c("G","I","M"),coldef)
 grid.arrange( grobs = heatMaps_cyt[1], ncol =1)
 grid.arrange( grobs = heatMaps_cyt[2], ncol =1)
 
-str(geneMatrix.complete)
+# str(geneMatrix.complete)
 ```
 
 ## Appendix Figure 11. Predictor profiles to represent gene - stimulus associations. 
