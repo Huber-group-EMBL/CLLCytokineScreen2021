@@ -211,17 +211,17 @@ Fig4B =
   guides(color="none", shape="none")+
   scale_x_discrete(labels=c("0"="WT",
                             "1"="trisomy 12"))+
+  xlab("") +
+  ylab("Log(Viability)") +
+  coord_cartesian( clip="off") +
+  t2 +
   stat_compare_means(method = "t.test",
                      label.x.npc = "center", 
                      comparisons = list(c(1,2)),
                      size=5,
                      method.args = list(paired=FALSE, alternative="two.sided"))+
-  xlab("") +
-  ylab("Log(Viability)") +
-  coord_cartesian( clip="off") +
-  ggtitle("IL4") +
-  scale_color_manual(values=c(palblues[3], palreds[8]))+
-  t2 
+  scale_color_manual(values=c(palblues[3], palreds[8]))
+
 
 
 plotTab %>%
@@ -233,6 +233,42 @@ Fig4B
 
 
 ```
+
+```{r, fig.height=3, fig.width=6, eval=FALSE}
+
+#filter for IL4-only treatment, only show patients who are annotated for Trisomy12
+left_join(df, patMeta, by = "PatientID") %>% 
+  dplyr::filter(Cytokine=="IL-4",
+                !is.na(trisomy12)) %>%
+         
+  ggplot(aes(x=interaction(trisomy12),
+                    y=Log,
+                    color=(trisomy12)))+
+  geom_boxplot(fill="#FDFDFD")+
+  geom_beeswarm(cex=2, size=3) +
+  guides(color="none", shape="none")+
+  scale_x_discrete(labels=c("0"="WT",
+                            "1"="trisomy 12"))+
+  xlab("") +
+  ylab("Log(Viability)") +
+  coord_cartesian( clip="off") +
+  t2 +
+  scale_color_manual(values=c(palblues[3], palreds[8]))+
+    annotate(geom="text", x=2.2,y=.7, label="tri12", size=7, )+
+    annotate(geom="text", x=.7,y=.7, label="wt", size=7,)+
+   theme(panel.grid.major.x=element_blank(),
+         axis.title.y = element_blank(),
+         axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y= element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x= element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank())
+
+
+```
+
 
 
 ### Figure 4C
