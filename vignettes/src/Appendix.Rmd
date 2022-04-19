@@ -2722,7 +2722,8 @@ stat.test <- df %>%
                 ,Drug=factor(Drug, levels = Drug_order)
                 )  %>%
   group_by(Drug) %>%
-  rstatix::t_test(Log ~ Cluster, p.adjust.method="BH", comparisons=list(c(1,2),c(3,4)))%>%
+  rstatix::t_test(Log ~ Cluster, p.adjust.method="BH",paired = FALSE,
+  var.equal = FALSE,  alternative = "two.sided", comparisons=list(c(1,2),c(3,4)))%>%
   rstatix::add_y_position(step.increase=0.001)
 
 df %>%
@@ -2752,7 +2753,7 @@ df %>%
 ```
 
 ## Appendix Figure 8. Drug response by clusters.
-Log transformed viabilities after treatment with drugs, faceted by cluster. BH-adjusted p-values from student's t-tests are shown (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
+Natural logarithm of the relative viability after treatment with drugs, faceted by cluster. BH-transformed p-values from non-paired two-sided Student's t-test are shown (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
 
 
 
@@ -3850,4 +3851,44 @@ Natural logarithm of the relative viability after treatment with IL4 in combinat
 1. Rendeiro, A., Schmidl, C., Strefford, J. et al. Chromatin accessibility maps of chronic lymphocytic leukaemia identify subtype-specific epigenome signatures and transcription regulatory networks. Nat Commun 7, 11938 (2016).
 
 2. Lu, J., Cannizzaro, E., Meier-Abt, F. et al. Multi-omics reveals clinically relevant proliferative drive associated with mTOR-MYC-OXPHOS activity in chronic lymphocytic leukemia. Nat Cancer 2, 853–864 (2021).
+
+
+```{r}
+knitr::knit_exit()
+```
+
+
+```{r, fig.height=6, fig.width=8}
+
+df_patMeta %>% 
+  left_join(Heatmap_clusters, by = "PatientID") %>% 
+  filter(Drug%in%c("DMSO", "BAY-11-7085"), Cytokine%in%c("No Cytokine", "BAFF"), Drug_Concentration%in%c("None", "High"), !(Drug=="DMSO"&Cytokine=="No Cytokine")) %>% 
+  mutate(Cluster=as.factor(Cluster),
+         DCK=factor(DCK, levels=c("DMSO:BAFF", "BAY-11-7085:No Cytokine", "BAY-11-7085:BAFF" ))
+         ) %>% 
+  
+  ggplot(aes(DCK, Log)) +
+  
+  geom_hline(yintercept = 0, linetype=2, color="black")+
+  
+  geom_boxplot(aes(fill=Cluster))+
+  # geom_beeswarm(aes(color=Cluster))+
+
+  # lemon::geom_pointline(aes(group=PatientID), size=1,   
+                         # colour="#003DA5", alpha=0.2)+
+  facet_wrap(~Cluster, scales = "fixed", nrow = 1, labeller = labeller(Cluster = c("1" = "Cluster 1", "2" = "Cluster 2","3" = "Cluster 3","4" = "Cluster 4")))+
+    scale_color_manual(values=colors[1:4])+
+  t1+ theme(strip.background =element_blank())+
+  guides(fill="none")+
+  scale_x_discrete(labels=c("DMSO:BAFF"="BAFF",
+                            "BAY-11-7085:No Cytokine"="BAY-11-7085",
+                            "BAY-11-7085:BAFF"="BAY-11-7085 + BAFF"))+
+  ylab("Log(Viability)")+
+  xlab("Treatment")+
+  coord_cartesian(clip="off")+
+  stat_compare_means(comparisons = list(c(1,3)))
+
+```
+
+
 
