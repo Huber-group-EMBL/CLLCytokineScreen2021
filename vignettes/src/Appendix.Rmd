@@ -2892,7 +2892,7 @@ tp <- theme(plot.tag=element_text(size = 30))
   
 ```
 
-```{r, fig.width=4, fig.height=4}
+```{r, fig.width=4, fig.height=4, eval=FALSE}
 volPlot+
   theme(title = element_blank(),
         axis.title.x = element_blank(),
