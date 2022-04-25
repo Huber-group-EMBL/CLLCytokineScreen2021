@@ -2757,7 +2757,43 @@ Natural logarithm of the relative viability after treatment with drugs, faceted 
 
 
 
-```{r S9, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 14, fig.width = 12, warning=F, message=F, cache=FALSE}
+
+```{r, fig.height=6, fig.width=8}
+
+df_patMeta %>% 
+  left_join(Heatmap_clusters, by = "PatientID") %>% 
+  filter(Drug%in%c("DMSO", "BAY-11-7085"), Cytokine%in%c("No Cytokine", "BAFF"), Drug_Concentration%in%c("None", "High"), !(Drug=="DMSO"&Cytokine=="No Cytokine")) %>% 
+  mutate(Cluster=as.factor(Cluster),
+         DCK=factor(DCK, levels=c("DMSO:BAFF", "BAY-11-7085:No Cytokine", "BAY-11-7085:BAFF" ))
+         ) %>% 
+  
+  ggplot(aes(DCK, Log)) +
+  
+  geom_hline(yintercept = 0, linetype=2, color="black")+
+  
+  geom_boxplot(aes(fill=Cluster))+
+  # geom_beeswarm(aes(color=Cluster))+
+
+  # lemon::geom_pointline(aes(group=PatientID), size=1,   
+                         # colour="#003DA5", alpha=0.2)+
+  facet_wrap(~Cluster, scales = "fixed", nrow = 1, labeller = labeller(Cluster = c("1" = "Cluster 1", "2" = "Cluster 2","3" = "Cluster 3","4" = "Cluster 4")))+
+    scale_color_manual(values=colors[1:4])+
+  t1+ theme(strip.background =element_blank())+
+  guides(fill="none")+
+  scale_x_discrete(labels=c("DMSO:BAFF"="BAFF",
+                            "BAY-11-7085:No Cytokine"="BAY-11-7085",
+                            "BAY-11-7085:BAFF"="BAY-11-7085 + BAFF"))+
+  ylab("Log(Viability)")+
+  xlab("Treatment")+
+  coord_cartesian(clip="off")+
+  stat_compare_means(comparisons = list(c(1,3)), paired = TRUE)
+
+```
+
+## Appendix Figure 9. Drug response by clusters.
+Natural logarithm of the relative viability after treatment with drugs, faceted by cluster. BH-transformed p-values from non-paired, two-sided Student's t-test are shown (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
+
+```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 14, fig.width = 12, warning=F, message=F, cache=FALSE}
 
 cytSeq <- dds_smp
 
@@ -2908,7 +2944,7 @@ volPlot+
 ```
 
 
-## Appendix Figure 9. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.
+## Appendix Figure 10. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.
 Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 (C3: n=9; C4: n=12) **(A)**. X axis indicates log2 fold change values, calculated using the DESeq2 package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software. 
 
 \newpage
@@ -2981,7 +3017,7 @@ volPlot
 # cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(2)]
 ```
 
-## Appendix Figure 10. Comparison of gene expression between Cluster 1 and 2.
+## Appendix Figure 11. Comparison of gene expression between Cluster 1 and 2.
 Volcano plot of differentially expressed genes between Cluster 1 and Cluster 2 (C1: n=17; C2: n=11). X axis indicates log2 fold change values, calculated using the DESeq package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05.
 
 \newpage
@@ -3021,7 +3057,7 @@ grid.arrange( grobs = heatMaps_cyt[2], ncol =1)
 # str(geneMatrix.complete)
 ```
 
-## Appendix Figure 11. Predictor profiles to represent gene - stimulus associations. 
+## Appendix Figure 12. Predictor profiles to represent gene - stimulus associations. 
 Stimuli which are not shown in Figure 3B but have predictors >0.02 assigned by multivariate analysis using Gaussian linear modelling with L1-penalty are shown. Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate log(viability) values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot (n=128). 
 
 
@@ -3143,61 +3179,61 @@ CR_volcanoplot
 
 ```
 
-## Appendix Figure 12. Correlation of stimuli response and receptor expression.
+## Appendix Figure 13. Correlation of stimuli response and receptor expression.
 The effects of the microenvironmental stimuli on viability were largely independent of the expression of the corresponding stimuli receptors. Volcano plot depicts Pearson correlation coefficients against corresponding BH-adjusted p values, for the correlation between natural logarithm of the relative viability and vst RNA counts of corresponding stimuli receptor (n=49). RNA counts taken from RNA-Sequencing of untreated matched CLL patient sample. Only viability  after treatment with Resiquimod correlated with receptor expression (R>0.3).
 
 \newpage
 
-```{r S13,fig.path=plotDir, dev=c("png", "cairo_pdf"),  fig.height=7, fig.width=12}
-tri12.labs <- c("0" = "Non-\ntrisomy 12", "1" = "trisomy 12")
-ighv.labs <- c("U" = "IGHV-U", "M" =  "IGHV-M")
+<!-- ```{r S13,fig.path=plotDir, dev=c("png", "cairo_pdf"),  fig.height=7, fig.width=12} -->
+<!-- tri12.labs <- c("0" = "Non-\ntrisomy 12", "1" = "trisomy 12") -->
+<!-- ighv.labs <- c("U" = "IGHV-U", "M" =  "IGHV-M") -->
 
-#filter for Resiquimod-only treatment, only show patients who are annoyated for IGHV and Trisomy12
-plotTab <- left_join(df, patMeta, by = "PatientID") %>% 
-  dplyr::filter(drugC %in% c("DMSO:None", "Ibrutinib:High"),
-                Cytokine=="Resiquimod",
-                !is.na(trisomy12),
-                !is.na(IGHV.status))
-
-
- 
-  plotTab %>%
-         
-  ggplot(aes(x = DCK,
-             y=Log,
-             color=(trisomy12)))+
-  geom_hline(yintercept = 0)+
-  geom_boxplot()+
-  geom_beeswarm(cex=1.5) +
-  guides(color="none", shape="none")+
-  facet_grid(~IGHV.status + trisomy12, labeller = labeller(trisomy12 = tri12.labs, IGHV.status = ighv.labs))+
- 
-  
-  stat_compare_means(method = "t.test",
-                     label.x.npc = "center", 
-                     comparisons = list( c(1,2)),
-                     size=5)+
-  xlab("") +
-  ylab("Log(Viability)") +
-  ggtitle("Resiquimod + Ibrutinib") +
-  scale_color_manual(values=c(palblues[3], palreds[8])) + 
-  t1+
-  theme(axis.text.x = element_text(angle = 45, vjust =1))+ 
-  coord_cartesian(ylim = c(-2.1, 2.5), clip="off")+
-  scale_x_discrete(labels=c("DMSO:Resiquimod"="Resiquimod",
-                            "Ibrutinib:Resiquimod"="Ibrutinib + Resiquimod"))
-  
+<!-- #filter for Resiquimod-only treatment, only show patients who are annoyated for IGHV and Trisomy12 -->
+<!-- plotTab <- left_join(df, patMeta, by = "PatientID") %>%  -->
+<!--   dplyr::filter(drugC %in% c("DMSO:None", "Ibrutinib:High"), -->
+<!--                 Cytokine=="Resiquimod", -->
+<!--                 !is.na(trisomy12), -->
+<!--                 !is.na(IGHV.status)) -->
 
 
-rm(plotTab)
+
+<!--   plotTab %>% -->
+
+<!--   ggplot(aes(x = DCK, -->
+<!--              y=Log, -->
+<!--              color=(trisomy12)))+ -->
+<!--   geom_hline(yintercept = 0)+ -->
+<!--   geom_boxplot()+ -->
+<!--   geom_beeswarm(cex=1.5) + -->
+<!--   guides(color="none", shape="none")+ -->
+<!--   facet_grid(~IGHV.status + trisomy12, labeller = labeller(trisomy12 = tri12.labs, IGHV.status = ighv.labs))+ -->
 
 
-```
+<!--   stat_compare_means(method = "t.test", -->
+<!--                      label.x.npc = "center",  -->
+<!--                      comparisons = list( c(1,2)), -->
+<!--                      size=5)+ -->
+<!--   xlab("") + -->
+<!--   ylab("Log(Viability)") + -->
+<!--   ggtitle("Resiquimod + Ibrutinib") + -->
+<!--   scale_color_manual(values=c(palblues[3], palreds[8])) +  -->
+<!--   t1+ -->
+<!--   theme(axis.text.x = element_text(angle = 45, vjust =1))+  -->
+<!--   coord_cartesian(ylim = c(-2.1, 2.5), clip="off")+ -->
+<!--   scale_x_discrete(labels=c("DMSO:Resiquimod"="Resiquimod", -->
+<!--                             "Ibrutinib:Resiquimod"="Ibrutinib + Resiquimod")) -->
 
-## Appendix Figure 13. BCR inhibition by ibrutinib counters the protective effect of TLR stimulation in all genetic subgroups of IGHV and trisomy 12.
-Natural logarithm of the relative viability after treatment with Resiquimod with and without ibrutinib (n=146). Faceted by IGHV mutation status and trisomy 12.
 
-\newpage
+
+<!-- rm(plotTab) -->
+
+
+<!-- ``` -->
+
+<!-- ## Appendix Figure 14. BCR inhibition by ibrutinib counters the protective effect of TLR stimulation in all genetic subgroups of IGHV and trisomy 12. -->
+<!-- Natural logarithm of the relative viability after treatment with Resiquimod with and without ibrutinib (n=146). Faceted by IGHV mutation status and trisomy 12. -->
+
+<!-- \newpage -->
 
 ```{r S14, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 8, fig.width = 10}
 
@@ -3857,38 +3893,6 @@ Natural logarithm of the relative viability after treatment with IL4 in combinat
 knitr::knit_exit()
 ```
 
-
-```{r, fig.height=6, fig.width=8}
-
-df_patMeta %>% 
-  left_join(Heatmap_clusters, by = "PatientID") %>% 
-  filter(Drug%in%c("DMSO", "BAY-11-7085"), Cytokine%in%c("No Cytokine", "BAFF"), Drug_Concentration%in%c("None", "High"), !(Drug=="DMSO"&Cytokine=="No Cytokine")) %>% 
-  mutate(Cluster=as.factor(Cluster),
-         DCK=factor(DCK, levels=c("DMSO:BAFF", "BAY-11-7085:No Cytokine", "BAY-11-7085:BAFF" ))
-         ) %>% 
-  
-  ggplot(aes(DCK, Log)) +
-  
-  geom_hline(yintercept = 0, linetype=2, color="black")+
-  
-  geom_boxplot(aes(fill=Cluster))+
-  # geom_beeswarm(aes(color=Cluster))+
-
-  # lemon::geom_pointline(aes(group=PatientID), size=1,   
-                         # colour="#003DA5", alpha=0.2)+
-  facet_wrap(~Cluster, scales = "fixed", nrow = 1, labeller = labeller(Cluster = c("1" = "Cluster 1", "2" = "Cluster 2","3" = "Cluster 3","4" = "Cluster 4")))+
-    scale_color_manual(values=colors[1:4])+
-  t1+ theme(strip.background =element_blank())+
-  guides(fill="none")+
-  scale_x_discrete(labels=c("DMSO:BAFF"="BAFF",
-                            "BAY-11-7085:No Cytokine"="BAY-11-7085",
-                            "BAY-11-7085:BAFF"="BAY-11-7085 + BAFF"))+
-  ylab("Log(Viability)")+
-  xlab("Treatment")+
-  coord_cartesian(clip="off")+
-  stat_compare_means(comparisons = list(c(1,3)), paired = TRUE)
-
-```
 
 
 
