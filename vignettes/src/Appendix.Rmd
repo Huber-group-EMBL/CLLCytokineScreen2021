@@ -3580,6 +3580,55 @@ chr_length<-filter(human.hg19.genome, V1%in%levels(peak_df$chr)) %>%
 
 ```
 
+
+```{r , fig.path=plotDir, dev=c("cairo_pdf"), fig.height = 2, fig.width = 2, warning = FALSE, eval=FALSE}
+
+
+#get a dataframe of all SPIB binding sites that show sig Log2FC
+peak_df <- 
+  TFBS %>%
+  dplyr::select(TF, chr, start, end, strand, l2FC, pval,  pval_adj) 
+
+#make factors / numeric
+chr.sorted <- unique(sortChrName(peak_df$chr))
+peak_df$chr <- factor(peak_df$chr, levels = chr.sorted)
+peak_df$start <- as.numeric(peak_df$start)
+peak_df$end <- as.numeric(peak_df$end)
+
+peak_df<-peak_df %>% 
+  mutate(chr_num=as.numeric(gsub("chr","",chr)))%>% 
+  filter(chr_num%in%c(12:22))
+
+chr_length<-filter(human.hg19.genome, V1%in%levels(peak_df$chr)) %>% 
+         mutate(V1=factor(V1, levels = rev(levels(peak_df$chr)))) %>% 
+          mutate(chr_num=as.numeric(gsub("chr","",V1)))%>%  
+  filter(chr_num%in%c(12:22))
+
+ ggplot(peak_df)+
+  geom_segment(data= chr_length, aes(y=chr_num, yend=chr_num, x=0, xend=V2/10^6))+
+  geom_segment(aes(y=chr_num, yend=chr_num-(l2FC/4),  x = start/10^6, xend= end/10^6,
+                color = ifelse(l2FC<0, palreds[5], palblues[1]))) +
+  scale_fill_manual(values = c(palreds[5], palblues[1]), guide = "none") +
+  scale_color_manual(values = c(palreds[5], palblues[1]), guide = "none") +
+   scale_y_reverse(breaks=c(1:22))+
+   ylab("Chromosome")+
+  t2+
+   theme(panel.grid.major.x=element_blank(),
+         axis.title.y = element_blank(),
+         # axis.title.y = element_text(size=14, color="black"),
+         axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        # axis.text.y = element_text(size=8, color="black"),
+        axis.ticks.y= element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x= element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank())
+
+
+
+```
+
 \newpage
 
 ```{r }
