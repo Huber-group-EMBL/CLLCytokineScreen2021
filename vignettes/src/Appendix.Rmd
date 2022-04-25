@@ -2790,8 +2790,8 @@ df_patMeta %>%
 
 ```
 
-## Appendix Figure 9. Drug response by clusters.
-Natural logarithm of the relative viability after treatment with drugs, faceted by cluster. BH-transformed p-values from non-paired, two-sided Student's t-test are shown (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
+## Appendix Figure 9. Effect of BAY-11-7085 treatment on BAFF response
+Natural logarithm of the relative viability after treatment BAFF, BAY-11-7085 or both, faceted by cluster. P-values from paired, two-sided Student's t-test are shown (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
 
 ```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 14, fig.width = 12, warning=F, message=F, cache=FALSE}
 
