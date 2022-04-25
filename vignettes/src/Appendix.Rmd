@@ -1831,10 +1831,22 @@ p1+
   plot_layout(nrow=1, guides="collect", widths = c(0.7,0.3))
 ```
 
+## Appendix Figure 1. Genetic profiles of screened patient samples.
+Selected genetic alterations on y-axis and screened patient samples (n=192) on x-axis.
+\newpage
 
 ```{r, fig.width=6, fig.height=6, eval=FALSE}
-p1+
-  theme(axis.title.y = element_blank(),
+
+
+patMeta_tmp %>%
+  filter(PatientID%in%unique(patMeta_tmp$PatientID)[1:80], Genetic_Alteration%in%c("del13q" ,"IGHV.status","TP53"   , "NOTCH1","trisomy12"  ) ) %>% 
+  ggplot(aes(x=PatientID, y=Genetic_Alteration))+
+  geom_tile(aes(fill = alteration_value), colour = NA, width=1)+
+  geom_label(aes(y=Genetic_Alteration, label=Genetic_Alteration), x=3, hjust=0, size=8)+
+  theme_temp+
+  scale_fill_manual(values = c("0"=Mutant[1], "1"=Mutant[2], "M"=IGHV[1], "U"=IGHV[2],  "unknown"=na_color), na.value=na_color, labels = c("0"="wildtype", "1"="mutated", "M"="IGHV mutated", "U"="IGHV unmutated", "HP"="High programmed", "IP"="Intermediate programmed", "LP"="Low programmmed", "unknown"="N/A"))+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.y= element_blank(),
         axis.line.x = element_blank(),
@@ -1843,9 +1855,6 @@ guides(fill="none")
 ```
 
 
-## Appendix Figure 1. Genetic profiles of screened patient samples.
-Selected genetic alterations on y-axis and screened patient samples (n=192) on x-axis.
-\newpage
 
 
 ```{r}
@@ -2928,8 +2937,27 @@ tp <- theme(plot.tag=element_text(size = 30))
   
 ```
 
+## Appendix Figure 10. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.
+Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 (C3: n=9; C4: n=12) **(A)**. X axis indicates log2 fold change values, calculated using the DESeq2 package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software. 
+
+
+
 ```{r, fig.width=4, fig.height=4, eval=FALSE}
-volPlot+
+sgncuoff<-3
+
+ res.ds %>%
+  filter(!is.na(padj), !is.na(symbol), symbol!="") %>%
+
+ggplot( aes(x=log2FoldChange, y=-log10(padj))) +
+      annotate("rect", xmin = 0.0, xmax = Inf, ymin = -Inf, ymax = Inf, fill = palreds[1], alpha = 0.2)+
+      annotate("rect", xmin = 0.0, xmax = -Inf, ymin = -Inf, ymax = Inf,alpha = 0.2, fill = palblues[1])+
+      geom_point(aes(alpha=0.4, colour = ifelse(-log10(padj)>sgncuoff,"black","grey")), size=3) +
+      theme(legend.position = "none") +
+      geom_label_repel(aes(label=ifelse(-log10(padj)>sgncuoff&abs(log2FoldChange)>3,as.character(symbol),''), colour=ifelse(log2FoldChange>0, palreds[2], palblues[4])), fill="#FDFDFD", size=3.5, max.overlaps=30)+
+      scale_colour_manual(values=c(palblues[2], palreds[4], "black", "grey"))+
+      t2 +
+      labs(title="Cluster 3 versus 4", x = "Log2FC", y = "-log10(adj p-val)", color = "Significance")+
+      guides(color="none", alpha="none")+
   theme(title = element_blank(),
         axis.title.x = element_blank(),
         axis.title.y = element_blank(),
@@ -2942,10 +2970,6 @@ volPlot+
         )+
   ggtitle("")
 ```
-
-
-## Appendix Figure 10. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.
-Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 (C3: n=9; C4: n=12) **(A)**. X axis indicates log2 fold change values, calculated using the DESeq2 package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software. 
 
 \newpage
 
@@ -3274,6 +3298,51 @@ rm(plotTab)
 ## Appendix Figure 14. ATACseq comparing trisomy 12 and non-trisomy 12 CLL samples.
 Volcano plot shows change in inferred TF activity (x axis) against adjusted p-values (y axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in analytic mode and transformed by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.15, and transformed p-value < 0.01.
 
+```{r, fig.width=4, fig.height=4, eval=FALSE}
+
+load( "../../data/diffTF_large.RData")
+
+plotTab <- diffTF_large %>%  filter(!is.na(pvalueAdj))
+
+#make naming consistent with text
+plotTab$TF <- gsub("SPI1", "PU1", plotTab$TF)
+
+sgncuoff<-3
+
+ ggplot(data = plotTab,
+         aes(x = weighted_meanDifference, y = -log10(pvalueAdj+0.000001))) +
+
+  geom_point(data=filter(plotTab, -log10(pvalueAdj) > 1.4), aes(alpha=0.4, colour = ifelse(weighted_meanDifference>0, palreds[1], palblues[1])),size=4.5) +
+   
+  geom_point(data=filter(plotTab, !(-log10(pvalueAdj) > 1.4)), aes(alpha=0.4), colour = "grey",size=2.5) +
+  
+  geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 1.4&abs(weighted_meanDifference)>0.12,
+                                    as.character(TF),''),
+                       colour=ifelse(weighted_meanDifference>0,
+                                     palreds[1],
+                                     palblues[1])),
+                   size=7, max.overlaps=20)+
+  scale_colour_manual(values=c(palblues[3], palreds[8], "black", "grey")) +
+  t2 +
+    annotate(geom="text", x=.1,y=.2, label="tri12", size=7, )+
+    annotate(geom="text", x=-.1,y=.2, label="wt", size=7,)+
+  ggtitle("ATAC seq: Tri12 v WT") +
+  xlab("Change in inferred TF activity") +
+  guides(color="none", alpha="none") +
+  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))+
+  # coord_cartesian(ylim = c(0,6.5))+
+  theme(title = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        panel.grid.major= element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        )+
+  ggtitle("")
+```
 
 \newpage
 
@@ -3471,7 +3540,7 @@ Log2 fold changes are plotted (y axis) Spi-B binding sites that show an absolute
 #get a dataframe of all SPIB binding sites that show sig Log2FC
 peak_df <- 
   TFBS %>%
-  dplyr::select(TF, chr, start, end, strand, l2FC, pval,  pval_adj)
+  dplyr::select(TF, chr, start, end, strand, l2FC, pval,  pval_adj) 
 
 #make factors / numeric
 chr.sorted <- unique(sortChrName(peak_df$chr))
@@ -3493,11 +3562,14 @@ chr_length<-filter(human.hg19.genome, V1%in%levels(peak_df$chr)) %>%
   scale_fill_manual(values = c(palreds[5], palblues[1]), guide = "none") +
   scale_color_manual(values = c(palreds[5], palblues[1]), guide = "none") +
    scale_y_reverse(breaks=c(1:22))+
+   ylab("Chromosome")+
   t2+
    theme(panel.grid.major.x=element_blank(),
-         axis.title.y = element_blank(),
+         # axis.title.y = element_blank(),
+         axis.title.y = element_text(size=14, color="black"),
          axis.title.x = element_blank(),
-        axis.text.y = element_blank(),
+        # axis.text.y = element_blank(),
+        axis.text.y = element_text(size=8, color="black"),
         axis.ticks.y= element_blank(),
         axis.text.x = element_blank(),
         axis.ticks.x= element_blank(),
