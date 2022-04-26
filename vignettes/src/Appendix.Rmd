@@ -1168,7 +1168,7 @@ clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
 c <- 
   clusters.surv %>%
   mutate(Cluster=factor(Cluster)) %>%
-  coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3)+ IGHV.status + trisomy12 + TP53+Methylation_Cluster,  data=.)
+  coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3)+ IGHV.status + trisomy12 + TP53+Methylation_Cluster+POT1,  data=.)
 
 #tidy results, exponentiate coefficients and estimate 95% confidence intervals 
 cox_output<- tidy(c, conf.int = TRUE,  exponentiate = TRUE) %>%
@@ -1183,7 +1183,8 @@ cox_output$term<-
   gsub(pattern="Cluster, 3", "Cluster 3 vs ", .)%>% 
   gsub(pattern="IGHV.statusU", "IGHV.status", .)%>% 
   gsub(pattern="trisomy121", "trisomy 12", .)%>% 
-  gsub(pattern="TP531", "TP53", .)
+  gsub(pattern="TP531", "TP53", .)%>% 
+  gsub(pattern="POT11", "POT1", .)
 
 colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High")
 
