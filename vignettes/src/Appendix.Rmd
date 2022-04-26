@@ -1248,6 +1248,7 @@ cox_output <- cox_output %>%
 colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
 
 cox_output %>%  
+  mutate(Factor=gsub(pattern=", \"3\"", "",Factor)) %>% 
   kable() %>%
   kable_styling(latex_options = c("striped", "HOLD_position")) 
 
@@ -1688,7 +1689,7 @@ reactome$term <- gsub("SIGNALING BY INTERLEUKINS",
 reactome$term <- gsub("REGULATION OF TP53 ACTIVITY", 
                       "Regulation of TP53 Pathway",reactome$term )
 reactome$term <- gsub("SIGNALING BY TGF BETA RECEPTOR COMPLEX",
-                      "Signaling by TGFbeta \nReceptor Complex", reactome$term )
+                      "Signaling by TGFbeta Receptor Complex", reactome$term )
 reactome$term <- gsub("TNF SIGNALING", 
                       "TNF Signaling",reactome$term )
 reactome$term <- gsub("INTERFERON ALPHA BETA SIGNALING", 
@@ -2652,7 +2653,7 @@ volPlot
 # cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(2)]
 ```
 
-## Appendix Figure 8. Comparison of gene expression between Cluster 1 and 2.
+## Appendix Figure 8. RNA-Sequencing of matched samples indicates differential gene expression between Cluster 1 and 2.
 Volcano plot of differentially expressed genes between Cluster 1 and Cluster 2 (C1: n=17; C2: n=11). X axis indicates log2 fold change values, calculated using the DESeq package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05.
 
 \newpage
@@ -2936,7 +2937,7 @@ wrap_elements(arrangeGrob(C4_drug_heatmap[[4]]))+
   plot_layout(nrow=1, widths = c(0.93,0.13,0.52,1.03))
 ```
 
-## Appendix Figure 8. Drug response between clusters.
+## Appendix Figure 9. Drug response between clusters.
 Heatmap showing the log normalised viability after drug treatment. Rows represent drug treatments and columns represent primary CLL samples (n=192), annotated for their genetic background, sex and pretreatment status above. Red values indicate increased viability upon treatment, blue indicates decreased viability.
 
 ```{r S8, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=11, fig.height=12}
@@ -2983,7 +2984,7 @@ df %>%
 
 ```
 
-## Appendix Figure 9. Drug response by clusters.
+## Appendix Figure 10. Drug response by clusters.
 Natural logarithm of the relative viability after treatment with drugs, faceted by cluster. BH-transformed p-values from non-paired, two-sided Student's t-test are shown (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
 
 
@@ -3021,7 +3022,7 @@ df_patMeta %>%
 
 ```
 
-## Appendix Figure 10. Effect of BAY-11-7085 treatment on BAFF response
+## Appendix Figure 11. Effect of BAY-11-7085 treatment on BAFF response
 Natural logarithm of the relative viability after treatment BAFF, BAY-11-7085 or both, faceted by cluster. P-values from paired, two-sided Student's t-test are shown (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
 
 
@@ -3055,48 +3056,6 @@ ggplot( aes(x=log2FoldChange, y=-log10(padj))) +
         )+
   ggtitle("")
 ```
-
-\newpage
-
-
-```{r S11,fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=12, fig.height=4, message=FALSE, warning=FALSE}
-load("../../data/fig3_data_for_lassoplots.RData")
-
-
-# Get predictor profiles for stimuli of interest
-
-heatMaps_cyt <- lassoPlot3Appendix(dataResult[c("Resiquimod","sCD40L+IL-4")] ,  # 
-                          geneMatrix.complete, #use gene matrix for heatmap 
-                          viabMatrix, #use viab matrix for scatter plot
-                          freqCut = 0.75, #coefficients should be selected in <75% of bootstrapped model files
-                          coefCut = 0.02) #no minimum value for coefficients 
-
-
-# Assemble legend for heatmaps
-
-#G = gene mutations, I = IGHV, M = Methylation Cluster
-legendFor = c("G", "I", "M")
-
-#assign colours for I, G and M
-coldef<-list()
-coldef["I"] <- list(c(offwhite,"#707372")) #U-CLL and M-CLL
-coldef["M"] <- list(c(offwhite, "#707372", "#A8A99E")) #IP, HP, LP
-coldef["G"] <- list(c(offwhite, "#373A36")) #WT and Mutated
-
-
-legends = makelegends(legendFor=c("G","I","M"),coldef)
-
-
-
-grid.arrange( grobs = heatMaps_cyt[1], ncol =1)
-grid.arrange( grobs = heatMaps_cyt[2], ncol =1)
-
-# str(geneMatrix.complete)
-```
-
-## Appendix Figure 12. Predictor profiles to represent gene - stimulus associations. 
-Stimuli which are not shown in Figure 3B but have predictors >0.02 assigned by multivariate analysis using Gaussian linear modelling with L1-penalty are shown. Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate log(viability) values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot (n=128). 
-
 
 \newpage
 
@@ -3216,10 +3175,53 @@ CR_volcanoplot
 
 ```
 
-## Appendix Figure 13. Correlation of stimuli response and receptor expression.
+## Appendix Figure 12. Correlation of stimuli response and receptor expression.
 The effects of the microenvironmental stimuli on viability were largely independent of the expression of the corresponding stimuli receptors. Volcano plot depicts Pearson correlation coefficients against corresponding BH-adjusted p values, for the correlation between natural logarithm of the relative viability and vst RNA counts of corresponding stimuli receptor (n=49). RNA counts taken from RNA-Sequencing of untreated matched CLL patient sample. Only viability  after treatment with Resiquimod correlated with receptor expression (R>0.3).
 
 \newpage
+
+```{r S11,fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=12, fig.height=4, message=FALSE, warning=FALSE}
+load("../../data/fig3_data_for_lassoplots.RData")
+
+
+# Get predictor profiles for stimuli of interest
+
+heatMaps_cyt <- lassoPlot3Appendix(dataResult[c("Resiquimod","sCD40L+IL-4")] ,  # 
+                          geneMatrix.complete, #use gene matrix for heatmap 
+                          viabMatrix, #use viab matrix for scatter plot
+                          freqCut = 0.75, #coefficients should be selected in <75% of bootstrapped model files
+                          coefCut = 0.02) #no minimum value for coefficients 
+
+
+# Assemble legend for heatmaps
+
+#G = gene mutations, I = IGHV, M = Methylation Cluster
+legendFor = c("G", "I", "M")
+
+#assign colours for I, G and M
+coldef<-list()
+coldef["I"] <- list(c(offwhite,"#707372")) #U-CLL and M-CLL
+coldef["M"] <- list(c(offwhite, "#707372", "#A8A99E")) #IP, HP, LP
+coldef["G"] <- list(c(offwhite, "#373A36")) #WT and Mutated
+
+
+legends = makelegends(legendFor=c("G","I","M"),coldef)
+
+
+
+grid.arrange( grobs = heatMaps_cyt[1], ncol =1)
+grid.arrange( grobs = heatMaps_cyt[2], ncol =1)
+
+# str(geneMatrix.complete)
+```
+
+## Appendix Figure 13. Predictor profiles to represent gene - stimulus associations. 
+Stimuli which are not shown in Figure 3B but have predictors >0.02 assigned by multivariate analysis using Gaussian linear modelling with L1-penalty are shown. Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate log(viability) values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot (n=128). 
+
+
+\newpage
+
+
 
 <!-- ```{r S13,fig.path=plotDir, dev=c("png", "cairo_pdf"),  fig.height=7, fig.width=12} -->
 <!-- tri12.labs <- c("0" = "Non-\ntrisomy 12", "1" = "trisomy 12") -->
@@ -4021,12 +4023,3 @@ Natural logarithm of the relative viability after treatment with IL4 in combinat
 1. Rendeiro, A., Schmidl, C., Strefford, J. et al. Chromatin accessibility maps of chronic lymphocytic leukaemia identify subtype-specific epigenome signatures and transcription regulatory networks. Nat Commun 7, 11938 (2016).
 
 2. Lu, J., Cannizzaro, E., Meier-Abt, F. et al. Multi-omics reveals clinically relevant proliferative drive associated with mTOR-MYC-OXPHOS activity in chronic lymphocytic leukemia. Nat Cancer 2, 853–864 (2021).
-
-
-```{r}
-knitr::knit_exit()
-```
-
-
-
-
