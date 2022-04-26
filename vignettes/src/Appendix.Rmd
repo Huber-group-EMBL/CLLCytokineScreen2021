@@ -1153,6 +1153,109 @@ selected_mutations <-
 Only genetic alterations with at least 3 positive cases were considered. 
 \newpage
 
+
+```{r, fig.pos="H"}
+######Arrange data######
+clusters.surv <- left_join(Heatmap_clusters, survT, by = "PatientID")
+
+#Add meta data to heatmap clusters
+clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
+
+
+coxph <- clusters.surv%>%
+  mutate(Cluster=factor(Cluster))%>%
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3), data=.) 
+
+# cox_outputcoxph_summ$coefficients
+
+#tidy results, exponentiate coefficients and estimate 95% confidence intervals 
+cox_output<- tidy(coxph, conf.int = TRUE,  exponentiate = TRUE) %>%
+  dplyr::select(term, estimate, p.value, conf.low, conf.high)
+
+#tidy names
+cox_output$term<-
+  cox_output$term %>% 
+  gsub(pattern="factor2ind", "", .)%>% 
+  gsub(pattern="[()]", "", .)%>% 
+  gsub(pattern=":", " ", .)%>% 
+  gsub(pattern="Cluster, 3", "Cluster 3 vs ", .)%>% 
+  gsub(pattern="Methylation_ClusterIP", "Methylation Cluster IP", .)%>% 
+  gsub(pattern="Methylation_ClusterLP", "Methylation Cluster LP", .)
+
+colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High")
+
+cox_output$HR <- round(cox_output$HR, 2)
+cox_output$p.value <- round(cox_output$p.value, 2)
+cox_output$CI.low <- round(cox_output$CI.low, 2)
+cox_output$CI.High <- round(cox_output$CI.High, 2)
+
+cox_output <- cox_output %>% 
+  dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
+
+
+colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
+
+cox_output %>%  
+  kable() %>%
+  kable_styling(latex_options = c("striped", "HOLD_position")) 
+
+```
+
+## Appendix Table 3. Survival analysis of microenvironmental response clusters comparing Cluster 3 to the other Clusters.
+Cox proportional hazards model of stimuli response clusters using TTT and C3 as reference.
+
+
+
+```{r, fig.pos="H"}
+######Arrange data######
+clusters.surv <- left_join(Heatmap_clusters, survT, by = "PatientID")
+
+#Add meta data to heatmap clusters
+clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
+
+
+coxph <- clusters.surv%>%
+  filter(Cluster%in%c(1,2,3)) %>% 
+  mutate(Cluster3vs12=ifelse(Cluster%in%c(1,2), "1_2", "3")) %>% 
+  mutate(Cluster3vs12=factor(Cluster3vs12))%>%
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster3vs12, "3"), data=.) 
+
+# cox_outputcoxph_summ$coefficients
+
+#tidy results, exponentiate coefficients and estimate 95% confidence intervals 
+cox_output<- tidy(coxph, conf.int = TRUE,  exponentiate = TRUE) %>%
+  dplyr::select(term, estimate, p.value, conf.low, conf.high)
+
+#tidy names
+cox_output$term<-
+  cox_output$term %>% 
+  gsub(pattern="factor2ind", "", .)%>% 
+  gsub(pattern="[()]", "", .)%>% 
+  gsub(pattern=":", " ", .)%>% 
+  gsub(pattern="Cluster3vs12", "Cluster 3 vs combined Clusters 1 and 2 ", .)
+
+colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High")
+
+cox_output$HR <- round(cox_output$HR, 2)
+cox_output$p.value <- round(cox_output$p.value, 2)
+cox_output$CI.low <- round(cox_output$CI.low, 2)
+cox_output$CI.High <- round(cox_output$CI.High, 2)
+
+cox_output <- cox_output %>% 
+  dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
+
+
+colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
+
+cox_output %>%  
+  kable() %>%
+  kable_styling(latex_options = c("striped", "HOLD_position")) 
+
+```
+
+## Appendix Table 4. Survival analysis of microenvironmental response clusters comparing Cluster 3 to the combined Cluster 1 and 2.
+Cox proportional hazards model of stimuli response clusters using TTT.
+
 ```{r, fig.pos="H" }
 
 clusters.surv<- left_join(Heatmap_clusters, survT, by = "PatientID")
@@ -1205,108 +1308,12 @@ cox_output %>%
 
 ```
 
-## Appendix Table 3. Multivariate survival analysis of response clusters.
+## Appendix Table 5. Multivariate survival analysis of response clusters.
 Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference.
 
-```{r, fig.pos="H"}
-######Arrange data######
-clusters.surv <- left_join(Heatmap_clusters, survT, by = "PatientID")
-
-#Add meta data to heatmap clusters
-clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
-
-
-coxph <- clusters.surv%>%
-  mutate(Cluster=factor(Cluster))%>%
-    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3), data=.) 
-
-# cox_outputcoxph_summ$coefficients
-
-#tidy results, exponentiate coefficients and estimate 95% confidence intervals 
-cox_output<- tidy(coxph, conf.int = TRUE,  exponentiate = TRUE) %>%
-  dplyr::select(term, estimate, p.value, conf.low, conf.high)
-
-#tidy names
-cox_output$term<-
-  cox_output$term %>% 
-  gsub(pattern="factor2ind", "", .)%>% 
-  gsub(pattern="[()]", "", .)%>% 
-  gsub(pattern=":", " ", .)%>% 
-  gsub(pattern="Cluster, 3", "Cluster 3 vs ", .)%>% 
-  gsub(pattern="Methylation_ClusterIP", "Methylation Cluster IP", .)%>% 
-  gsub(pattern="Methylation_ClusterLP", "Methylation Cluster LP", .)
-
-colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High")
-
-cox_output$HR <- round(cox_output$HR, 2)
-cox_output$p.value <- round(cox_output$p.value, 2)
-cox_output$CI.low <- round(cox_output$CI.low, 2)
-cox_output$CI.High <- round(cox_output$CI.High, 2)
-
-cox_output <- cox_output %>% 
-  dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
-
-
-colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
-
-cox_output %>%  
-  kable() %>%
-  kable_styling(latex_options = c("striped", "HOLD_position")) 
-
-```
-
-## Appendix Table 4. Survival analysis of microenvironmental response clusters comparing Cluster 3 to the other Clusters.
 
 
 
-```{r, fig.pos="H"}
-######Arrange data######
-clusters.surv <- left_join(Heatmap_clusters, survT, by = "PatientID")
-
-#Add meta data to heatmap clusters
-clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
-
-
-coxph <- clusters.surv%>%
-  filter(Cluster%in%c(1,2,3)) %>% 
-  mutate(Cluster3vs12=ifelse(Cluster%in%c(1,2), "1_2", "3")) %>% 
-  mutate(Cluster3vs12=factor(Cluster3vs12))%>%
-    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster3vs12, "3"), data=.) 
-
-# cox_outputcoxph_summ$coefficients
-
-#tidy results, exponentiate coefficients and estimate 95% confidence intervals 
-cox_output<- tidy(coxph, conf.int = TRUE,  exponentiate = TRUE) %>%
-  dplyr::select(term, estimate, p.value, conf.low, conf.high)
-
-#tidy names
-cox_output$term<-
-  cox_output$term %>% 
-  gsub(pattern="factor2ind", "", .)%>% 
-  gsub(pattern="[()]", "", .)%>% 
-  gsub(pattern=":", " ", .)%>% 
-  gsub(pattern="Cluster3vs12", "Cluster 3 vs combined Clusters 1 and 2 ", .)
-
-colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High")
-
-cox_output$HR <- round(cox_output$HR, 2)
-cox_output$p.value <- round(cox_output$p.value, 2)
-cox_output$CI.low <- round(cox_output$CI.low, 2)
-cox_output$CI.High <- round(cox_output$CI.High, 2)
-
-cox_output <- cox_output %>% 
-  dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
-
-
-colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
-
-cox_output %>%  
-  kable() %>%
-  kable_styling(latex_options = c("striped", "HOLD_position")) 
-
-```
-
-## Appendix Table 5. Survival analysis of microenvironmental response clusters comparing Cluster 3 to the combined Cluster 1 and 2.
 \blandscape
 \newpage
 
@@ -2363,6 +2370,7 @@ IL1b_Scatterplot<-left_join(CLL_PD, filter(df, Drug=="DMSO"), by = "PatientID") 
   ggplot(aes(x=CLL_PD, y=Log)) +
   geom_smooth(method="lm", formula= 'y ~ x')+
   geom_point(aes(color=IGHV.status))+
+  scale_colour_manual(name = 'IGHV status', values = setNames(c(palreds[8],palblues[1]), c("M", "U"))) +
   facet_wrap(.~IGHV.status,  nrow = 2, strip.position="right", labeller = labeller(IGHV.status = c("U" = "IGHV-U", "M" =  "IGHV-M")))+
   stat_cor()+
   guides(color="none")+
@@ -2383,6 +2391,7 @@ Res_Scatterplot<-left_join(CLL_PD, filter(df, Drug=="DMSO"), by = "PatientID") %
   ggplot(aes(x=CLL_PD, y=Log)) +
   geom_smooth(method="lm", formula= 'y ~ x')+
   geom_point(aes(color=IGHV.status))+
+  scale_colour_manual(name = 'IGHV status', values = setNames(c(palreds[8],palblues[1]), c("M", "U"))) +
   facet_wrap(.~IGHV.status,  nrow = 2, strip.position="right", labeller = labeller(IGHV.status = c("U" = "IGHV-U", "M" =  "IGHV-M")))+
   stat_cor()+
   guides(color="none")+
@@ -2435,8 +2444,220 @@ Beeswarm plot of Proliferative Drive in the clusters defined by microenvironment
 
 \newpage
 
-<!-- ###  Drug Response heatmap -->
-<!-- Heatmap of all scaled log(viability) values, for all patient samples and drugs. -->
+
+```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 14, fig.width = 12, warning=F, message=F, cache=FALSE}
+
+cytSeq <- dds_smp
+
+#Filter out IGHV genes
+cytSeq <- cytSeq[!grepl("IG_", rowData(cytSeq)$biotype),]
+
+#split into 3,4
+cytSeq.34 <- cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(3,4)]
+
+#remove patients where IGHV is unknown
+cytSeq.34 <- cytSeq.34[,colData(cytSeq.34)[,"IGHV.status"] %in% c("U","M")]
+
+#set order of factors
+cytSeq.34$Cluster <- factor(cytSeq.34$Cluster,
+                            levels = c("3","4"))
+
+cytSeq.34$IGHV.status <- factor(cytSeq.34$IGHV.status,
+                                levels = c("U","M"))
+
+design(cytSeq.34) <- ~ IGHV.status + Cluster
+
+cytSeq.34 <- DESeq(cytSeq.34)
+
+res.ds <-
+  results(cytSeq.34, contrast = c("Cluster", 3, 4), tidy = TRUE) %>%
+  dplyr::rename(Symbol = "row") %>%
+  arrange(pvalue)
+
+#get ensembl ids to Entrez dataframe
+ens2entrez <-
+  rowData(cytSeq.34)[c("entrezgene", "symbol")] %>%
+  as.data.frame() %>%
+  rownames_to_column("ENSEMBL") %>%
+  tibble::as_tibble()
+
+
+
+#Join
+res.ds <- left_join(res.ds, ens2entrez, by=c("Symbol"="ENSEMBL"))
+
+
+d <-
+  dplyr::select(res.ds, entrezgene, stat) %>%
+  na.omit() %>%
+  dplyr::group_by(entrezgene) %>%
+  dplyr::summarize(stat=mean(stat), .groups = "keep")
+
+## feature 1: numeric vector
+geneList <- d$stat
+
+## feature 2: named vector
+names(geneList) <- as.character(d$entrezgene)
+
+## feature 3: decreasing order
+geneList <- sort(geneList, decreasing = TRUE)
+
+
+hm2gene <-
+  msigdbr(species = "Homo sapiens", category = "H") %>%
+  dplyr::select(gs_name, entrez_gene)
+# head(hm2gene)
+
+#run GSEA
+set.seed(1996)
+gsea.res <- GSEA(geneList, TERM2GENE = hm2gene, by = "fgsea", seed = TRUE, verbose = FALSE)
+
+#make readable with gene names
+gsea.res <- setReadable(gsea.res, org.Hs.eg.db, keyType = "ENTREZID")
+
+## TNFa
+TNFaEnrichment <-
+  enrichmentPlot(filter(hm2gene, gs_name =="HALLMARK_TNFA_SIGNALING_VIA_NFKB")$entrez_gene,geneList) +
+  labs(title="TNFA signalling via NFKB")
+
+
+#myc targets
+mycEnrichment <-
+  enrichmentPlot(filter(hm2gene, gs_name =="HALLMARK_MYC_TARGETS_V1")$entrez_gene, geneList) +
+  labs(title="MYC targets V1")
+
+
+#oxidative phosphorylation
+oxphosEnrichment <-
+  enrichmentPlot(filter(hm2gene, gs_name =="HALLMARK_OXIDATIVE_PHOSPHORYLATION")$entrez_gene, geneList) +
+  labs(title="Oxidative Phosphorylation")
+
+
+#p53 pathway
+p53Enrichment <-
+  enrichmentPlot(filter(hm2gene, gs_name =="HALLMARK_P53_PATHWAY")$entrez_gene, geneList) +
+  labs(title="P53 Pathway")
+
+
+sgncuoff <- 1.4
+
+volPlot <-
+  res.ds %>%
+  filter(!is.na(padj), !is.na(symbol), symbol!="") %>%
+
+ggplot( aes(x=log2FoldChange, y=-log10(padj))) +
+      annotate("rect", xmin = 0.0, xmax = Inf, ymin = -Inf, ymax = Inf, fill = palreds[1], alpha = 0.2)+
+      annotate("rect", xmin = 0.0, xmax = -Inf, ymin = -Inf, ymax = Inf,alpha = 0.2, fill = palblues[1])+
+      geom_point(aes(alpha=0.4, colour = ifelse(-log10(padj)>sgncuoff,"black","grey"))) +
+      theme(legend.position = "none") +
+      geom_label_repel(aes(label=ifelse(-log10(padj)>sgncuoff&abs(log2FoldChange)>2,as.character(symbol),''),
+                           colour=ifelse(log2FoldChange>0, palreds[2], palblues[4])), fill="#FDFDFD",
+                       size=3.5, max.overlaps=30)+
+      scale_colour_manual(values=c(palblues[2], palreds[4], "black", "grey"))+
+      t2 +
+      labs(title="Cluster 3 versus 4", x = "Log2FC", y = "-log10(adj p-val)", color = "Significance")+
+      guides(color="none", alpha="none")
+
+
+design1<-"
+  1111
+  2233
+  4455
+  "
+
+tp <- theme(plot.tag=element_text(size = 30))
+
+  volPlot + tp +
+  wrap_elements(TNFaEnrichment) + tp +
+  wrap_elements(mycEnrichment) + tp +
+  wrap_elements(oxphosEnrichment) + tp +
+  wrap_elements(p53Enrichment) + tp +
+  plot_layout(design=design1, heights = c(2,1,1))+
+  plot_annotation(tag_levels = "A")
+
+# cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(3)]  
+# cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(4)]  
+  
+```
+
+## Appendix Figure 7. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.
+Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 (C3: n=9; C4: n=12) **(A)**. X axis indicates log2 fold change values, calculated using the DESeq2 package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software. 
+
+
+```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 7, fig.width = 12, warning=F, message=F, cache=FALSE}
+
+cytSeq <- dds_smp
+
+#Filter out IGHV genes
+cytSeq <- cytSeq[!grepl("IG_", rowData(cytSeq)$biotype),]
+
+#split into 1,2
+cytSeq.12 <- cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(1,2)]
+
+#remove patients where IGHV is unknown
+cytSeq.12 <- cytSeq.12[,colData(cytSeq.12)[,"IGHV.status"] %in% c("U","M")]
+
+#set order of factors
+cytSeq.12$Cluster <- factor(cytSeq.12$Cluster,
+                            levels = c("1","2"))
+
+cytSeq.12$IGHV.status <- factor(cytSeq.12$IGHV.status,
+                                levels = c("U","M"))
+
+design(cytSeq.12) <- ~ IGHV.status + Cluster
+
+cytSeq.12 <- DESeq(cytSeq.12)
+
+res.ds <-
+  results(cytSeq.12, contrast = c("Cluster", 1, 2), tidy = TRUE) %>%
+  dplyr::rename(Symbol = "row") %>%
+  arrange(pvalue)
+
+#get ensembl ids to Entrez dataframe
+ens2entrez <-
+  rowData(cytSeq.12)[c("entrezgene", "symbol")] %>%
+  as.data.frame() %>%
+  rownames_to_column("ENSEMBL") %>%
+  tibble::as_tibble()
+
+
+
+#Join
+res.ds <- left_join(res.ds, ens2entrez, by=c("Symbol"="ENSEMBL"))
+
+sgncuoff <- 1.4
+
+volPlot <-
+  res.ds %>%
+  filter(!is.na(padj), !is.na(symbol), symbol!="") %>%
+
+ggplot( aes(x=log2FoldChange, y=-log10(padj))) +
+      annotate("rect", xmin = 0.0, xmax = Inf, ymin = -Inf, ymax = Inf, fill = palreds[1], alpha = 0.2)+
+      annotate("rect", xmin = 0.0, xmax = -Inf, ymin = -Inf, ymax = Inf,alpha = 0.2, fill = palblues[1])+
+      geom_point(aes(alpha=0.4, colour = ifelse(-log10(padj)>sgncuoff,"black","grey"))) +
+      theme(legend.position = "none") +
+      geom_label_repel(aes(label=ifelse(-log10(padj)>sgncuoff&abs(log2FoldChange)>2,as.character(symbol),''),
+                           colour=ifelse(log2FoldChange>0, palreds[2], palblues[4])),
+                       size=3.5, max.overlaps=30)+
+      scale_colour_manual(values=c(palblues[2], palreds[4], "black", "grey"))+
+      t2 +
+      labs(title="Cluster 1 versus 2", x = "Log2FC", y = "-log10(adj p-val)", color = "Significance")+
+      guides(color="none", alpha="none")
+
+
+volPlot
+
+# 
+# cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(1)]
+# cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(2)]
+```
+
+## Appendix Figure 8. Comparison of gene expression between Cluster 1 and 2.
+Volcano plot of differentially expressed genes between Cluster 1 and Cluster 2 (C1: n=17; C2: n=11). X axis indicates log2 fold change values, calculated using the DESeq package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05.
+
+\newpage
+
+
 ```{r }
 
 ########### Viability matrix ################
@@ -2715,7 +2936,7 @@ wrap_elements(arrangeGrob(C4_drug_heatmap[[4]]))+
   plot_layout(nrow=1, widths = c(0.93,0.13,0.52,1.03))
 ```
 
-## Appendix Figure 7. Drug response between clusters.
+## Appendix Figure 8. Drug response between clusters.
 Heatmap showing the log normalised viability after drug treatment. Rows represent drug treatments and columns represent primary CLL samples (n=192), annotated for their genetic background, sex and pretreatment status above. Red values indicate increased viability upon treatment, blue indicates decreased viability.
 
 ```{r S8, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=11, fig.height=12}
@@ -2762,7 +2983,7 @@ df %>%
 
 ```
 
-## Appendix Figure 8. Drug response by clusters.
+## Appendix Figure 9. Drug response by clusters.
 Natural logarithm of the relative viability after treatment with drugs, faceted by cluster. BH-transformed p-values from non-paired, two-sided Student's t-test are shown (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
 
 
@@ -2800,146 +3021,9 @@ df_patMeta %>%
 
 ```
 
-## Appendix Figure 9. Effect of BAY-11-7085 treatment on BAFF response
+## Appendix Figure 10. Effect of BAY-11-7085 treatment on BAFF response
 Natural logarithm of the relative viability after treatment BAFF, BAY-11-7085 or both, faceted by cluster. P-values from paired, two-sided Student's t-test are shown (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
 
-```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 14, fig.width = 12, warning=F, message=F, cache=FALSE}
-
-cytSeq <- dds_smp
-
-#Filter out IGHV genes
-cytSeq <- cytSeq[!grepl("IG_", rowData(cytSeq)$biotype),]
-
-#split into 3,4
-cytSeq.34 <- cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(3,4)]
-
-#remove patients where IGHV is unknown
-cytSeq.34 <- cytSeq.34[,colData(cytSeq.34)[,"IGHV.status"] %in% c("U","M")]
-
-#set order of factors
-cytSeq.34$Cluster <- factor(cytSeq.34$Cluster,
-                            levels = c("3","4"))
-
-cytSeq.34$IGHV.status <- factor(cytSeq.34$IGHV.status,
-                                levels = c("U","M"))
-
-design(cytSeq.34) <- ~ IGHV.status + Cluster
-
-cytSeq.34 <- DESeq(cytSeq.34)
-
-res.ds <-
-  results(cytSeq.34, contrast = c("Cluster", 3, 4), tidy = TRUE) %>%
-  dplyr::rename(Symbol = "row") %>%
-  arrange(pvalue)
-
-#get ensembl ids to Entrez dataframe
-ens2entrez <-
-  rowData(cytSeq.34)[c("entrezgene", "symbol")] %>%
-  as.data.frame() %>%
-  rownames_to_column("ENSEMBL") %>%
-  tibble::as_tibble()
-
-
-
-#Join
-res.ds <- left_join(res.ds, ens2entrez, by=c("Symbol"="ENSEMBL"))
-
-
-d <-
-  dplyr::select(res.ds, entrezgene, stat) %>%
-  na.omit() %>%
-  dplyr::group_by(entrezgene) %>%
-  dplyr::summarize(stat=mean(stat), .groups = "keep")
-
-## feature 1: numeric vector
-geneList <- d$stat
-
-## feature 2: named vector
-names(geneList) <- as.character(d$entrezgene)
-
-## feature 3: decreasing order
-geneList <- sort(geneList, decreasing = TRUE)
-
-
-hm2gene <-
-  msigdbr(species = "Homo sapiens", category = "H") %>%
-  dplyr::select(gs_name, entrez_gene)
-# head(hm2gene)
-
-#run GSEA
-set.seed(1996)
-gsea.res <- GSEA(geneList, TERM2GENE = hm2gene, by = "fgsea", seed = TRUE, verbose = FALSE)
-
-#make readable with gene names
-gsea.res <- setReadable(gsea.res, org.Hs.eg.db, keyType = "ENTREZID")
-
-## TNFa
-TNFaEnrichment <-
-  enrichmentPlot(filter(hm2gene, gs_name =="HALLMARK_TNFA_SIGNALING_VIA_NFKB")$entrez_gene,geneList) +
-  labs(title="TNFA signalling via NFKB")
-
-
-#myc targets
-mycEnrichment <-
-  enrichmentPlot(filter(hm2gene, gs_name =="HALLMARK_MYC_TARGETS_V1")$entrez_gene, geneList) +
-  labs(title="MYC targets V1")
-
-
-#oxidative phosphorylation
-oxphosEnrichment <-
-  enrichmentPlot(filter(hm2gene, gs_name =="HALLMARK_OXIDATIVE_PHOSPHORYLATION")$entrez_gene, geneList) +
-  labs(title="Oxidative Phosphorylation")
-
-
-#p53 pathway
-p53Enrichment <-
-  enrichmentPlot(filter(hm2gene, gs_name =="HALLMARK_P53_PATHWAY")$entrez_gene, geneList) +
-  labs(title="P53 Pathway")
-
-
-sgncuoff <- 1.4
-
-volPlot <-
-  res.ds %>%
-  filter(!is.na(padj), !is.na(symbol), symbol!="") %>%
-
-ggplot( aes(x=log2FoldChange, y=-log10(padj))) +
-      annotate("rect", xmin = 0.0, xmax = Inf, ymin = -Inf, ymax = Inf, fill = palreds[1], alpha = 0.2)+
-      annotate("rect", xmin = 0.0, xmax = -Inf, ymin = -Inf, ymax = Inf,alpha = 0.2, fill = palblues[1])+
-      geom_point(aes(alpha=0.4, colour = ifelse(-log10(padj)>sgncuoff,"black","grey"))) +
-      theme(legend.position = "none") +
-      geom_label_repel(aes(label=ifelse(-log10(padj)>sgncuoff&abs(log2FoldChange)>2,as.character(symbol),''),
-                           colour=ifelse(log2FoldChange>0, palreds[2], palblues[4])), fill="#FDFDFD",
-                       size=3.5, max.overlaps=30)+
-      scale_colour_manual(values=c(palblues[2], palreds[4], "black", "grey"))+
-      t2 +
-      labs(title="Cluster 3 versus 4", x = "Log2FC", y = "-log10(adj p-val)", color = "Significance")+
-      guides(color="none", alpha="none")
-
-
-design1<-"
-  1111
-  2233
-  4455
-  "
-
-tp <- theme(plot.tag=element_text(size = 30))
-
-  volPlot + tp +
-  wrap_elements(TNFaEnrichment) + tp +
-  wrap_elements(mycEnrichment) + tp +
-  wrap_elements(oxphosEnrichment) + tp +
-  wrap_elements(p53Enrichment) + tp +
-  plot_layout(design=design1, heights = c(2,1,1))+
-  plot_annotation(tag_levels = "A")
-
-# cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(3)]  
-# cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(4)]  
-  
-```
-
-## Appendix Figure 10. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.
-Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 (C3: n=9; C4: n=12) **(A)**. X axis indicates log2 fold change values, calculated using the DESeq2 package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software. 
 
 
 
@@ -2974,78 +3058,6 @@ ggplot( aes(x=log2FoldChange, y=-log10(padj))) +
 
 \newpage
 
-```{r S10, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 7, fig.width = 12, warning=F, message=F, cache=FALSE}
-
-cytSeq <- dds_smp
-
-#Filter out IGHV genes
-cytSeq <- cytSeq[!grepl("IG_", rowData(cytSeq)$biotype),]
-
-#split into 1,2
-cytSeq.12 <- cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(1,2)]
-
-#remove patients where IGHV is unknown
-cytSeq.12 <- cytSeq.12[,colData(cytSeq.12)[,"IGHV.status"] %in% c("U","M")]
-
-#set order of factors
-cytSeq.12$Cluster <- factor(cytSeq.12$Cluster,
-                            levels = c("1","2"))
-
-cytSeq.12$IGHV.status <- factor(cytSeq.12$IGHV.status,
-                                levels = c("U","M"))
-
-design(cytSeq.12) <- ~ IGHV.status + Cluster
-
-cytSeq.12 <- DESeq(cytSeq.12)
-
-res.ds <-
-  results(cytSeq.12, contrast = c("Cluster", 1, 2), tidy = TRUE) %>%
-  dplyr::rename(Symbol = "row") %>%
-  arrange(pvalue)
-
-#get ensembl ids to Entrez dataframe
-ens2entrez <-
-  rowData(cytSeq.12)[c("entrezgene", "symbol")] %>%
-  as.data.frame() %>%
-  rownames_to_column("ENSEMBL") %>%
-  tibble::as_tibble()
-
-
-
-#Join
-res.ds <- left_join(res.ds, ens2entrez, by=c("Symbol"="ENSEMBL"))
-
-sgncuoff <- 1.4
-
-volPlot <-
-  res.ds %>%
-  filter(!is.na(padj), !is.na(symbol), symbol!="") %>%
-
-ggplot( aes(x=log2FoldChange, y=-log10(padj))) +
-      annotate("rect", xmin = 0.0, xmax = Inf, ymin = -Inf, ymax = Inf, fill = palreds[1], alpha = 0.2)+
-      annotate("rect", xmin = 0.0, xmax = -Inf, ymin = -Inf, ymax = Inf,alpha = 0.2, fill = palblues[1])+
-      geom_point(aes(alpha=0.4, colour = ifelse(-log10(padj)>sgncuoff,"black","grey"))) +
-      theme(legend.position = "none") +
-      geom_label_repel(aes(label=ifelse(-log10(padj)>sgncuoff&abs(log2FoldChange)>2,as.character(symbol),''),
-                           colour=ifelse(log2FoldChange>0, palreds[2], palblues[4])),
-                       size=3.5, max.overlaps=30)+
-      scale_colour_manual(values=c(palblues[2], palreds[4], "black", "grey"))+
-      t2 +
-      labs(title="Cluster 1 versus 2", x = "Log2FC", y = "-log10(adj p-val)", color = "Significance")+
-      guides(color="none", alpha="none")
-
-
-volPlot
-
-# 
-# cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(1)]
-# cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(2)]
-```
-
-## Appendix Figure 11. Comparison of gene expression between Cluster 1 and 2.
-Volcano plot of differentially expressed genes between Cluster 1 and Cluster 2 (C1: n=17; C2: n=11). X axis indicates log2 fold change values, calculated using the DESeq package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05.
-
-\newpage
 
 ```{r S11,fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=12, fig.height=4, message=FALSE, warning=FALSE}
 load("../../data/fig3_data_for_lassoplots.RData")
