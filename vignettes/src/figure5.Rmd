@@ -252,7 +252,7 @@ Fig5A <-
   theme_bw() +
   t1 +
   xlab("") +
-  ylab("Log(Viability)") +
+  ylab("Logarithm of relative viability") +
   coord_cartesian(ylim = c(-1, 1)) +
   scale_y_continuous(n.breaks=3)+
   scale_x_discrete(labels=c( "coord1"="DMSO","coord2"="Drug","coord3"="Stimulus","coord4"="Drug +\nStimulus")) +
@@ -599,7 +599,7 @@ lapply(names(gg), function(i){
   t2 + theme(axis.text.x = element_text(size=fontsize+5)) +
     theme(plot.tag=element_text(size = 30))+
   scale_x_discrete(labels = xlabels) +
-  ylab("Log (Viability)") + 
+  ylab("Logarithm of relative viability") + 
   xlab("")
 
 

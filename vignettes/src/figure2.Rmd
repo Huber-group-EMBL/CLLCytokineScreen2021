@@ -523,7 +523,7 @@ Fig2B <-
   scale_fill_manual(values=colors[1:4]) +
   scale_y_log10() +
   guides(fill="none") +
-  ylab("LDT in years") +
+  ylab("Lymphocyte doubling time in years") +
   t2 +
   stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=6, label.x = 1.3, label.y=2.1, method.args=list(paired=FALSE, alternative="two.sided"))
 

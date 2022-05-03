@@ -862,7 +862,7 @@ Fig6C <-
                      step.increase=0.2, 
                      size=6) +
   xlab("") +
-  ylab("Log(Viability)") +
+  ylab("Logarithm of relative viability") +
   #facet by trisomy 12 and IGHV status
   facet_grid(vars(trisomy12), 
              vars(IGHV.status),
@@ -916,7 +916,7 @@ Fig6D <-
                      step.increase=0.2, 
                      size=6) +
   xlab("") +
-  ylab("Log(Viability)") +
+  ylab("Logarithm of relative viability") +
   #facet by trisomy 12 and IGHV status
   facet_grid(vars(trisomy12), 
              vars(IGHV.status),
@@ -1016,7 +1016,7 @@ Fig6
                      step.increase=0.2, 
                      size=6) +
   xlab("") +
-  ylab("Log(Viability)") +
+  ylab("Logarithm of relative viability") +
   #facet by trisomy 12 and IGHV status
   facet_grid(vars(trisomy12), 
              vars(IGHV.status),

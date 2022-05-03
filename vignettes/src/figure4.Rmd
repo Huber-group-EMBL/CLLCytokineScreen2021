@@ -352,7 +352,7 @@ Fig4D <-
   #Labels
   ylab("") +
   xlab("Change in inferred TF activity") +
-  ggtitle("Trisomy 12 vs. non-trisomy 12") +
+  ggtitle("Trisomy 12 versus non-trisomy 12") +
 
   #Add annotations
   #arrow 1
@@ -464,7 +464,7 @@ Fig4F <-
   #Labels
   ylab("") +
   xlab("Change in inferred TF activity") +
-  ggtitle("IBET-762 treated CLL vs. untreated control") +
+  ggtitle("IBET-762 versus untreated control") +
 
   #flip plot
   coord_flip()
