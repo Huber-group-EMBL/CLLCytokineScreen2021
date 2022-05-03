@@ -1153,7 +1153,7 @@ Fig2D<-   ggplot(plotTab, aes(x=feature, y=meanCoef))+
     ggtitle("") +
     coord_cartesian(ylim=c(-1.5, 1.75))+
     geom_hline(yintercept=0)+
-    ylab("Depleted / Enriched\n")+
+    ylab("Coefficient")+
     xlab("")+
     scale_fill_manual(values=colors[1:4])+
     t1+

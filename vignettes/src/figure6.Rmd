@@ -795,7 +795,7 @@ Fig6A <-
         strip.background = element_blank())+
   
   
-  labs(fill = expression(beta["int"]))+
+  labs(fill = "Coefficient")+
   scale_y_discrete(position = "right")+
   scale_x_discrete(labels = gene_labels) +
   facet_grid(Stimulus~., scales = "free_y",  space="free_y", switch = "both", labeller =labeller( Stimulus=cyt_labels))
