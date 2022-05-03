@@ -174,7 +174,7 @@ Fig4A =
                      size=5,
                      method.args = list(paired=FALSE, alternative="two.sided"))+
   xlab("") +
-  ylab("Log(Viability)") +
+  ylab("Logarithm of relative viability") +
   ggtitle("Resiquimod (TLR 7/8 agonist)") +
   scale_color_manual(values=c(palblues[3], palreds[8])) + 
   coord_cartesian(ylim = c(-1.5, 3.1), clip="off") +
@@ -212,7 +212,7 @@ Fig4B =
   scale_x_discrete(labels=c("0"="WT",
                             "1"="trisomy 12"))+
   xlab("") +
-  ylab("Log(Viability)") +
+  ylab("Logarithm of relative viability") +
   coord_cartesian( clip="off") +
   t2 +
   stat_compare_means(method = "t.test",
@@ -250,7 +250,7 @@ left_join(df, patMeta, by = "PatientID") %>%
   scale_x_discrete(labels=c("0"="WT",
                             "1"="trisomy 12"))+
   xlab("") +
-  ylab("Log(Viability)") +
+  ylab("Logarithm of relative viability") +
   coord_cartesian( clip="off") +
   t2 +
   scale_color_manual(values=c(palblues[3], palreds[8]))+
@@ -300,7 +300,7 @@ Fig4C =
   scale_x_discrete(labels=c("0"="WT",
                             "1"="trisomy 12"))+
   xlab("") +
-  ylab("Log(Viability)") +
+  ylab("Logarithm of relative viability") +
   ggtitle("TGF\u03B2") +
   scale_color_manual(values=c(palblues[3], palreds[8])) + 
   coord_cartesian(clip="off")+
@@ -352,7 +352,7 @@ Fig4D <-
   #Labels
   ylab("") +
   xlab("Change in inferred TF activity") +
-  ggtitle("Diffential TF binding site accessibility in trisomy 12 CLL") +
+  ggtitle("Trisomy 12 vs. non-trisomy 12") +
 
   #Add annotations
   #arrow 1
@@ -396,7 +396,7 @@ Fig4E <-
                      size=5,
                      comparisons = list(c(1,2)),
                      method.args = list(paired=FALSE, alternative="two.sided"))+
-  ylab("Log(Viability)") +
+  ylab("Logarithm of relative viability") +
   ggtitle("IBET-762") +
   scale_color_manual(values=c(colors[1], colors[2])) + 
   coord_cartesian( clip="off") +
@@ -464,29 +464,12 @@ Fig4F <-
   #Labels
   ylab("") +
   xlab("Change in inferred TF activity") +
-  ggtitle("Diffential TF binding site accessibility in IBET-762-treated CLL") +
-
-
+  ggtitle("IBET-762 treated CLL vs. untreated control") +
 
   #flip plot
-  coord_flip()#+
+  coord_flip()
 
   
-  #Add annotations
-  # #arrow 1
-  # annotate("segment", x = arrow_height, xend = arrow_height, y = 8.4, yend = 0.75,
-  #          colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) +
-  # #arrow 2
-  # annotate("segment", x = arrow_height, xend = arrow_height, y = 8.6, yend = 17,
-  #          colour = "#5e5e5e", size=3, alpha=1, arrow=arrow()) +
-  # 
-  #  #2 arrow labels
-  # annotate("text", x = c(text_height,text_height), y = c(4.8,12.5),
-  #         label = c("Lower after IBET-762 treatment",
-  #                   "Higher after IBET-762 treatment") ,
-  #         color="black",
-  #         size=5 , fontface="bold")
-
 
 Fig4F
 
