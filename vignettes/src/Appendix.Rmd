@@ -4023,3 +4023,97 @@ Natural logarithm of the relative viability after treatment with IL4 in combinat
 1. Rendeiro, A., Schmidl, C., Strefford, J. et al. Chromatin accessibility maps of chronic lymphocytic leukaemia identify subtype-specific epigenome signatures and transcription regulatory networks. Nat Commun 7, 11938 (2016).
 
 2. Lu, J., Cannizzaro, E., Meier-Abt, F. et al. Multi-omics reveals clinically relevant proliferative drive associated with mTOR-MYC-OXPHOS activity in chronic lymphocytic leukemia. Nat Cancer 2, 853–864 (2021).
+
+
+
+
+```{r}
+
+knitr::knit_exit()
+
+```
+
+```{r, fig.height=12, fig.width=7}
+
+load("C:/Users/Peter Bruch/Documents/GitHub/CLL_Proteomics/multiomics_MAE.RData")
+
+# metadata(multiomics_MAE)$gene_symbol_mapping %>%  filter(hgnc_symbol=="SPI1")
+
+# metadata(multiomics_MAE)$gene_symbol_mapping %>%  filter(hgnc_symbol=="SPIB")
+
+##### SPI1
+plot_Tab<-as_tibble(wideFormat(multiomics_MAE["SPI1",,"proteomics"] )) %>% 
+left_join(select(as_tibble(wideFormat(multiomics_MAE[,,"RNAseq_norm"] )),primary, RNAseq_norm_ENSG00000066336), by="primary") %>%
+left_join(select(as_tibble(wideFormat(multiomics_MAE[,,"chrom_abber"])), primary, chrom_abber_trisomy12), by="primary") %>% 
+  mutate(chrom_abber_trisomy12=as.factor(chrom_abber_trisomy12))
+  
+p1<-filter(plot_Tab, !is.na(chrom_abber_trisomy12), !is.na(proteomics_SPI1)) %>% 
+       ggplot(aes(chrom_abber_trisomy12, proteomics_SPI1, fill=chrom_abber_trisomy12, group=chrom_abber_trisomy12)) +
+       geom_boxplot() + 
+        geom_beeswarm() + 
+       t2 +
+       ylab(paste("Protein abundance SPI1")) + 
+       xlab("trisomy 12") + 
+       scale_fill_manual(labels=c("no", "yes"), values = c(palreds[8],palblues[1])) +
+       theme( text = element_text(size=15)) +
+       stat_compare_means(method = "t.test", 
+                          aes(label = paste0("p = ", ..p.format..)), 
+                          label.x = 1.5, hjust=0.5,
+                          #comparisons = list(c("1", "0")), 
+                          size=4) + 
+       theme(legend.position = "top") + 
+  guides(fill = "none" )
+  
+  
+p2<-filter(plot_Tab, !is.na(chrom_abber_trisomy12), !is.na(RNAseq_norm_ENSG00000066336)) %>% 
+       ggplot(aes(chrom_abber_trisomy12, RNAseq_norm_ENSG00000066336, fill=chrom_abber_trisomy12, group=chrom_abber_trisomy12)) +
+       geom_boxplot() + 
+        geom_beeswarm() + 
+       t2 +
+       ylab(paste("Gene expression SPI1")) + 
+       xlab("trisomy 12") + 
+       scale_fill_manual(labels=c("no", "yes"), values = c( palreds[5],palblues[4])) +
+       theme( text = element_text(size=15)) +
+       stat_compare_means(method = "t.test", 
+                          aes(label = paste0("p = ", ..p.format..)), 
+                          label.x = 1.5, hjust=0.5,
+                          #comparisons = list(c("1", "0")), 
+                          size=4) + 
+       theme(legend.position = "top") + 
+  guides(fill = "none" )
+
+
+
+######### SPIB
+plot_Tab<-select(as_tibble(wideFormat(multiomics_MAE[,,"RNAseq_norm"] )),primary, RNAseq_norm_ENSG00000269404) %>%
+left_join(select(as_tibble(wideFormat(multiomics_MAE[,,"chrom_abber"])), primary, chrom_abber_trisomy12), by="primary") %>% 
+  mutate(chrom_abber_trisomy12=as.factor(chrom_abber_trisomy12))
+  
+
+p3<-filter(plot_Tab, !is.na(chrom_abber_trisomy12), !is.na(RNAseq_norm_ENSG00000269404)) %>% 
+       ggplot(aes(chrom_abber_trisomy12, RNAseq_norm_ENSG00000269404, fill=chrom_abber_trisomy12, group=chrom_abber_trisomy12)) +
+       geom_boxplot() + 
+        geom_beeswarm() + 
+       t2 +
+       ylab(paste("Gene expression SPIB")) + 
+       xlab("trisomy 12") + 
+       scale_fill_manual(labels=c("no", "yes"), values = c( palreds[5],palblues[4])) +
+       theme( text = element_text(size=15)) +
+       stat_compare_means(method = "t.test", 
+                          aes(label = paste0("p = ", ..p.format..)), 
+                          label.x = 1.5, hjust=0.5,
+                          #comparisons = list(c("1", "0")), 
+                          size=4) + 
+       theme(legend.position = "top") + 
+  guides(fill = "none" )
+
+tp <- theme(plot.tag=element_text(size = 30))
+
+
+p1+
+  p2+
+  p3+
+  plot_layout(nrow = 3)+
+  plot_annotation(tag_levels = "A")
+```
+
