@@ -1198,7 +1198,7 @@ cox_output <- cox_output %>%
   dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
 
 
-colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
+colnames(cox_output) <- c("Factor", "Hazard Ratio", "p-value", "CI Low", "CI High")
 
 cox_output %>%  
   kable() %>%
@@ -1250,7 +1250,7 @@ cox_output <- cox_output %>%
   dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
 
 
-colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
+colnames(cox_output) <- c("Factor", "Hazard Ratio", "p-value", "CI Low", "CI High")
 
 cox_output %>%  
   mutate(Factor=gsub(pattern=", \"3\"", "",Factor)) %>% 
@@ -1306,7 +1306,7 @@ cox_output <- cox_output %>%
   dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
 
 
-colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
+colnames(cox_output) <- c("Factor", "Hazard Ratio", "p-value", "CI Low", "CI High")
 
 cox_output %>%  
   kable() %>%
@@ -1570,7 +1570,7 @@ resTab %>%
 
 ## Appendix Table 6. Over-representation test of immune signalling pathways (and control pathways) amongst Spi-B gene targets, based on primary CLL ATACseq data.
 
-Spi-B gene targets defined as nearest gene to each Spi-B binding site. Spi-B binding sites subset from all Spi-B sites defined in the HOCOMOCO database, and subset for those that   that show an absolute Log2 fold change > 1 and a p value < 0.1 in trisomy 12 versus non-trisomy 12 CLL. Log2FC values and p values calculated using the diffTF package based on the CLL ATACseq data from Rendeiro et al. 2016^1^.
+Spi-B gene targets defined as nearest gene to each Spi-B binding site. Spi-B binding sites subset from all Spi-B sites defined in the HOCOMOCO database, and subset for those that   that show an absolute Log2 fold change > 1 and a p-value < 0.1 in trisomy 12 versus non-trisomy 12 CLL. Log2 fold change values and p-values calculated using the diffTF package based on the CLL ATACseq data from Rendeiro et al. 2016^1^.
 
 ```{R, T7, fig.width=15, fig.height=2, message=FALSE }
 
@@ -1760,7 +1760,7 @@ resTab %>%
 
 ```
 ## Appendix Table 7. Over-representation test of immune signalling pathways (and control pathways) amongst Spi-B gene targets, based on DLBCL ChIPseq data. 
-Spi-B gene targets defined as nearest gene to each Spi-B binding site. Spi-B binding sites determined using ChIPseq data from Care et al 2014. 
+Spi-B gene targets defined as nearest gene to each Spi-B binding site. Spi-B binding sites determined using ChIPseq data from Care et al. 2014^2^. 
 
 
 \elandscape
@@ -2445,7 +2445,7 @@ wrap_elements(CLLPD_Lasso_U_patients)+theme(plot.tag=element_text(size = 20))+
   
 ```
 
-## Appendix Figure 6. CLL Proliferative Drive as defined by Lu et al., 2021^2^.
+## Appendix Figure 6. CLL Proliferative Drive as defined by Lu et al., 2021^3^.
 Beeswarm plot of Proliferative Drive in the clusters defined by microenvironmental resonse. P-values are shown from Student's t-test (C1: n=57; C2:n=20; C3: n=29; C4: n=40). **(A)** Predictor profiles for stimuli response to represent CLL Proliferative Drive identified through multivariate analysis using Gaussian linear modelling with L1-penalty for all patient samples which were analysed (n=146) **(B)**, for only IGHV mutated  (n=80) **(C)** and for only IGHV unmutated patient samples (n=65) **(D)** Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate log(viability) values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot.  Exemplary scatter plots devided by IGHV mutation status shown for Resiquimod **(E)** and IL1ß **(F)** (IGHV-M: n=80, IGHV-U: n=65). CLL-PD on x-axis and log normalised viability after microenvironmental stimulation on y-axis. Person correlation coefficients are shown with p-values. 
 
 \newpage
@@ -4027,10 +4027,9 @@ Natural logarithm of the relative viability after treatment with IL4 in combinat
 # References  
 1. Rendeiro, A., Schmidl, C., Strefford, J. et al. Chromatin accessibility maps of chronic lymphocytic leukaemia identify subtype-specific epigenome signatures and transcription regulatory networks. Nat Commun 7, 11938 (2016).
 
-2. Lu, J., Cannizzaro, E., Meier-Abt, F. et al. Multi-omics reveals clinically relevant proliferative drive associated with mTOR-MYC-OXPHOS activity in chronic lymphocytic leukemia. Nat Cancer 2, 853–864 (2021).
+2. Care, M.A., Cocco, M., Laye, J.P., et al. (2014) SPIB and BATF provide alternate determinants of IRF4 occupancy in diffuse large B-cell lymphoma linked to disease heterogeneity. Nucleic Acids Res 42: 7591–7610
 
-
-
+3. Lu, J., Cannizzaro, E., Meier-Abt, F. et al. Multi-omics reveals clinically relevant proliferative drive associated with mTOR-MYC-OXPHOS activity in chronic lymphocytic leukemia. Nat Cancer 2, 853–864 (2021).
 
 ```{r}
 
