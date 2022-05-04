@@ -1078,7 +1078,7 @@ patMeta %>%
 
 ```
 ## Appendix Table 1. Patient samples included in the study.
-List of patient samples and selected characteristics. For a full list of characteristics see [online vignette](https://github.com/Huber-group-EMBL/CLLCytokineScreen2021).
+List of patient samples and selected characteristics. For a full list of characteristics see [online vignette](https://github.com/Huber-group-EMBL/CLLCytokineScreen2021).NA = Not available.
 
 \newpage
 
