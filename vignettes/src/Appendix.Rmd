@@ -1849,28 +1849,6 @@ p1+
 Selected genetic alterations on y-axis and screened patient samples (n=192) on x-axis.
 \newpage
 
-```{r, fig.width=6, fig.height=6, eval=FALSE}
-
-
-patMeta_tmp %>%
-  filter(PatientID%in%unique(patMeta_tmp$PatientID)[1:80], Genetic_Alteration%in%c("del13q" ,"IGHV.status","TP53"   , "NOTCH1","trisomy12"  ) ) %>% 
-  ggplot(aes(x=PatientID, y=Genetic_Alteration))+
-  geom_tile(aes(fill = alteration_value), colour = NA, width=1)+
-  geom_label(aes(y=Genetic_Alteration, label=Genetic_Alteration), x=3, hjust=0, size=8)+
-  theme_temp+
-  scale_fill_manual(values = c("0"=Mutant[1], "1"=Mutant[2], "M"=IGHV[1], "U"=IGHV[2],  "unknown"=na_color), na.value=na_color, labels = c("0"="wildtype", "1"="mutated", "M"="IGHV mutated", "U"="IGHV unmutated", "HP"="High programmed", "IP"="Intermediate programmed", "LP"="Low programmmed", "unknown"="N/A"))+
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y= element_blank(),
-        axis.line.x = element_blank(),
-        axis.line.y = element_blank())+
-guides(fill="none")
-```
-
-
-
-
 ```{r}
 order_Cytokines<-df%>%
   dplyr::filter(Drug=="DMSO") %>%
@@ -3030,38 +3008,6 @@ df_patMeta %>%
 ## Appendix Figure 11. Effect of BAY-11-7085 treatment on BAFF response
 Natural logarithm of the relative viability after treatment BAFF, BAY-11-7085 or both, faceted by cluster. P-values from paired, two-sided Student's t-test are shown (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
 
-
-
-
-```{r, fig.width=4, fig.height=4, eval=FALSE}
-sgncuoff<-3
-
- res.ds %>%
-  filter(!is.na(padj), !is.na(symbol), symbol!="") %>%
-
-ggplot( aes(x=log2FoldChange, y=-log10(padj))) +
-      annotate("rect", xmin = 0.0, xmax = Inf, ymin = -Inf, ymax = Inf, fill = palreds[1], alpha = 0.2)+
-      annotate("rect", xmin = 0.0, xmax = -Inf, ymin = -Inf, ymax = Inf,alpha = 0.2, fill = palblues[1])+
-      geom_point(aes(alpha=0.4, colour = ifelse(-log10(padj)>sgncuoff,"black","grey")), size=3) +
-      theme(legend.position = "none") +
-      geom_label_repel(aes(label=ifelse(-log10(padj)>sgncuoff&abs(log2FoldChange)>3,as.character(symbol),''), colour=ifelse(log2FoldChange>0, palreds[2], palblues[4])), fill="#FDFDFD", size=3.5, max.overlaps=30)+
-      scale_colour_manual(values=c(palblues[2], palreds[4], "black", "grey"))+
-      t2 +
-      labs(title="Cluster 3 versus 4", x = "Log2FC", y = "-log10(adj p-val)", color = "Significance")+
-      guides(color="none", alpha="none")+
-  theme(title = element_blank(),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        panel.grid.major= element_blank(),
-        panel.grid.minor = element_blank(), 
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank(),
-        )+
-  ggtitle("")
-```
-
 \newpage
 
 
@@ -3318,51 +3264,6 @@ rm(plotTab)
 ## Appendix Figure 14. ATACseq comparing trisomy 12 and non-trisomy 12 CLL samples.
 Volcano plot shows change in inferred TF activity (x axis) against adjusted p-values (y axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in analytic mode and transformed by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.15, and transformed p-value < 0.01.
 
-```{r, fig.width=4, fig.height=4, eval=FALSE}
-
-load( "../../data/diffTF_large.RData")
-
-plotTab <- diffTF_large %>%  filter(!is.na(pvalueAdj))
-
-#make naming consistent with text
-plotTab$TF <- gsub("SPI1", "PU1", plotTab$TF)
-
-sgncuoff<-3
-
- ggplot(data = plotTab,
-         aes(x = weighted_meanDifference, y = -log10(pvalueAdj+0.000001))) +
-
-  geom_point(data=filter(plotTab, -log10(pvalueAdj) > 1.4), aes(alpha=0.4, colour = ifelse(weighted_meanDifference>0, palreds[1], palblues[1])),size=4.5) +
-   
-  geom_point(data=filter(plotTab, !(-log10(pvalueAdj) > 1.4)), aes(alpha=0.4), colour = "grey",size=2.5) +
-  
-  geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 1.4&abs(weighted_meanDifference)>0.12,
-                                    as.character(TF),''),
-                       colour=ifelse(weighted_meanDifference>0,
-                                     palreds[1],
-                                     palblues[1])),
-                   size=7, max.overlaps=20)+
-  scale_colour_manual(values=c(palblues[3], palreds[8], "black", "grey")) +
-  t2 +
-    annotate(geom="text", x=.1,y=.2, label="tri12", size=7, )+
-    annotate(geom="text", x=-.1,y=.2, label="wt", size=7,)+
-  ggtitle("ATAC seq: Tri12 v WT") +
-  xlab("Change in inferred TF activity") +
-  guides(color="none", alpha="none") +
-  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))+
-  # coord_cartesian(ylim = c(0,6.5))+
-  theme(title = element_blank(),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        panel.grid.major= element_blank(),
-        panel.grid.minor = element_blank(), 
-        axis.ticks.x = element_blank(),
-        axis.ticks.y = element_blank(),
-        )+
-  ggtitle("")
-```
 
 \newpage
 
@@ -3400,7 +3301,7 @@ rm(plotTab)
 ```
 
 ## Appendix Figure 15. ATACseq comparing trisomy 12 and non-trisomy 12 CLL samples.
-Volcano plot shows change in inferred TF activity (x axis) against transformed p-values (y axis) for  trisomy 12 (n = XXX) versus non-trisomy 12 samples (n = XXX). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in analytic mode and transformed by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.15, and transformed p-value < 0.01. Data from Beekman et al. 2018. 
+Volcano plot shows change in inferred TF activity (x axis) against transformed p-values (y axis) for  trisomy 12 (n = XXX) versus non-trisomy 12 samples (n = XXX). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in analytic mode and transformed by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.15, and transformed p-value < 0.01. Data from Beekman et al. 2018^4^. 
 
 \newpage
 
@@ -3554,100 +3455,6 @@ ggplot(aes(start/10^6, l2FC))+
 Log2 fold changes are plotted (y axis) Spi-B binding sites that show an absolute Log2 fold change > 1 and a p value < 0.1, as calculated using the diffTF package for all Spi-B binding sites defined in the HOCOMOCO database. Data shown is the 9 versus 42 comparison based on the data from Rendeiro et al. 2016^1^.
 
 
-```{r , fig.path=plotDir, dev=c("cairo_pdf"), fig.height = 3, fig.width = 3, warning = FALSE, eval=FALSE}
-
-
-#get a dataframe of all SPIB binding sites that show sig Log2FC
-peak_df <- 
-  TFBS %>%
-  dplyr::select(TF, chr, start, end, strand, l2FC, pval,  pval_adj) 
-
-#make factors / numeric
-chr.sorted <- unique(sortChrName(peak_df$chr))
-peak_df$chr <- factor(peak_df$chr, levels = chr.sorted)
-peak_df$start <- as.numeric(peak_df$start)
-peak_df$end <- as.numeric(peak_df$end)
-
-peak_df<-peak_df %>% 
-  mutate(chr_num=as.numeric(gsub("chr","",chr)))
-
-chr_length<-filter(human.hg19.genome, V1%in%levels(peak_df$chr)) %>% 
-         mutate(V1=factor(V1, levels = rev(levels(peak_df$chr)))) %>% 
-          mutate(chr_num=as.numeric(gsub("chr","",V1)))
-
- ggplot(peak_df)+
-  geom_segment(data= chr_length, aes(y=chr_num, yend=chr_num, x=0, xend=V2/10^6))+
-  geom_segment(aes(y=chr_num, yend=chr_num-(l2FC/4),  x = start/10^6, xend= end/10^6,
-                color = ifelse(l2FC<0, palreds[5], palblues[1]))) +
-  scale_fill_manual(values = c(palreds[5], palblues[1]), guide = "none") +
-  scale_color_manual(values = c(palreds[5], palblues[1]), guide = "none") +
-   scale_y_reverse(breaks=c(1:22))+
-   ylab("Chromosome")+
-  t2+
-   theme(panel.grid.major.x=element_blank(),
-         # axis.title.y = element_blank(),
-         axis.title.y = element_text(size=14, color="black"),
-         axis.title.x = element_blank(),
-        # axis.text.y = element_blank(),
-        axis.text.y = element_text(size=8, color="black"),
-        axis.ticks.y= element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x= element_blank(),
-        axis.line.x = element_blank(),
-        axis.line.y = element_blank())
-
-
-
-```
-
-
-```{r , fig.path=plotDir, dev=c("cairo_pdf"), fig.height = 2, fig.width = 2, warning = FALSE, eval=FALSE}
-
-
-#get a dataframe of all SPIB binding sites that show sig Log2FC
-peak_df <- 
-  TFBS %>%
-  dplyr::select(TF, chr, start, end, strand, l2FC, pval,  pval_adj) 
-
-#make factors / numeric
-chr.sorted <- unique(sortChrName(peak_df$chr))
-peak_df$chr <- factor(peak_df$chr, levels = chr.sorted)
-peak_df$start <- as.numeric(peak_df$start)
-peak_df$end <- as.numeric(peak_df$end)
-
-peak_df<-peak_df %>% 
-  mutate(chr_num=as.numeric(gsub("chr","",chr)))%>% 
-  filter(chr_num%in%c(12:22))
-
-chr_length<-filter(human.hg19.genome, V1%in%levels(peak_df$chr)) %>% 
-         mutate(V1=factor(V1, levels = rev(levels(peak_df$chr)))) %>% 
-          mutate(chr_num=as.numeric(gsub("chr","",V1)))%>%  
-  filter(chr_num%in%c(12:22))
-
- ggplot(peak_df)+
-  geom_segment(data= chr_length, aes(y=chr_num, yend=chr_num, x=0, xend=V2/10^6))+
-  geom_segment(aes(y=chr_num, yend=chr_num-(l2FC/4),  x = start/10^6, xend= end/10^6,
-                color = ifelse(l2FC<0, palreds[5], palblues[1]))) +
-  scale_fill_manual(values = c(palreds[5], palblues[1]), guide = "none") +
-  scale_color_manual(values = c(palreds[5], palblues[1]), guide = "none") +
-   scale_y_reverse(breaks=c(1:22))+
-   ylab("Chromosome")+
-  t2+
-   theme(panel.grid.major.x=element_blank(),
-         axis.title.y = element_blank(),
-         # axis.title.y = element_text(size=14, color="black"),
-         axis.title.x = element_blank(),
-        axis.text.y = element_blank(),
-        # axis.text.y = element_text(size=8, color="black"),
-        axis.ticks.y= element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x= element_blank(),
-        axis.line.x = element_blank(),
-        axis.line.y = element_blank())
-
-
-
-```
 
 \newpage
 
@@ -4030,6 +3837,8 @@ Natural logarithm of the relative viability after treatment with IL4 in combinat
 2. Care, M.A., Cocco, M., Laye, J.P., et al. (2014) SPIB and BATF provide alternate determinants of IRF4 occupancy in diffuse large B-cell lymphoma linked to disease heterogeneity. Nucleic Acids Res 42: 7591–7610
 
 3. Lu, J., Cannizzaro, E., Meier-Abt, F. et al. Multi-omics reveals clinically relevant proliferative drive associated with mTOR-MYC-OXPHOS activity in chronic lymphocytic leukemia. Nat Cancer 2, 853–864 (2021).
+
+4. Beekman, R., Chapaprieta, V., Russiñol, N. et al. The reference epigenome and regulatory chromatin landscape of chronic lymphocytic leukemia. Nat Med 24, 868–880 (2018).
 
 ```{r}
 
