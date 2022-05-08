@@ -186,7 +186,7 @@ body <- dashboardBody(
                 status = "primary",
                 title = "Welcome to the Shiny App to Explore the Drug-Cytokine Combinatorial Screen Dataset",
                 helpText("Please click on the tabs on the left to interactively explore the data. 
-                This app accompanies the 2021 paper: Combinatorial drug-microenvironment interaction mapping reveals cell-extrinsic drug resistance mechanisms and clinically relevant patient subgroups in CLL. If you use this app to support published research, please cite the paper. 
+                This app accompanies the 2021 paper: Drug-microenvironment perturbations reveal resistance mechanisms and prognostic subgroups in CLL. If you use this app to support published research, please cite the paper. 
                 The data can also be explored manually using the online vignette."))), 
                
               fluidRow(#boxes for tabs 2 and 3
