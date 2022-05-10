@@ -481,7 +481,7 @@ Fig4F
 ## Assemble Figure 4
 
 
-```{r Fig4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=16, fig.width=14, eval = TRUE, warning = FALSE}
+```{r, Figure4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=16, fig.width=14, eval = TRUE, warning = FALSE}
 
 design1<-"
   AAB
