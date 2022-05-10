@@ -3253,7 +3253,7 @@ atac.plot =
   t2 +
   ggtitle("Trisomy 12 v Non-trisomy 12") +
   xlab("Change in inferred TF activity") +
-  guides(color="none", alpha="none") 
+  guides(color="none", alpha="none")+
   scale_y_continuous("BH-transformed p-value", 
                      breaks=seq(0,10,1),
                      labels=math_format(expr=10^.x)(-seq(0,10,1)))
