@@ -672,7 +672,7 @@ lassoPlot3Appendix <- function(lassoOut, geneMatrix, viabMatrix, freqCut = 1, co
                   panel.grid.minor=element_blank()) + 
             xlab("Viability z-score") + 
             ylab("") +
-            scale_fill_gradient2(low = palblues[1],high = palreds[8], mid = "white")
+            scale_fill_gradient2(low = palblues[1],high = palreds[8], mid = "white",guide="none")
             
         
 
@@ -1213,10 +1213,6 @@ cox_output %>%
 ## Appendix Table 3. Survival analysis of microenvironmental response clusters comparing C3 to C1, C2 and C4.
 Cox proportional hazards model of stimulus response clusters using time to next treatment and with C3 as reference.
 
-
-
-
-
 ```{r, fig.pos="H"}
 ######Arrange data######
 clusters.surv <- left_join(Heatmap_clusters, survT, by = "PatientID")
@@ -1321,7 +1317,7 @@ cox_output %>%
 ```
 
 ## Appendix Table 5. Multivariate survival analysis of response clusters.
-Multivariate Cox proportional hazards model of stimulus response clusters and genetic subgroups of disease progression using time to next treatment and with C3 as reference.
+Multivariate Cox proportional hazards model of stimulus response clusters and genetic subgroups of disease progression using time to next treatment  with C3 as reference.
 
 
 
@@ -3819,7 +3815,7 @@ knitr::knit_exit()
 
 ```
 
-```{r, fig.height=12, fig.width=7}
+```{r, fig.height=12, fig.width=7, eval=FALSE}
 
 load("C:/Users/Peter Bruch/Documents/GitHub/CLL_Proteomics/multiomics_MAE.RData")
 
