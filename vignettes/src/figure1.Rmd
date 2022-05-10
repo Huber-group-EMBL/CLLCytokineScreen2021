@@ -874,6 +874,7 @@ All_Cor_Plot
 
 tp <- theme(plot.tag=element_text(size = 30, face="plain"))
 
+
 design1 <-"
   ABBC
   DDEE
@@ -888,7 +889,8 @@ Figure1 <-
   wrap_elements(Cyt_Cor_Plot) + tp+
   
   plot_annotation(tag_levels = "A", title="Figure 1", theme = theme(title=element_text(size = 20))) +
-  plot_layout(design = design1, heights = c(0.7,1.2), width=c(.8,.7,.9,1.2))
+  # plot_layout(design = design1, heights = c(0.7,1.2), width=c(.8,.7,.9,1.2))+
+  plot_layout(design = design1, heights = c(0.7,1.2), width=c(1,.5,1,1.1))
 
 
 Figure1
