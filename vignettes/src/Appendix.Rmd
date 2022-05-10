@@ -911,6 +911,9 @@ load( "../../data/diffTF_wochr12.RData")
 #diffTF_wochr12_big: tibble containing results from running diffTF package without reads from chromosome 12 for the Rendeiro et al dataset. 
 load( "../../data/diffTF_wochr12_big.RData")
 
+#diffTF_Beekman: tibble containing results from running diffTF package on Beekman data
+load( "../../data/diffTF_Beekman.RData")
+
 #BIGCLL52.SPIB.output: tibble containing Lof2FCs and p values for each Spi-B binding site
 load("../../data/BIGCLL52.SPIB.output.RData")
 
@@ -3234,7 +3237,7 @@ Volcano plot shows change in inferred TF activity (x-axis) against transformed p
 
 \newpage
 
-```{r S15, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 6, fig.width = 10, eval=FALSE}
+```{r S15, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 6, fig.width = 10, eval=TRUE}
 
 plotTab <- diffTF_Beekman %>%  filter(!is.na(pvalueAdj))
 
@@ -3243,10 +3246,10 @@ plotTab$TF <- gsub("SPI1", "PU1", plotTab$TF)
 
 atac.plot =
   ggplot(data = plotTab,
-         aes(x = weighted_meanDifference, y = -log10(pvalueAdj+0.000001))) +
+         aes(x = weighted_meanDifference, y = -log10(pvalueAdj))) +
 
-  geom_point(aes(alpha=0.4, colour = ifelse(-log10(pvalueAdj) > 2,"black","grey")),size=3) +
-  geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 4&abs(weighted_meanDifference)>0.15,
+  geom_point(aes(alpha=0.4, colour = ifelse(-log10(pvalueAdj) > 1.3,"black","grey")),size=3) +
+  geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 1.3&abs(weighted_meanDifference)>0.1,
                                     as.character(TF),''),
                        colour=ifelse(weighted_meanDifference>0,
                                      palreds[1],
@@ -3256,7 +3259,7 @@ atac.plot =
   t2 +
   ggtitle("Trisomy 12 v Non-trisomy 12") +
   xlab("Change in inferred TF activity") +
-  guides(color="none", alpha="none") +
+  guides(color="none", alpha="none") 
   scale_y_continuous("BH-transformed p-value", 
                      breaks=seq(0,10,1),
                      labels=math_format(expr=10^.x)(-seq(0,10,1)))
@@ -3266,11 +3269,11 @@ atac.plot
 rm(plotTab)
 
 #check number of upregulated TFs
-# nrow(filter(diffTF_small, weighted_meanDifference>0, pvalueAdj <0.05))
+#nrow(filter(diffTF_Beekman, weighted_meanDifference>0, pvalueAdj <0.05))
 ```
 
 ## Appendix Figure 15. ATACseq comparing trisomy 12 and non-trisomy 12 CLL samples.
-Volcano plot shows change in inferred TF activity (x axis) against transformed p-values (y axis) for  trisomy 12 (n = XXX) versus non-trisomy 12 samples (n = XXX). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in analytic mode and transformed by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.15, and transformed p-value < 0.01. Data from Beekman et al. 2018^4^. 
+Volcano plot shows change in inferred TF activity (x-axis) against transformed p-values (y-axis) for  trisomy 12 (n = 13) versus non-trisomy 12 samples (n = 87). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in permutation mode and transformed by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.1, and transformed p-value < 0.05. Data from Beekman et al. 2018^4^. 
 
 \newpage
 
