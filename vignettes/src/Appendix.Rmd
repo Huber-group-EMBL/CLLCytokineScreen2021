@@ -672,7 +672,7 @@ lassoPlot3Appendix <- function(lassoOut, geneMatrix, viabMatrix, freqCut = 1, co
                   panel.grid.minor=element_blank()) + 
             xlab("Viability z-score") + 
             ylab("") +
-            scale_fill_gradient2(low = palblues[1],high = palreds[8], mid = "white",guide="none")
+            scale_fill_gradient2(low = palblues[1],high = palreds[8], mid = "white", name="Z-score")
             
         
 
@@ -914,7 +914,7 @@ load( "../../data/diffTF_wochr12_big.RData")
 #diffTF_Beekman: tibble containing results from running diffTF package on Beekman data
 load( "../../data/diffTF_Beekman.RData")
 
-#BIGCLL52.SPIB.output: tibble containing Lof2FCs and p values for each Spi-B binding site
+#BIGCLL52.SPIB.output: tibble containing Lof2FCs and p-values for each Spi-B binding site
 load("../../data/BIGCLL52.SPIB.output.RData")
 
 #ChIPseq data for SPIB and PU1 binding in OCILY3 cell line (downloaded from GEO)
@@ -1507,7 +1507,7 @@ term2genesetdatabase <- rbind(kegg, reactome) %>% dplyr::select(term, genesetDat
 colnames(term2genesetdatabase) <- c("term", "name")
 
 ##SPIB
-#run over-representation test, and extract all results and p values:
+#run over-representation test, and extract all results and p-values:
 #NB Bg ratio = number of genes in set / number of unique genes in term2gene, 
 #NB Gene ratio = number of SPIB targets in gene set being tested / total number of SPIB targets that overlap with genes in term to gene
 
@@ -1516,7 +1516,7 @@ spibRes <- enricher(unique(as.data.frame(peakAnno)$geneId),
                     TERM2GENE=term2gene, 
                     #assign description for each term, as its database source
                     TERM2NAME = term2genesetdatabase, 
-                    #no cutoffs on reported results, we want to see all results and p values 
+                    #no cutoffs on reported results, we want to see all results and p-values 
                     minGSSize = 0,
                     maxGSSize = 1000,
                     pvalueCutoff = 1, 
@@ -1537,7 +1537,7 @@ colnames(resTab.spib) <- c("ID", "genesetDatabase", "pvalue_SPIB", "adjpvalue_SP
 
 resTab <- resTab.spib
 
-#where count and p value is NA, put a 0 / 1 (ie there were no SPIB target genes in the set)
+#where count and p-value is NA, put a 0 / 1 (ie there were no SPIB target genes in the set)
 resTab$count_SPIB[is.na(resTab$count_SPIB)] <- 0
 resTab$pvalue_SPIB[is.na(resTab$pvalue_SPIB)] <- 1
 resTab$adjpvalue_SPIB[is.na(resTab$adjpvalue_SPIB)] <- 1
@@ -1545,7 +1545,7 @@ resTab$adjpvalue_SPIB[is.na(resTab$adjpvalue_SPIB)] <- 1
 #select columns of interest to show in figure
 resTab <- dplyr::select(resTab, ID, genesetDatabase, genesetSize,  count_SPIB, pvalue_SPIB, adjpvalue_SPIB)
 
-#adjust decimal places of p values
+#adjust decimal places of p-values
 resTab$adjpvalue_SPIB <- round(resTab$adjpvalue_SPIB, digits = 3)
 resTab$pvalue_SPIB <- round(resTab$pvalue_SPIB, digits = 3)
 
@@ -1711,7 +1711,7 @@ term2gene <- rbind(kegg, reactome) %>% dplyr::select(term, gene)
 term2genesetdatabase <- rbind(kegg, reactome) %>% dplyr::select(term, genesetDatabase)
 colnames(term2genesetdatabase) <- c("term", "name")
 ##SPIB
-#run over-representation test, and extract all results and p values:
+#run over-representation test, and extract all results and p-values:
 #NB Bg ratio = number of genes in set / number of unique genes in term2gene, 
 #NB Gene ratio = number of SPIB targets in gene set being tested / total number of SPIB targets that overlap with genes in term to gene
 spibRes <- enricher(unique(as.data.frame(peakAnno.spib.1kb)$geneId), 
@@ -1719,7 +1719,7 @@ spibRes <- enricher(unique(as.data.frame(peakAnno.spib.1kb)$geneId),
                     TERM2GENE=term2gene, 
                     #assign description for each term, as its database source
                     TERM2NAME = term2genesetdatabase, 
-                    #no cutoffs on reported results, we want to see all results and p values 
+                    #no cutoffs on reported results, we want to see all results and p-values 
                     minGSSize = 0,
                     maxGSSize = 1000,
                     pvalueCutoff = 1, 
@@ -1733,14 +1733,14 @@ resTab.spib <-
   dplyr::select(ID, Description, pvalue, p.adjust, Count, genesetSize)
 colnames(resTab.spib) <- c("ID", "genesetDatabase", "pvalue_SPIB", "adjpvalue_SPIB","count_SPIB", "genesetSize")
 resTab <- resTab.spib
-#where count and p value is NA, put a 0 / 1 (ie there were no SPIB target genes in the set)
+#where count and p-value is NA, put a 0 / 1 (ie there were no SPIB target genes in the set)
 resTab$count_SPIB[is.na(resTab$count_SPIB)] <- 0
 resTab$adjpvalue_SPIB[is.na(resTab$adjpvalue_SPIB)] <- 1
 resTab$pvalue_SPIB[is.na(resTab$pvalue_SPIB)] <- 1
 
 #select columns of interest to show in figure
 resTab <- dplyr::select(resTab, ID, genesetDatabase, genesetSize,  count_SPIB, pvalue_SPIB, adjpvalue_SPIB)
-#adjust decimal places of p values
+#adjust decimal places of p-values
 resTab$adjpvalue_SPIB <- round(resTab$adjpvalue_SPIB, digits = 3)
 resTab$pvalue_SPIB <- round(resTab$pvalue_SPIB, digits = 3)
 
@@ -2430,7 +2430,7 @@ wrap_elements(CLLPD_Lasso_U_patients)+theme(plot.tag=element_text(size = 20))+
 ```
 
 ## Appendix Figure 6. The relationship between CLL Proliferative Drive (as defined by Lu et al. (2021)^2^) and microenvironmental response.
-**(A)** Beeswarm-boxplot of CLL-PD values stratified by cluster. P-values are from Student's t-tests (C1: n=57; C2:n=20; C3: n=29; C4: n=40). **(B-D)** Predictor profiles depicting relationship between CLL-PD and stimulus response. Stimuli that were associated to the size of CLL-PD were identified with Gaussian linear modelling with L1-penalty, using viability z scores for each stimulus as feature matrix, and CLL-PD values as response matrix (n=146). Predictor profiles show  z scores of logarithm of relative viability for each stimuli associated with CLL-PD, bar plot on left shows size of coefficient assigned to each stimulus and scatter plot below indicates CLL-PD values for same patient sample. Coefficients are mean of 30 bootstrapped model fits, plotted when selected in >75% of fits.  **(C)** shows model outputs for  IGHV-M only samples   (n=80) and **(D)**  for IGHV-U only  samples (n=65). **(E & F)**  Exemplary scatter plots split by IGHV mutation status shown for Resiquimod **(E)** and IL1ß **(F)** (IGHV-M: n=80, IGHV-U: n=65). CLL-PD on x-axis and the logarithm of relative viability after microenvironmental stimulation on y-axis. Pearson correlation coefficients are shown with p-values. 
+**(A)** Beeswarm-boxplot of CLL-PD values stratified by cluster. P-values are from Student's t-tests (C1: n=57; C2:n=20; C3: n=29; C4: n=40). **(B-D)** Predictor profiles depicting relationship between CLL-PD and stimulus response. Stimuli that were associated to the size of CLL-PD were identified with Gaussian linear modelling with L1-penalty, using viability z-scores for each stimulus as feature matrix, and CLL-PD values as response matrix (n=146). Predictor profiles show  z-scores of logarithm of relative viability for each stimuli associated with CLL-PD, bar plot on left shows size of coefficient assigned to each stimulus and scatter plot below indicates CLL-PD values for same patient sample. Coefficients are mean of 30 bootstrapped model fits, plotted when selected in >75% of fits.  **(C)** shows model outputs for  IGHV-M only samples   (n=80) and **(D)**  for IGHV-U only  samples (n=65). **(E & F)**  Exemplary scatter plots split by IGHV mutation status shown for Resiquimod **(E)** and IL1ß **(F)** (IGHV-M: n=80, IGHV-U: n=65). CLL-PD on x-axis and the logarithm of relative viability after microenvironmental stimulation on y-axis. Pearson correlation coefficients are shown with p-values. 
 
 \newpage
 
@@ -2575,7 +2575,7 @@ tp <- theme(plot.tag=element_text(size = 30))
 
 \newpage
 ## Appendix Figure 7. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.
-Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 (C3: n=9; C4: n=12) **(A)**. X axis indicates log2 fold change values, calculated using the DESeq2 package, y axis gives corresponding -log10(adjusted p value). P-values transformed using BH method. Genes are labeled where p value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software. 
+Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 (C3: n=9; C4: n=12) **(A)**. X axis indicates log2 fold change values, calculated using the DESeq2 package, y axis gives corresponding -log10(transformed p-value). P-values transformed using BH method. Genes are labeled where p-value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software. 
 \newpage
 
 ```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 7, fig.width = 12, warning=F, message=F, cache=FALSE}
@@ -2650,7 +2650,7 @@ volPlot
 ```
 
 ## Appendix Figure 8. RNA-Sequencing of matched samples indicates differential gene expression between Cluster 1 and 2.
-Volcano plot of differentially expressed genes between Cluster 1 and Cluster 2 (C1: n=17; C2: n=11). X axis indicates log2 fold change values, calculated using the DESeq package, y axis gives corresponding -log10(adjusted p-value). P-values transformed using BH method. Genes are labeled where p-value<0.05.
+Volcano plot of differentially expressed genes between Cluster 1 and Cluster 2 (C1: n=17; C2: n=11). X axis indicates log2 fold change values, calculated using the DESeq package, y axis gives corresponding -log10(transformed p-value). P-values transformed using BH method. Genes are labeled where p-value<0.05.
 
 \newpage
 
@@ -3129,7 +3129,6 @@ CR_volcanoplot <-
   theme_minimal()+
   scale_x_continuous(breaks = c(-0.3,0,0.3))+
   xlab("Pearson Correlation Coefficient")+
-  # ylab("-log10(BH adjusted p-value)")+
   t2+
   scale_y_continuous("BH-transformed p-value", 
                      breaks=seq(0,10,1),
@@ -3212,7 +3211,6 @@ atac.plot =
   ggtitle("Trisomy 12 v Non-Trisomy 12") +
   xlab("Change in inferred TF activity") +
   guides(color="none", alpha="none") +
-  # scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"))+
   coord_cartesian(ylim = c(0,6.5))+
   scale_y_continuous("BH-transformed p-value", 
                      breaks=seq(0,10,3),
@@ -3344,7 +3342,7 @@ plot_annotation(tag_levels = "A", theme = theme(title=element_text(size = 20)))
 ```
 
 ## Appendix Figure 16. ATACseq comparing trisomy 12 and non-trisomy 12 CLL samples, independent of third copy of chromosome 12
-Volcano plot shows change in inferred TF activity (x axis) against transformed p-values (y axis) for  trisomy 12 versus non-trisomy 12 samples, for (A) the 2 versus 2 comparison and (B) the 9 versus 42 comparison based on the data from Rendeiro et al. 2016^3^.  Input peak files supplied to diffTF did not include peaks on chromosome 12. p-values are obtained through diffTF in (A) analytic mode and (B) permutation mode, adjusted by the Benjamini-Hochberg procedure. TFs are labelled in (A) where absolute weighted mean difference > 0.15, and transformed p-value < 0.01 and in (B) where absolute weighted mean difference > 0.05, and transformed p-value < 0.1.
+Volcano plot shows change in inferred TF activity (x axis) against transformed p-values (y axis) for  trisomy 12 versus non-trisomy 12 samples, for (A) the 2 versus 2 comparison and (B) the 9 versus 42 comparison based on the data from Rendeiro et al. 2016^3^.  Input peak files supplied to diffTF did not include peaks on chromosome 12. p-values are obtained through diffTF in (A) analytic mode and (B) permutation mode, transformed by the Benjamini-Hochberg procedure. TFs are labelled in (A) where absolute weighted mean difference > 0.15, and transformed p-value < 0.01 and in (B) where absolute weighted mean difference > 0.05, and transformed p-value < 0.1.
 
 
 \newpage
@@ -3416,7 +3414,7 @@ ggplot(aes(start/10^6, l2FC))+
 ```
 
 ## Appendix Figure 17. Chromosomal locations of Spi-B motifs that show differential accessibility between trisomy 12 and non-trisomy 12 CLL. 
-Log2 fold changes are plotted (y axis) for Spi-B motifs that show an absolute Log2 fold change > 1 and a p value < 0.1, as calculated using the diffTF package for all Spi-B motif locations, (motif defined in the HOCOMOCO database). Data shown is the 9 (trisomy 12 CLL) versus 42 (non-trisomy 12 CLL) comparison based on the data from Rendeiro et al. 2016^3^.
+Log2 fold changes are plotted (y axis) for Spi-B motifs that show an absolute Log2 fold change > 1 and a p-value < 0.1, as calculated using the diffTF package for all Spi-B motif locations, (motif defined in the HOCOMOCO database). Data shown is the 9 (trisomy 12 CLL) versus 42 (non-trisomy 12 CLL) comparison based on the data from Rendeiro et al. 2016^3^.
 
 
 
@@ -3532,7 +3530,7 @@ for(x in drug.list){
     fit.lm <- lm(Viability ~ treatment_drug * treatment_cytokine * PatientID, modelTab)
     fit[[nam]] <- fit.lm
 
-    #extract coefficients and p values and put into a dataframe
+    #extract coefficients and p-values and put into a dataframe
     coeffdf <- summary(fit.lm)$coefficients[,1] %>% as.data.frame()
 
     #process coeffdf
