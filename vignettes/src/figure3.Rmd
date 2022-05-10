@@ -406,7 +406,7 @@ lassoPlot <- function(lassoOut, geneMatrix, viabMatrix, freqCut = 1, coefCut = 0
                 axis.title.x=element_text(size=14), 
                 panel.border=element_rect(colour="dimgrey", size=0.1),
                 panel.background=element_rect(fill="white")) +
-      xlab("Log(Viability) for each sample")
+      xlab("Logarithm of relative viability for each sample")
     
     
     #Assemble all the plots togehter
@@ -700,7 +700,7 @@ viabMatrix <-
   #select patients with complete meta data 
   dplyr::filter(df,
                 PatientID %in% row.names(geneMatrix.complete)) %>%
-  #select cytokine, patient and log(viability values only)
+  #select cytokine, patient and log( viability values only)
   dplyr::select(Cytokine, 
                 Log, 
                 PatientID) %>% 
