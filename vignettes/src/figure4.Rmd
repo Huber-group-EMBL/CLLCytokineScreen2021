@@ -212,6 +212,7 @@ Fig4B =
   scale_x_discrete(labels=c("0"="WT",
                             "1"="trisomy 12"))+
   xlab("") +
+  ggtitle("IL4")+
   ylab("Logarithm of relative viability") +
   coord_cartesian( clip="off") +
   t2 +
