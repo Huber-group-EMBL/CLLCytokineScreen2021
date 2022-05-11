@@ -460,7 +460,7 @@ lassoPlot <- function(lassoOut, geneMatrix, viabMatrix, freqCut = 1, coefCut = 0
 
 ### Figure 3A
 Overview of t test p values to identify genetic features that affect responses to stimuli.     
-Here we test for associations between stimulus viability assay results and genomic features by Student’s t-tests (two-sided, with equal variance). We test somatic mutations (aggregated at the gene level), copy number aberrations and IGHV status. We restrict the analysis to features that are present in at least 3 patient samples (63 features). p-values are adjusted for multiple testing by applying the Benjamini-Hochberg procedure.     
+Here we test for associations between stimulus viability assay results and genomic features by Student’s t-tests (two-sided, with equal variance). We test somatic mutations (aggregated at the gene level), copy number aberrations and IGHV status. We restrict the analysis to features that are present in at least 3 patient samples (63 features). p-values are transformed using the Benjamini-Hochberg procedure.     
 
 ```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 10, fig.width = 10, message = FALSE, warning = FALSE}
 ##################### List of mutations with >2 postive cases #############################
@@ -591,7 +591,7 @@ Fig3A<-  ggplot(dplyr::filter(p_values, adj.p.value>fdr),
   guides(colour = guide_legend(nrow=4, title = "Mutations"), 
          shape = "none") +
   scale_color_manual(name = "Mutations", values = c(colors, "black"), labels=c("IGHV.status"="IGHV status", "del9p"="del(9p)", "trisomy12"="trisomy 12", "gain17q"="gain(17q)", "gain2p"="gain(2p)","gain19p"="gain(19p)","gain19q"="gain(19q)", "del7q"="del(7q)","del9q"="del(9q)", "del4p"= "del(4p)", "SPEN"="SPEN", "del11q"="del(11q)", "del1q" = "del(1q)", "Complex_Karyotype3"="Complex Karyotype")) +
-  scale_y_continuous(expression("BH-adjusted  "* italic(p)*"-value"), 
+  scale_y_continuous(expression("BH-transformed  "* italic(p)*"-value"), 
                      breaks=seq(0,10,5),
                      labels=math_format(expr=10^.x)(-seq(0,10,5)))+
   scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))
@@ -860,7 +860,7 @@ p_values %<>%
   guides(colour = guide_legend(nrow=3, title = "Mutations"), 
          shape = guide_legend(ncol = 1)) +
   scale_color_manual(name = "Mutations", values = colors, labels=c("IGHV.status"="IGHV status", "del9p"="del(9p)", "trisomy12"="trisomy 12", "gain17q"="gain(17q)", "gain2p"="gain(2p)","gain19p"="gain(19p)","gain19q"="gain(19q)", "del7q"="del(7q)","del9q"="del(9q)", "del4p"= "del(4p)", "SPEN"="SPEN", "del11q"="del(11q)", "del1q" = "del(1q)")) +
-  scale_y_continuous(expression("BH-adjusted  "* italic(p)*"-value"), 
+  scale_y_continuous(expression("BH-transformed  "* italic(p)*"-value"), 
                      breaks=seq(0,10,5),
                      labels=math_format(expr=10^.x)(-seq(0,10,5)))+
   scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))
