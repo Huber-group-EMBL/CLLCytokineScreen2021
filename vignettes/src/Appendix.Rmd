@@ -2093,31 +2093,6 @@ OS_Clusters_KM+theme(plot.tag=element_text(size = 20))+
 Kaplan-Meier curves of time to first treatment with p-value from univariate Cox proportional hazards model between C3 and C4 **(A)** and overall survival with p-value from univariate Cox proportional hazards  model between C1&2 and C3&4 **(B)**. Median survival not reached.
 
 
-
-\newpage
-
-```{r S5, fig.path=plotDir, dev=c("png", "cairo_pdf"),fig.height=5}
-plotTab<-patMeta_Cluster %>% 
-  group_by(Cluster, Methylation_Cluster) %>% 
-  count() %>% 
-  group_by(Cluster) %>% 
-  mutate(freq = n / sum(n)) %>% 
-   plyr::ddply("Cluster", transform, label_ypos=cumsum(freq)) %>% 
-  mutate(Methylation_Cluster=factor(Methylation_Cluster, levels = c("HP", "IP", "LP"), labels = c("High programmed", "Intermediate programmed", "Low programmed")))
-
-
-  ggplot(plotTab, aes(x=Cluster, y=freq, fill=Methylation_Cluster))+
-  geom_bar(stat="identity")+
-  ylab("Relative incidence of\n DNA methylation profiles")+
-  scale_fill_manual(name = 'DNA Methylation Profile', values = Methylation_cluster)+
-  t2
-```
-
-## Appendix Figure 5. DNA Methylation profile of Clusters defined by response to microenvironmental stimuli
-Barplot of DNA methylation profiles in the four clusters of microenvironmental response. C1 and C2 show higher abundance of low programmed (LP) DNA Methylation profiles, while C3 and C4 show more highly programmed (HP) DNA methylation clusters (C1: n=77; C2:n=27; C3: n=38; C4: n=50). NA=Not available. 
-
-\newpage
-
 ```{r fig.height=5}
 
 plotTab<-CLL_PD %>% 
@@ -2405,7 +2380,7 @@ Res_Scatterplot<-left_join(CLL_PD, filter(df, Drug=="DMSO"), by = "PatientID") %
 ```
 
 
-```{r S6, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=13, fig.width=13}
+```{r S5, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=13, fig.width=13}
 
 design1<-"
   15
@@ -2429,8 +2404,33 @@ wrap_elements(CLLPD_Lasso_U_patients)+theme(plot.tag=element_text(size = 20))+
   
 ```
 
-## Appendix Figure 6. The relationship between CLL Proliferative Drive (as defined by Lu et al. (2021)^2^) and microenvironmental response.
+## Appendix Figure 5. The relationship between CLL Proliferative Drive (as defined by Lu et al. (2021)^2^) and microenvironmental response.
 **(A)** Beeswarm-boxplot of CLL-PD values stratified by cluster. P-values are from Student's t-tests (C1: n=57; C2:n=20; C3: n=29; C4: n=40). **(B-D)** Predictor profiles depicting relationship between CLL-PD and stimulus response. Stimuli that were associated to the size of CLL-PD were identified with Gaussian linear modelling with L1-penalty, using viability z-scores for each stimulus as feature matrix, and CLL-PD values as response matrix (n=146). Predictor profiles show  z-scores of logarithm of relative viability for each stimuli associated with CLL-PD, bar plot on left shows size of coefficient assigned to each stimulus and scatter plot below indicates CLL-PD values for same patient sample. Coefficients are mean of 30 bootstrapped model fits, plotted when selected in >75% of fits.  **(C)** shows model outputs for  IGHV-M only samples   (n=80) and **(D)**  for IGHV-U only  samples (n=65). **(E & F)**  Exemplary scatter plots split by IGHV mutation status shown for Resiquimod **(E)** and IL1ß **(F)** (IGHV-M: n=80, IGHV-U: n=65). CLL-PD on x-axis and the logarithm of relative viability after microenvironmental stimulation on y-axis. Pearson correlation coefficients are shown with p-values. 
+
+\newpage
+
+
+\newpage
+
+```{r S6, fig.path=plotDir, dev=c("png", "cairo_pdf"),fig.height=5}
+plotTab<-patMeta_Cluster %>% 
+  group_by(Cluster, Methylation_Cluster) %>% 
+  count() %>% 
+  group_by(Cluster) %>% 
+  mutate(freq = n / sum(n)) %>% 
+   plyr::ddply("Cluster", transform, label_ypos=cumsum(freq)) %>% 
+  mutate(Methylation_Cluster=factor(Methylation_Cluster, levels = c("HP", "IP", "LP"), labels = c("High programmed", "Intermediate programmed", "Low programmed")))
+
+
+  ggplot(plotTab, aes(x=Cluster, y=freq, fill=Methylation_Cluster))+
+  geom_bar(stat="identity")+
+  ylab("Relative incidence of\n DNA methylation profiles")+
+  scale_fill_manual(name = 'DNA Methylation Profile', values = Methylation_cluster)+
+  t2
+```
+
+## Appendix Figure 6. DNA Methylation profile of Clusters defined by response to microenvironmental stimuli
+Barplot of DNA methylation profiles in the four clusters of microenvironmental response. C1 and C2 show higher abundance of low programmed (LP) DNA Methylation profiles, while C3 and C4 show more highly programmed (HP) DNA methylation clusters (C1: n=77; C2:n=27; C3: n=38; C4: n=50). NA=Not available. 
 
 \newpage
 
@@ -3415,8 +3415,6 @@ ggplot(aes(start/10^6, l2FC))+
 
 ## Appendix Figure 17. Chromosomal locations of Spi-B motifs that show differential accessibility between trisomy 12 and non-trisomy 12 CLL. 
 Log2 fold changes are plotted (y axis) for Spi-B motifs that show an absolute Log2 fold change > 1 and a p-value < 0.1, as calculated using the diffTF package for all Spi-B motif locations, (motif defined in the HOCOMOCO database). Data shown is the 9 (trisomy 12 CLL) versus 42 (non-trisomy 12 CLL) comparison based on the data from Rendeiro et al. 2016^3^.
-
-
 
 \newpage
 
