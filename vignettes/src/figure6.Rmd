@@ -729,7 +729,7 @@ coeff.long.mat %>%
 
 ```
 
-```{r Fig6B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 9, fig.height = 18, warning=FALSE}
+```{r Fig6A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 9, fig.height = 18, warning=FALSE}
 
 #Plot heatmap
 coeff.long.mat.ordered <-  
@@ -818,7 +818,7 @@ heatMaps <- heatMaps[!is.na(heatMaps)]
 ```
 
 Plot predictor profile for Fludarabine + CpG ODN 
-```{r Fig6A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 10, fig.height = 10}
+```{r Fig6B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 10, fig.height = 10}
 
 Fig6B <- grid.arrange(grobs = heatMaps["Fludarabine + CpG ODN"], ncol = 1)
 
