@@ -28,7 +28,6 @@ library(genomation)
 library(DESeq2)
 library(ggbeeswarm)
 library(ggpubr)
-library(ggplot2)
 library(magrittr)
 library(gtable)
 library(glmnet)
@@ -38,7 +37,6 @@ library(gridExtra)
 library(ggrepel)
 library(broom)
 library(plyr)
-library(dplyr)
 library(tidyverse)
 
 ```
@@ -462,7 +460,7 @@ lassoPlot <- function(lassoOut, geneMatrix, viabMatrix, freqCut = 1, coefCut = 0
 Overview of t test p values to identify genetic features that affect responses to stimuli.     
 Here we test for associations between stimulus viability assay results and genomic features by Student’s t-tests (two-sided, with equal variance). We test somatic mutations (aggregated at the gene level), copy number aberrations and IGHV status. We restrict the analysis to features that are present in at least 3 patient samples (63 features). p-values are transformed using the Benjamini-Hochberg procedure.     
 
-```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 10, fig.width = 10, message = FALSE, warning = FALSE}
+```{r Fig3A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 10, fig.width = 10, message = FALSE, warning = FALSE}
 ##################### List of mutations with >2 postive cases #############################
 selected_mutations <- 
   patMeta %>% 
