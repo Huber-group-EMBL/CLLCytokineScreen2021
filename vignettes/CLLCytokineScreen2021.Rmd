@@ -18,7 +18,7 @@ In this vignette we present the complete analysis of the 2021 Drug-Cytokine Comb
 
 <br />
 
-**Combinatorial drug-microenvironment interaction mapping reveals cell-extrinsic drug resistance mechanisms and clinically relevant patient subgroups in CLL**
+**Drug-microenvironment perturbations reveal resistance mechanisms and prognostic subgroups in CLL**
 
 _Peter-Martin Bruch\*, Holly A. R. Giles\*, Carolin Kolb, Sophie A. Herbst, Tina Becirovic, Tobias Roider, Junyan Lu, Sebastian Scheinost, Lena Wagner, Jennifer Huellein, Ivan Berest, Mark Kriegsmann, Katharina Kriegsmann, Christiane Zgorzelski, Peter Dreger, Judith B. Zaugg, Carsten Müller-Tidow, Thorsten Zenz, Wolfgang Huber\*, Sascha Dietrich\*_
 <br />
