@@ -40,6 +40,7 @@ inst/figs/*.png
 inst/figs/*.pdf
 inst/shiny/data_for_shiny/
 inst/figs/
+vignettes/revisionWork
 
 #Specific Files#
 ################
