@@ -2435,7 +2435,7 @@ Barplot of DNA methylation profiles in the four clusters of microenvironmental r
 \newpage
 
 
-```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 14, fig.width = 12, warning=F, message=F, cache=FALSE}
+```{r S7, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 14, fig.width = 12, warning=F, message=F, cache=FALSE}
 
 cytSeq <- dds_smp
 
@@ -2578,7 +2578,7 @@ tp <- theme(plot.tag=element_text(size = 30))
 Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 (C3: n=9; C4: n=12) **(A)**. X axis indicates log2 fold change values, calculated using the DESeq2 package, y axis gives corresponding -log10(transformed p-value). P-values transformed using BH method. Genes are labeled where p-value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software. 
 \newpage
 
-```{r, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 7, fig.width = 12, warning=F, message=F, cache=FALSE}
+```{r S8, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 7, fig.width = 12, warning=F, message=F, cache=FALSE}
 
 cytSeq <- dds_smp
 
@@ -2773,7 +2773,7 @@ breaks <- breaks %>% `names<-`(
 
 
 
-```{r S7, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=14.5, fig.height=11, warning = FALSE}
+```{r S9, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=14.5, fig.height=11, warning = FALSE}
 Cluster_for_Heatmap<-patMeta_Cluster %>% select(PatientID, Cluster) %>%
   column_to_rownames("PatientID") %>%
   as.data.frame()
@@ -2935,7 +2935,7 @@ wrap_elements(arrangeGrob(C4_drug_heatmap[[4]]))+
 ## Appendix Figure 9. Drug response between clusters.
 Heatmap showing the logarithm of relative viability after drug treatment. Rows represent drug treatments and columns represent primary CLL samples (n=192), annotated for their genetic background, sex and pretreatment status above. Red values indicate increased viability upon treatment, blue indicates decreased viability.
 
-```{r S8, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=11, fig.height=12}
+```{r S10, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=11, fig.height=12}
 
 Drug_order<-c("BAY-11-7085","Fludarabine","Everolimus","Nutlin-3a","Idelalisib","Ralimetinib","Ibrutinib","I-BET 762","PRT062607","Pyridone-6","Selumetinib","Luminespib")
   
@@ -2985,7 +2985,7 @@ Logarithm of the relative viability after treatment with drugs, faceted by clust
 
 
 
-```{r, fig.height=6, fig.width=8}
+```{r S11, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=6, fig.width=8}
 
 df_patMeta %>% 
   left_join(Heatmap_clusters, by = "PatientID") %>% 
@@ -3145,7 +3145,7 @@ Volcano plot depicts Pearson correlation coefficients against corresponding BH-t
 
 \newpage
 
-```{r S11,fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=12, fig.height=4, message=FALSE, warning=FALSE}
+```{r S13,fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=12, fig.height=4, message=FALSE, warning=FALSE}
 load("../../data/fig3_data_for_lassoplots.RData")
 
 
@@ -3809,89 +3809,5 @@ Natural logarithm of the relative viability after treatment with IL4 in combinat
 
 knitr::knit_exit()
 
-```
-
-```{r, fig.height=12, fig.width=7, eval=FALSE}
-
-load("C:/Users/Peter Bruch/Documents/GitHub/CLL_Proteomics/multiomics_MAE.RData")
-
-# metadata(multiomics_MAE)$gene_symbol_mapping %>%  filter(hgnc_symbol=="SPI1")
-
-# metadata(multiomics_MAE)$gene_symbol_mapping %>%  filter(hgnc_symbol=="SPIB")
-
-##### SPI1
-plot_Tab<-as_tibble(wideFormat(multiomics_MAE["SPI1",,"proteomics"] )) %>% 
-left_join(select(as_tibble(wideFormat(multiomics_MAE[,,"RNAseq_norm"] )),primary, RNAseq_norm_ENSG00000066336), by="primary") %>%
-left_join(select(as_tibble(wideFormat(multiomics_MAE[,,"chrom_abber"])), primary, chrom_abber_trisomy12), by="primary") %>% 
-  mutate(chrom_abber_trisomy12=as.factor(chrom_abber_trisomy12))
-  
-p1<-filter(plot_Tab, !is.na(chrom_abber_trisomy12), !is.na(proteomics_SPI1)) %>% 
-       ggplot(aes(chrom_abber_trisomy12, proteomics_SPI1, fill=chrom_abber_trisomy12, group=chrom_abber_trisomy12)) +
-       geom_boxplot() + 
-        geom_beeswarm() + 
-       t2 +
-       ylab(paste("Protein abundance SPI1")) + 
-       xlab("trisomy 12") + 
-       scale_fill_manual(labels=c("no", "yes"), values = c(palreds[8],palblues[1])) +
-       theme( text = element_text(size=15)) +
-       stat_compare_means(method = "t.test", 
-                          aes(label = paste0("p = ", ..p.format..)), 
-                          label.x = 1.5, hjust=0.5,
-                          #comparisons = list(c("1", "0")), 
-                          size=4) + 
-       theme(legend.position = "top") + 
-  guides(fill = "none" )
-  
-  
-p2<-filter(plot_Tab, !is.na(chrom_abber_trisomy12), !is.na(RNAseq_norm_ENSG00000066336)) %>% 
-       ggplot(aes(chrom_abber_trisomy12, RNAseq_norm_ENSG00000066336, fill=chrom_abber_trisomy12, group=chrom_abber_trisomy12)) +
-       geom_boxplot() + 
-        geom_beeswarm() + 
-       t2 +
-       ylab(paste("Gene expression SPI1")) + 
-       xlab("trisomy 12") + 
-       scale_fill_manual(labels=c("no", "yes"), values = c( palreds[5],palblues[4])) +
-       theme( text = element_text(size=15)) +
-       stat_compare_means(method = "t.test", 
-                          aes(label = paste0("p = ", ..p.format..)), 
-                          label.x = 1.5, hjust=0.5,
-                          #comparisons = list(c("1", "0")), 
-                          size=4) + 
-       theme(legend.position = "top") + 
-  guides(fill = "none" )
-
-
-
-######### SPIB
-plot_Tab<-select(as_tibble(wideFormat(multiomics_MAE[,,"RNAseq_norm"] )),primary, RNAseq_norm_ENSG00000269404) %>%
-left_join(select(as_tibble(wideFormat(multiomics_MAE[,,"chrom_abber"])), primary, chrom_abber_trisomy12), by="primary") %>% 
-  mutate(chrom_abber_trisomy12=as.factor(chrom_abber_trisomy12))
-  
-
-p3<-filter(plot_Tab, !is.na(chrom_abber_trisomy12), !is.na(RNAseq_norm_ENSG00000269404)) %>% 
-       ggplot(aes(chrom_abber_trisomy12, RNAseq_norm_ENSG00000269404, fill=chrom_abber_trisomy12, group=chrom_abber_trisomy12)) +
-       geom_boxplot() + 
-        geom_beeswarm() + 
-       t2 +
-       ylab(paste("Gene expression SPIB")) + 
-       xlab("trisomy 12") + 
-       scale_fill_manual(labels=c("no", "yes"), values = c( palreds[5],palblues[4])) +
-       theme( text = element_text(size=15)) +
-       stat_compare_means(method = "t.test", 
-                          aes(label = paste0("p = ", ..p.format..)), 
-                          label.x = 1.5, hjust=0.5,
-                          #comparisons = list(c("1", "0")), 
-                          size=4) + 
-       theme(legend.position = "top") + 
-  guides(fill = "none" )
-
-tp <- theme(plot.tag=element_text(size = 30))
-
-
-p1+
-  p2+
-  p3+
-  plot_layout(nrow = 3)+
-  plot_annotation(tag_levels = "A")
 ```
 
