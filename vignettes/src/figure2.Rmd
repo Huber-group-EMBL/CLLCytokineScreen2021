@@ -21,8 +21,6 @@ Load libraries
 library(RColorBrewer)
 library(ggrepel)
 library(patchwork)
-library(ggplot2)
-library(tidyr)
 library(ggbeeswarm)
 library(magrittr)
 library(pheatmap)
@@ -36,7 +34,6 @@ library(ConsensusClusterPlus)
 library(clusterProfiler)
 library(org.Hs.eg.db)
 library(msigdbr)
-library(dplyr)
 library(tidyverse)
 
 ```
@@ -473,8 +470,9 @@ Fig2A
 
 ```
 
+
+Additional reduced version of Fig2A for synopsis image
 ```{r, fig.width=3, fig.height=1.5, eval=FALSE}
-# Reduced figure for synopsis image 
 
 Heatmap_Annotation_short<-select(Heatmap_Annotation, Cluster)
 
@@ -631,8 +629,7 @@ C3vsC4_p_mv
 ```
 
 
-Plot figure
-```{r, Fig2C, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=8, fig.height=6}
+```{r Fig2C, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=8, fig.height=6}
 
 ##Run survfit on TTT
 fit <- survfit(Surv(TTT, treatedAfter)~Cluster, clusters.surv)
@@ -824,7 +821,7 @@ coefTab <- lapply(names(coefList), function(d) {
 
 ```
 
-### Figure 2D
+
 ```{r}
 coefTab %>% 
   group_by(feature) %>% 
@@ -942,71 +939,8 @@ Coef_Perc_Table<-  patMeta_cl %>%
 
 ```
 
-<!-- ```{r, fig.height=8, fig.width=8} -->
-<!-- plotTab <- -->
-<!--   coefTab %>% -->
-<!--   dplyr::group_by(feature, cluster) %>%  -->
-<!--   dplyr::summarise(meanCoef = mean(coef), -->
-<!--                    sdCoef = sd(coef)) %>% -->
-<!--   dplyr::arrange(desc(meanCoef)) %>%  -->
-<!--   ungroup() -->
 
-<!-- #update labelling  -->
-<!-- plotTab <- plotTab %>% mutate(feature = ifelse(feature == "IGHV", "IGHV status",  -->
-<!--                                    ifelse(feature == "trisomy12", "trisomy 12",  -->
-<!--                                       ifelse(feature == "gain8q", "gain(8q)", feature)))) -->
-
-<!-- plotTab$feature <- factor(plotTab$feature, -->
-<!--                           levels=c("IGHV status",  -->
-<!--                                    "trisomy 12", -->
-<!--                                    "SF3B1",  -->
-<!--                                    "POT1", -->
-<!--                                    "ATM",  -->
-<!--                                    "TP53", -->
-<!--                                    "RAS/RAF", -->
-<!--                                    "gain(8q)")) -->
-
-
-<!-- plotTab_for_Perc<- plotTab %>%  -->
-<!--   mutate(feature=case_when(feature=="IGHV status"~"IGHV.mutated", -->
-<!--                            feature=="trisomy 12"~"trisomy12_positive", -->
-<!--                            feature=="POT1"~"POT1_mut", -->
-<!--                            feature=="SF3B1"~"SF3B1_mut", -->
-<!--                            feature=="gain(8q)"~"gain8q_positive", -->
-<!--                            feature=="RAS/RAF"~"RAS_RAF_mut", -->
-<!--                            feature=="TP53"~"TP53_mut", -->
-<!--                            feature=="ATM"~"ATM_mut")) -->
-
-<!-- Fig2D<-Coef_Perc_Table %>%  -->
-<!--   pivot_longer(IGHV.mutated:gain8q_positive, names_to = "feature", values_to = "Percentage" ) %>%  -->
-<!--   left_join(plotTab_for_Perc, by=c("Cluster"="cluster", "feature")) %>%  -->
-<!--   mutate(meanCoef=if_else(is.na(meanCoef), 0, meanCoef)) %>%  -->
-<!--   mutate(Cluster=factor(Cluster, levels = rev(c(1,2,3,4))), -->
-<!--          feature= factor(feature,  -->
-<!--                          levels=c("IGHV.mutated","trisomy12_positive","POT1_mut","SF3B1_mut", "gain8q_positive","RAS_RAF_mut","TP53_mut","ATM_mut"),  -->
-<!--                          labels=c("IGHV mutated","trisomy 12","POT1","SF3B1","gain8q","KRAS, BRAF or NRAS","TP53","ATM" ))) %>%  -->
-
-<!--   ggplot(aes(y=Cluster, x=feature))+ -->
-<!--   geom_tile(aes(fill=meanCoef),color = "grey")+ -->
-<!--    scale_fill_gradient2(low ="#003DA5",  mid ="white",  high = "#A6093D", midpoint = 0)+ -->
-<!--    geom_text(aes( label=paste0(Percentage, "%")), size=7 )+ -->
-<!--     t1+ -->
-<!--    t.leg+ -->
-<!--   theme(legend.position = "bottom",  -->
-<!--         legend.key.width = unit(1.7, "cm"), -->
-<!--          axis.text.x= element_text(size=fontsize+4, angle=45, vjust=1))+ -->
-<!--   labs(fill="Coefficient", x="Genetic alteration")+ -->
-<!--   guides(fill="none") -->
-
-<!--   Fig2D -->
-<!-- ``` -->
-
-### Alternative Fig 4D
-Multinomial regression with lasso penalisation to identify enrichment or depletion of genetic features within each cluster.
-
-
-
-```{r, fig.height=8, fig.width=8}
+```{r }
 # load("../../data/multinominal_regression_Clusters_Fig2D.RData" )
 
 
@@ -1145,7 +1079,7 @@ plotTab[which(plotTab$feature=="RAS/RAF"&plotTab$cluster=="4"),which(colnames(pl
 plotTab[which(plotTab$feature=="gain(8q)"&plotTab$cluster=="4"),which(colnames(plotTab)=="yposition")]<-0.5
 ```
 
-```{r, fig.height=6, fig.width=7}
+```{r Fig2D,  fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=6, fig.width=7}
 Fig2D<-   ggplot(plotTab, aes(x=feature, y=meanCoef))+ 
     geom_bar(stat= "identity", aes(fill = cluster))+
     geom_errorbar(aes(ymin = meanCoef - sdCoef, 
@@ -1346,7 +1280,6 @@ Fig2E
 
 
 ```
-
 
 
 
