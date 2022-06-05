@@ -2,7 +2,7 @@
 
 This repository contains data and executable scripts to reproduce the figures and analysis presented in the paper: 
 
-_**Combinatorial drug-microenvironment interaction mapping reveals cell-extrinsic drug resistance mechanisms and clinically relevant patient subgroups in CLL**_     
+_**Drug-microenvironment perturbations reveal resistance mechanisms and prognostic subgroups in CLLL**_     
 _Peter-Martin Bruch\*, Holly A. R. Giles\*, Carolin Kolb, Sophie A. Herbst, Tina Becirovic, Tobias Roider, Junyan Lu, Sebastian Scheinost, Lena Wagner, Jennifer Huellein, Ivan Berest, Mark Kriegsmann, Katharina Kriegsmann, Christiane Zgorzelski, Peter Dreger, Judith B. Zaugg, Carsten Müller-Tidow, Thorsten Zenz, Wolfgang Huber\*, Sascha Dietrich\*_
 
 \*These authors contributed equally to this work. 
