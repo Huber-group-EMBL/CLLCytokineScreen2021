@@ -793,6 +793,7 @@ Coef_Perc_Table<-  patMeta_cl %>%
 # Coef_Perc_Table
 ```
 
+<<<<<<< HEAD
 
 ```{r }
 # load("../../data/multinominal_regression_Clusters_Fig2D.RData" )
@@ -802,6 +803,101 @@ patMeta_cl %>%
   filter(!is.na(TP53)) %>% 
   count() %>% 
   ungroup() %>% 
+  filter(Cluster==4)
+#average remaining coefficients in dataframe for plotting
+#ie show all sig features, the cluster they predict, and the average coefficient 
+plotTab <-
+  coefTab %>%
+  dplyr::group_by(feature, cluster) %>% 
+  dplyr::summarise(meanCoef = mean(coef),
+                   sdCoef = sd(coef), 
+                   .groups="keep") %>%
+  dplyr::arrange(desc(meanCoef)) %>% 
+  ungroup()
+#update labelling 
+plotTab <- plotTab %>% mutate(feature = ifelse(feature == "IGHV", "IGHV mutated", 
+                                   ifelse(feature == "trisomy12", "trisomy 12", 
+                                      ifelse(feature == "gain8q", "gain(8q)", feature))))
+plotTab$feature <- factor(plotTab$feature,
+                          levels=c("IGHV mutated", 
+                                   "trisomy 12",
+                                   "SF3B1", 
+                                   "POT1",
+                                   "ATM", 
+                                   "TP53",
+                                   "RAS/RAF",
+                                   "gain(8q)"))
+Cluster.labs <- c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4")
+names(Cluster.labs) <- c(1, 2, 3, 4)
+```
+
+
+```{r, eval=FALSE}
+patMeta_cl %>% 
+  select(Cluster, IGHV.status) %>% 
+  group_by( Cluster, IGHV.status) %>% 
+  filter(!is.na(IGHV.status)) %>% 
+  count() %>% 
+  ungroup()
+patMeta_cl %>% 
+  select(Cluster, trisomy12) %>% 
+  group_by( Cluster, trisomy12) %>% 
+  filter(!is.na(trisomy12)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==2) 
+patMeta_cl %>% 
+  select(Cluster, SF3B1) %>% 
+  group_by( Cluster, SF3B1) %>% 
+  filter(!is.na(SF3B1)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==2) 
+patMeta_cl %>% 
+  select(Cluster, POT1) %>% 
+  group_by( Cluster, POT1) %>% 
+  filter(!is.na(POT1)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==3) 
+patMeta_cl %>% 
+  select(Cluster, ATM) %>% 
+  group_by( Cluster, ATM) %>% 
+  filter(!is.na(ATM)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==4) 
+=======
+
+```{r }
+# load("../../data/multinominal_regression_Clusters_Fig2D.RData" )
+>>>>>>> 1e64f538c637f62c254f8d7afae53e9f70f566d7
+patMeta_cl %>% 
+  select(Cluster, TP53) %>% 
+  group_by( Cluster, TP53) %>% 
+  filter(!is.na(TP53)) %>% 
+  count() %>% 
+  ungroup() %>% 
+<<<<<<< HEAD
+  filter(Cluster==4) 
+patMeta_cl %>% 
+  select(Cluster, RAS_RAF) %>% 
+  group_by( Cluster, RAS_RAF) %>% 
+  filter(!is.na(RAS_RAF)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==4) 
+patMeta_cl %>% 
+  select(Cluster, gain8q) %>% 
+  group_by( Cluster, gain8q) %>% 
+  filter(!is.na(gain8q)) %>% 
+  count() %>% 
+  ungroup() %>% 
+  filter(Cluster==4)
+```
+
+
+=======
   filter(Cluster==4)
 #average remaining coefficients in dataframe for plotting
 #ie show all sig features, the cluster they predict, and the average coefficient 
@@ -890,6 +986,7 @@ patMeta_cl %>%
 ```
 
 
+>>>>>>> 1e64f538c637f62c254f8d7afae53e9f70f566d7
 ```{r}
 plotTab$label<-NA
 plotTab[which(plotTab$feature=="IGHV mutated"&plotTab$cluster=="1"),which(colnames(plotTab)=="label")]<-"20/71"
@@ -1110,4 +1207,9 @@ Figure2
 ```{r appendix2}
 Sys.info()
 sessionInfo()
+<<<<<<< HEAD
 ```
+=======
+```
+
+>>>>>>> 1e64f538c637f62c254f8d7afae53e9f70f566d7
