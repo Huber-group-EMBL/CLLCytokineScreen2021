@@ -1,6 +1,29 @@
 ---
-title: 'Appendix'
-date: "9th November 2021"
+title: 'Drug-microenvironment perturbations reveal resistance mechanisms and prognostic subgroups in CLL'
+subtitle: 'Appendix'
+author: 
+- Peter-Martin Bruch\*,
+- Holly A. R. Giles\*,
+- Carolin Kolb ,
+- Sophie A. Herbst,
+- Tina Becirovic,
+- Tobias Roider,
+- Junyan Lu,
+- Sebastian Scheinost,
+- Lena Wagner,
+- Jennifer Huellein,
+- Ivan Berest,
+- Mark Kriegsmann,
+- Katharina Kriegsmann,
+- Christiane Zgorzelski,
+- Peter Dreger,
+- Judith B. Zaugg,
+- Carsten Müller-Tidow,
+- Thorsten Zenz,
+- Wolfgang Huber\*,
+- Sascha Dietrich\*
+- \* These authors contributed equally to this work.
+date: "14th April 2022"
 header-includes:
 - \usepackage{pdflscape}
 - \newcommand{\blandscape}{\begin{landscape}}
@@ -11,10 +34,12 @@ header-includes:
 
 output:
   pdf_document:
-      toc: no
+      toc: true
       extra_dependencies: ["float"]
       dev: cairo_pdf
       latex_engine: xelatex
+      includes:  
+          in_header: preamble.tex
   BiocStyle::html_document:
       code_folding: "hide"
       toc: yes
@@ -23,38 +48,26 @@ output:
       self_contained: yes
 ---
 
-# Drug-microenvironment mapping reveals resistance mechanisms and prognostic patient subgroups in CLL 
-_Peter-Martin Bruch\* , Holly A. R. Giles\*, Carolin Kolb, Sophie A. Herbst, Tina Becirovic, Tobias Roider, Junyan Lu, Sebastian Scheinost, Lena Wagner, Jennifer Huellein, Ivan Berest, Mark Kriegsmann, Katharina Kriegsmann, Christiane Zgorzelski, Peter Dreger, Judith B. Zaugg, Carsten Müller-Tidow, Thorsten Zenz, Wolfgang Huber\*, Sascha Dietrich\* _
-
-\* These authors contributed equally to this work. 
-
-
 \newpage
-
-**Appendix Methods**
-
-**Drug-stimulation profiling of samples treated with Ibrutinib, IL4 and AS1517499**   
-The experiment in Appendix Fig. 11, was performed as detailed in the main methods (Sample preparation and drug-stimulation profiling), but with the following adjustments. 16 independent CLL PBMC samples were used and luminescence was read out using a Perkin Elmer EnSight.
-
-**ATAC sequencing**  
-Peripheral blood was taken from 4 CLL patients and separated by Ficoll gradient (GE Healthcare), mononuclear cells were cryopreserved on liquid nitrogen. Samples were later thawed from frozen as previously described^1^ and MACS sorted for CD19 positive cells (Miltenyi autoMACS®). The cells were resuspended in RPMI (GIBCO, Cat.No. 21875–034), with the addition of 2mM glutamine (GIBCO, Cat.No. 25030–24), 1% Pen/Strep (GIBCO, Cat.No. 15140–122) and 10% pooled, heat–inactivated and sterile filtered human type AB male off the clot serum (PAN Biotech, Cat.No. P40–2701, Lot.No:P–020317). 5ml of cell suspension was cultured in 6–well plates (Greiner Bio–One Cat.No. 657160). After thawing, cells were incubated at 37°C and 5% CO2 for 6 hours in 0.2% DMSO. The final cell concentration was 2x10ˆ6 cells/ml. Cell viability and purity was assessed using FACS. All samples had a viability over 90% and over 95% of CD19+/CD5+/CD3– cells.
-
-**ATAC sequencing library generation**   
-ATACseq libraries were generated as described previously^2^. Cell preparation and transposition was performed according to the protocol, starting with 5x10ˆ4 cells per sample. Purified DNA was stored at −20°C until library preparation was performed. To generate multiplexed libraries, the transposed DNA was initially amplified for 5x PCR cycles using 2.5 μL each of 25 μM PCR Primer 1 and 2.5 μL of 25 μM Barcoded PCR Primer 2 (included in the Nextera index kit, Illumina, San Diego, CA, USA), 25 μL of NEBNext High-Fidelity 2x PCR Master Mix (New England Biolabs, Boston, Massachusetts) in a total volume of 50 μL. 5 μL of the amplified DNA was used to determine the appropriate number of additional PCR cycles using qPCR. Additional number of cycles was calculated through the plotting of the linear Rn versus cycle, and corresponds to one-third of the maximum fluorescent intensity. Finally, amplification was performed on the remaining 45 μL of the PCR reaction using the optimal number of cycles determined for each library by qPCR (max. 13 cycles in total). The amplified fragments were purified with two rounds of SPRI bead clean-up (1.4x). The size distribution of the libraries was assessed on Bioanalyzer with a DNA High Sensitivity kit (Agilent Technologies, Santa Clara, CA), concentration was measured with Qubit® DNA High Sensitivity kit in Qubit® 2.0 Flurometer (Life Technologies, Carlsbad, CA). Sequencing was performed on NextSeq 500 (Illumina, San Diego, CA, USA) using 75bp paired-end sequencing, generating approx. 450 million paired-reads per run, with an average of 55 million reads per sample.
-
-**ATAC sequencing analysis of transcription factor activity in trisomy 12 CLL**   
-Raw ATACseq data generated from our CLL samples were processed as described in Berest et al. 2019^3^, with the only exception that we did not use CG bias correction step. We then used analytical mode of diffTF with HOCOMOCO v10 database^4^ using the following parameters: minOverlap = 1; design formula = “~ Patient + trisomy 12 status”.
-
 <!-- Set up  -->
 ```{R setUp_supp, echo = FALSE}
-knitr::opts_chunk$set(echo = FALSE, message=FALSE, fig.pos = "!H", out.extra = "")
+
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, out.extra = "")
+
+```
+
+<!-- Set plot directory-->
+```{r plotDirApp, message=FALSE, warning=FALSE}
+
+plotDir = ifelse(exists(".standalone"), "", "../../inst/figs/")
+if(plotDir!="") if(!file.exists(plotDir)) dir.create(plotDir)
 
 ```
 
 <!-- Load Libraries -->
 ```{r loadLibraries_supp,  warning=FALSE}
-
 #Libraries
+library(survival)
 library(maxstat)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(ChIPseeker)
@@ -68,7 +81,6 @@ library(xlsx)
 library(fgsea)
 library(DESeq2)
 library(biobroom)
-library(survival)
 library(survminer)
 library(patchwork)
 library(data.table)
@@ -86,14 +98,16 @@ library(magrittr)
 library(gtable)
 library(glmnet)
 library(RColorBrewer)
+library(grid)
 library(gridExtra)
 library(cowplot)
 library(ggh4x)
 library(magick)
+library(cicero)
+
 ```
 
-
-<!-- Define Functions -->
+<!-- # Define Functions -->
 ```{r factor2ind_supp}
 
 factor2ind <- function(x, baseline)
@@ -348,7 +362,7 @@ lassoPlot <- function(lassoOut, geneMatrix, betaMatrix, freqCut = 1, coefCut = 0
                 axis.title = element_text(size=fontsize+4),
                 panel.border=element_rect(colour="dimgrey", size=0.1),
                 panel.background=element_rect(fill="white")) +
-  xlab(expression(paste("Patient-specific ", beta["int"])))
+  xlab(expression(paste("Patient-specific $\beta_{int}$ ")))
     
     
     #Assemble all the plots together
@@ -392,6 +406,365 @@ lassoPlot <- function(lassoOut, geneMatrix, betaMatrix, freqCut = 1, coefCut = 0
   }
   return(plotList)
 }
+
+```
+
+
+```{r lassoPlot3Appendix}
+
+
+lassoPlot3Appendix <- function(lassoOut, geneMatrix, viabMatrix, freqCut = 1, coefCut = 0.01) {
+  
+  plotList <- list()
+  
+  for (seaName in names(lassoOut)) { 
+    ###FOR THE BAR PLOT
+    #extract coefMat for each stimulus
+    barValue <- rowMeans(lassoOut[[seaName]]$coefMat)
+    #extract proportion of repeats for which each coefficient is significant
+    freqValue <- rowMeans(abs(sign(lassoOut[[seaName]]$coefMat)))
+    #filter out coefficients that don't meet freqCut and coefCut thresholds
+    barValue <- barValue[abs(barValue) >= coefCut & freqValue >= freqCut] 
+    #arrange the bar values in numerical order
+    barValue <- barValue[order(barValue)]
+    #if there are no sig coefficients, don't plot
+    if(length(barValue) == 0) {
+      plotList[[seaName]] <- NA
+      next
+    }
+
+    ###FOR THE HEATMAP AND SCATTER PLOT
+    #get feature matrix and response matrix to plot
+    allData <- geneMatrix
+    viabValue <- unlist(viabMatrix[seaName,])
+    
+    #get feature matrix for sig coefficients only
+    tabValue <- allData[, names(barValue),drop=FALSE]
+    ord <- order(viabValue)
+    viabValue <- viabValue[ord]
+    tabValue <- tabValue[ord, ,drop=FALSE]
+    sampleIDs <- rownames(tabValue)
+    tabValue <- as_tibble(tabValue)
+    tabValue$Sample <- sampleIDs
+    
+    
+    #annotate mutations by mutation, methylation or IGHV
+    matValue <- gather(tabValue, key = "Var",value = "Value", -Sample)
+    matValue$Type <- "mut"
+    
+    #for Methylation Cluster
+    matValue$Type[grep("Methylation",matValue$Var)] <- "meth"
+    
+    #for IGHV status
+    matValue$Type[grep("IGHV",matValue$Var)] <- "ighv"
+    
+    #change the scale of the value so that IGHV, Methylation and Mutation do not overlap
+    matValue[matValue$Type == "mut",]$Value = matValue[matValue$Type == "mut",]$Value + 10
+    matValue[matValue$Type == "meth",]$Value = matValue[matValue$Type == "meth",]$Value + 20
+    matValue[matValue$Type == "ighv",]$Value = matValue[matValue$Type == "ighv",]$Value + 30
+    
+    #change continuous to categorical
+    matValue$Value <- factor(matValue$Value,levels = sort(unique(matValue$Value)))
+    
+    #arrange order of heatmap
+    matValue$Var <- factor(matValue$Var, levels = names(barValue))
+    matValue$Sample <- factor(matValue$Sample, levels = names(viabValue))
+    
+    #change labels if mutation is a Doehner mutation 
+    matValue$Var <- plyr::revalue(matValue$Var, c("del11q" = "del(11q)", "del13q" = "del(13q)", "del17p" = "del(17p)", "trisomy12" = "trisomy 12")) 
+    
+
+   
+     #plot the heatmap 
+      #title
+    if(seaName=="TGF-b1"){
+      thetitle <- "TGF-\u03B21"     
+      } else {
+        if(seaName=='IL-4'){ 
+          thetitle <- "IL4"  
+          } else {
+            thetitle <- seaName
+          }
+        }
+    
+      p1 <- ggplot(matValue, aes(x=Sample, y=Var)) + 
+            geom_tile(aes(fill=Value), color = "white") + #ghost white
+            theme_bw()+
+            scale_y_discrete(expand=c(0,0)) + 
+            theme(axis.title.y = element_text( size=14),
+                  axis.title.x = element_text( size=14),
+                  axis.text.x=element_text(hjust=0, size=11),
+                  axis.text.y=element_text(hjust=0.1, size=11),
+                  axis.ticks=element_blank(),
+                  panel.border=element_rect(colour="gainsboro"),  
+                  plot.title=element_text(face="bold", size = 18, margin = margin(t = -5, b = 1)), 
+                  panel.background=element_blank(),
+                  panel.grid.major=element_blank(), 
+                  panel.grid.minor=element_blank()) + 
+            xlab("Mutation status for each patient") + 
+            ylab("") + 
+            scale_fill_manual(name="Mutated", 
+                              values=c(`10`= offwhite,  #WT
+                                       `11`="#373A36", #Mutant
+                                       `20`= offwhite, #LP
+                                       `20.5`= "#707372", #IP
+                                       `21` = "#A8A99E", #HP
+                                       `30` = offwhite, #IGHV-U
+                                       `31` = "#707372"), #IGHV-M
+                                       guide="none") + 
+            ggtitle(thetitle)
+        
+
+         
+    #Plot the bar plot on the left of the heatmap 
+    barDF = data.frame(barValue, nm=factor(names(barValue),levels=names(barValue)))
+    
+    p2 <- ggplot(data=barDF, aes(x=nm, y=barValue)) + 
+      geom_bar(stat="identity", 
+               fill=ifelse(barValue<0,
+                           palblues[6],palreds[8]), 
+               colour="black", 
+               size=0.3) + 
+      scale_x_discrete(expand=c(0,0.5)) + 
+      scale_y_continuous(expand=c(0,0)) + 
+      coord_flip(ylim=c(-0.3,0.35)) + #changed from min(barValue) and max(barValue)
+      theme(panel.grid.major=element_blank(), 
+            panel.background=element_blank(), 
+            axis.ticks.y = element_blank(),
+            panel.grid.minor = element_blank(), 
+            axis.text=element_text(size=11, angle = 45, hjust = 1, vjust = 1),
+                axis.title = element_text(size=14), 
+            panel.border=element_blank()) +
+      ylab("Size of predictor") + 
+      geom_vline(xintercept=c(0.5), 
+                 color="black", 
+                 size=0.6)
+    
+    #Plot the scatter plot under the heatmap
+    scatterDF = data.frame(X=factor(names(viabValue), 
+                                    levels=names(viabValue)), 
+                           Y=unlist(viabValue))
+    
+    p3 <- 
+      ggplot(scatterDF, aes(x=X, y=Y)) + 
+      geom_point(shape=21, 
+                     fill="dimgrey", 
+                     colour="#707372", #dark grey
+                     size=1.2) + 
+      theme_bw() +
+      theme(panel.grid.minor=element_blank(), 
+                panel.grid.major.x=element_blank(), 
+                #axis.title.x=element_blank(), 
+                axis.ticks.x=element_blank(), 
+                axis.text.y=element_text(size=11), 
+                axis.title.x=element_text(size=14), 
+                panel.border=element_rect(colour="dimgrey", size=0.1),
+                panel.background=element_rect(fill="white")) +
+      xlab("Logarithm of relative viability for each sample")
+    
+    
+    #Assemble all the plots togehter
+
+    # construct the gtable
+    wdths = c(0.2, 1.5, 0.2, 1.3*ncol(matValue), 1.5, 0.2)
+    hghts = c(0.2, 0.2, 0.0020*nrow(matValue), 0.3, 1, 0.2)
+    gt = gtable(widths=unit(wdths, "in"), heights=unit(hghts, "in"))
+    
+    ## make grobs
+    gg1 = ggplotGrob(p1)
+    gg2 = ggplotGrob(p2)
+    gg3 = ggplotGrob(p3)
+
+    ## fill in the gtable
+   
+    #HEATMAP
+    #5:1 = "PREDICTORS"
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "panel"), 3, 4) # add heatmap
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "panel"), 3, 4) #add legend
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "title"), 1, 4) #add title to plot
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "axis-l"), 3, 5) # variable names
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "xlab-b"), 2, 4) # axis title
+    
+    #BARPLOT
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "panel"), 3, 2) # add barplot
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "axis-b"), 4, 2) # y axis for barplot
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "xlab-b"), 2, 2) # y lab for barplot
+
+    
+    #SCATTER PLOT
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "panel"), 5, 4) # add scatterplot
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "xlab-b"), 6, 4) # x label for scatter plot
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "axis-l"), 5, 3) #  axis for scatter plot
+    
+   
+
+    
+    #plot
+    #grid.draw(gt)
+    plotList[[seaName]] <- gt
+  }
+  return(plotList)
+}
+
+
+```
+
+```{r lassoPlot_CLLPD}
+
+
+ lassoPlot_CLLPD<- function(lassoOut, viabMatrix, PDMatrix, freqCut = 1, coefCut = 0.01) {
+
+    
+    ###FOR THE BAR PLOT
+    #extract coefMat for each stimulus
+    barValue <- rowMeans(lassoOut$coefMat)
+    #extract proportion of repeats for which each coefficient is significant
+    freqValue <- rowMeans(abs(sign(lassoOut$coefMat)))
+    #filter out coefficients that don't meet freqCut and coefCut thresholds
+    barValue <- barValue[abs(barValue) >= coefCut & freqValue >= freqCut] 
+    #arrange the bar values in numerical order
+    barValue <- barValue[order(barValue)]
+    #if there are no sig coefficients, don't plot
+    if(length(barValue) == 0) {
+      
+      next
+    }
+
+    ###FOR THE HEATMAP AND SCATTER PLOT
+    #get feature matrix and response matrix to plot
+    allData <- viabMatrix
+    PDValue <- PDMatrix
+    
+    #get feature matrix for sig coefficients only
+    tabValue <- allData[, names(barValue),drop=FALSE]
+    ord <- order(PDValue)
+    PDValue <- PDValue[ord]
+    tabValue <- tabValue[ord, ,drop=FALSE]
+    sampleIDs <- rownames(tabValue)
+    tabValue <- as_tibble(tabValue)
+    tabValue$Sample <- sampleIDs
+    
+    
+    
+    matValue <- gather(tabValue, key = "Var",value = "Value", -Sample)
+    
+    
+    #arrange order of heatmap
+    matValue$Var <- factor(matValue$Var, levels = names(barValue))
+    matValue$Sample <- factor(matValue$Sample, levels = names(PDValue))
+
+   
+     #plot the heatmap 
+    
+      p1 <- ggplot(matValue, aes(x=Sample, y=Var)) + 
+            geom_tile(aes(fill=Value), color = "white") + #ghost white
+            theme_bw()+
+            scale_y_discrete(expand=c(0,0)) + 
+            theme(axis.title.y = element_text( size=14),
+                  axis.title.x = element_text( size=14),
+                  axis.text.x=element_text(hjust=0, size=11),
+                  axis.text.y=element_text(hjust=0.1, size=11),
+                  axis.ticks=element_blank(),
+                  panel.border=element_rect(colour="gainsboro"),  
+                  plot.title=element_text(face="bold", size = 18, margin = margin(t = -5, b = 1)), 
+                  panel.background=element_blank(),
+                  panel.grid.major=element_blank(), 
+                  panel.grid.minor=element_blank()) + 
+            xlab("Viability z-score") + 
+            ylab("") +
+            scale_fill_gradient2(low = palblues[1],high = palreds[8], mid = "white", name="Z-score")
+            
+        
+
+         
+    #Plot the bar plot on the left of the heatmap 
+    barDF = data.frame(barValue, nm = factor(names(barValue),levels=names(barValue)))
+    
+    p2 <- ggplot(data=barDF, aes(x = nm, y = barValue)) + 
+      geom_bar(stat = "identity", 
+               fill = ifelse(barValue<0,
+                           palblues[6], palreds[8]), 
+               colour = "black", 
+               size=0.3) + 
+      scale_x_discrete(expand = c(0, 0.5)) + 
+      scale_y_continuous(expand = c(0, 0)) + 
+      coord_flip(ylim = c(-0.3, 0.35)) + #changed from min(barValue) and max(barValue)
+      theme(panel.grid.major = element_blank(), 
+            panel.background = element_blank(), 
+            axis.ticks.y = element_blank(),
+            panel.grid.minor = element_blank(), 
+            axis.text=element_text(size = 11, angle = 45, hjust = 1, vjust = 1),
+                axis.title = element_text(size = 14), 
+            panel.border = element_blank()) +
+      ylab("Coefficient") + 
+      geom_vline(xintercept = c(0.5), 
+                 color = "black", 
+                 size = 0.6)
+    
+    #Plot the scatter plot under the heatmap
+    
+    scatterDF = data.frame(X=factor(names(PDValue), 
+                                    levels=names(PDValue)), 
+                           Y=unlist(PDValue))
+    
+    p3 <- 
+      ggplot(scatterDF, aes(x=X, y=Y)) + 
+      geom_point(shape=21, 
+                     fill="dimgrey", 
+                     colour="#707372", #dark grey
+                     size=1.2) + 
+      theme_bw() +
+      theme(panel.grid.minor=element_blank(), 
+                panel.grid.major.x=element_blank(), 
+                #axis.title.x=element_blank(), 
+                axis.ticks.x=element_blank(), 
+                axis.text.y=element_text(size=11), 
+                axis.title.x=element_text(size=14), 
+                panel.border=element_rect(colour="dimgrey", size=0.1),
+                panel.background=element_rect(fill="white")) +
+      xlab("CLL PD for each sample")
+    
+    
+    #Assemble all the plots togehter
+
+    # construct the gtable
+    wdths = c(0.2, 1.5, 0.2, 1.3*ncol(matValue), 1.5, 1)
+    hghts = c(0.2, 0.2, 0.0020*nrow(matValue), 0.3, 1, 0.2)
+    gt = gtable(widths=unit(wdths, "in"), heights=unit(hghts, "in"))
+    
+    ## make grobs
+    gg1 = ggplotGrob(p1)
+    gg2 = ggplotGrob(p2)
+    gg3 = ggplotGrob(p3)
+
+    ## fill in the gtable
+   
+    #HEATMAP
+    #5:1 = "PREDICTORS"
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "panel"), 3, 4) # add heatmap
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "panel"), 3, 4) #add legend
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "title"), 1, 4) #add title to plot
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "axis-l"), 3, 5) # variable names
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "xlab-b"), 2, 4) # axis title
+    gt = gtable_add_grob(gt, gtable_filter(gg1, "guide-box"), 3, 6) # scale
+    
+    #BARPLOT
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "panel"), 3, 2) # add barplot
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "axis-b"), 4, 2) # y axis for barplot
+    gt = gtable_add_grob(gt, gtable_filter(gg2, "xlab-b"), 2, 2) # y lab for barplot
+
+    
+    #SCATTER PLOT
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "panel"), 5, 4) # add scatterplot
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "xlab-b"), 6, 4) # x label for scatter plot
+    gt = gtable_add_grob(gt, gtable_filter(gg3, "axis-l"), 5, 3) #  axis for scatter plot
+    
+   
+  # grid.draw(gt)
+    return(gt)
+ 
+}
+
 
 ```
 
@@ -456,6 +829,43 @@ makelegends <- function (legendFor, colors)
 
 ```
 
+```{r Scale viability matrix}
+########### Scaling and Centering of Viability Matrix ################
+
+# medianCenter_MadScale: 
+#function to  scale with MAD, center to merdian
+medianCenter_MadScale <- function(x) {
+  s <- median(x)
+  #s=0
+  (x - s) / mad(x, center = s)
+}
+
+# scaleCytResp function:  to apply medianCenter_MadScale row wise to viability matrix
+scaleCytResp  <- function(x) t(apply(x, 1, medianCenter_MadScale)) 
+
+```
+
+```{r sortchrName}
+
+#sort chromosomes by number 
+sortChrName <- function(chr.name) {
+    ## X, Y and M will cause warnings when change to number.
+    noChr <- suppressWarnings(as.numeric(sub("chr", "", chr.name)))
+    ## index of chromosome name are character, such as X, Y
+    ch.idx <- which(is.na(noChr))
+    
+    n.idx <- which(!is.na(noChr))
+    chr.n <- noChr[n.idx]
+
+    chr.sorted <- chr.name[n.idx][order(chr.n)]
+    if (length(ch.idx) != 0) {
+        chr.sorted <- c(chr.sorted, sort(chr.name[ch.idx]))
+    }
+         
+    return(chr.sorted)
+}
+
+```
 
 
 <!-- Define Aesthetics  -->
@@ -495,12 +905,45 @@ load( "../../data/dds_smp.RData")
 #diffTF_small: tibble containing results from running diffTF package
 load( "../../data/diffTF_small.RData")
 
+#diffTF_wochr12: tibble containing results from running diffTF package without reads from chromosome 12
+load( "../../data/diffTF_wochr12.RData")
+
+#diffTF_wochr12_big: tibble containing results from running diffTF package without reads from chromosome 12 for the Rendeiro et al dataset. 
+load( "../../data/diffTF_wochr12_big.RData")
+
+#diffTF_Beekman: tibble containing results from running diffTF package on Beekman data
+load( "../../data/diffTF_Beekman.RData")
+
+#BIGCLL52.SPIB.output: tibble containing Lof2FCs and p-values for each Spi-B binding site
+load("../../data/BIGCLL52.SPIB.output.RData")
+
+#ChIPseq data for SPIB and PU1 binding in OCILY3 cell line (downloaded from GEO)
+
+#get info on dataset of interest
+chipSeq <- getGEOInfo(genome="hg19", simplify=FALSE) %>% dplyr::filter(series_id=="GSE56857")
+
+#Define gsm id for SPIB and PU1 ChIPseq dataset in OCILY3 cell line (DLBCL)
+gsm_spib = "GSM1370276"
+gsm_pu1 = "GSM1370275"                                                         
+
+#download bed file if not already there                                          
+downloadGSMbedFiles(gsm_spib, destDir="../../inst/extdata/")
+downloadGSMbedFiles(gsm_pu1, destDir="../../inst/extdata/")
+
+#read the data
+#ChIPseq data downloaded from GEO Accession Number: GSE56857
+peak.spib <-  genomation ::readBed("../../inst/extdata/GSM1370276_OCILY3_SPIB_GEM_events.bed.gz", track.line = "auto")
+peak.pu1 <-  genomation ::readBed( "../../inst/extdata/GSM1370275_OCILY3_PU1_GEM_events.bed.gz", track.line = "auto")
+
 #patMeta: tibble containing patient genetic data
 load( "../../data/patMeta.RData")
 patMeta$treatment <- as.factor(patMeta$treatment)
 
 #survT: tibble containing patient clinical outcomes
 load( "../../data/survT.RData")
+
+#CLL PD 
+load( "../../data/CLL_PD.RData")
 
 ```
 
@@ -568,7 +1011,11 @@ rowData(dds_smp) <- rowdata_rna
 
 
 #diffTF_small: tibble containing results from running diffTF package
-diffTF_small <- read_tsv("../../inst/extdata/Tri12vsWT.Cons.summary.tsv.gz ")
+diffTF_small <- read_tsv("../../inst/extdata/Tri12vsWT.Cons.summary.tsv.gz")
+
+
+#diffTF_wochr12: tibble containing results from running diffTF package without reads from chromosome 12
+diffTF_wochr12 <- read_tsv("../../inst/extdata/Tri12vsWT.wochr12.summary.tsv.gz")
 
 #patMeta: tibble containing patient genetic data
 patMeta <- read.table(file= "../../inst/extdata/patMeta.txt",header = TRUE) %>% as_tibble()
@@ -617,84 +1064,207 @@ colnames(Cytokine_labels) <- c("name", "Cytlabel")
 
 ```
 
-<!-- \blandscape -->
+# Appendix Tables
 
-<!-- ```{r Appendix Table 1} -->
-
-<!-- Drug_table<-drugs %>% -->
-<!--   dplyr::select(-ID, -approved_012020,-devel_012020) %>% -->
-<!--   dplyr::rename(Drug=Name, -->
-<!--                 `Main targets`=main_targets, -->
-<!--                 `Target category`=target_category, -->
-<!--                 `Drug Group`=group, -->
-<!--                 Pathway=pathway, -->
-<!--                 Distributor=distributor, -->
-<!--                 `Catalogue number`=cat_no, -->
-<!--                 `Conc. 1`= conc1, -->
-<!--                 `Conc. 2`= conc2) -->
-
-<!-- Drug_table %>%  -->
-<!--   kable() %>% -->
-<!--   row_spec(0, bold=TRUE) %>% -->
-<!-- kable_styling(latex_options = "striped", font_size=8) -->
-
-<!-- # writexl::write_xlsx(Drug_table, "../../inst/extdata/Drugs.xlsx") -->
-
-
-<!-- ``` -->
-<!-- **Appendix Table 1. Drugs contained in the study.** List of drugs, along with their main target, supplier and concentration. All drugs were dissolved in Dimethyl Sulfoxide (DMSO) and stored at –20°C. -->
-<!-- \newpage -->
-
-
-
-<!-- ```{r Appendix Table 2, dev="cairo_pdf"} -->
-
-<!-- #tidy names for table -->
-<!-- cytokines$stimulus[grepl("IL-4 human recombinant animal component free",cytokines$stimulus)]<-"IL4 human recombinant animal component free" -->
-<!-- cytokines$stimulus[grepl("IL-2 human recombinant animal component free",cytokines$stimulus)]<-"IL2 human recombinant animal component free" -->
-<!-- cytokines$stimulus[grepl("Human IL-1beta",cytokines$stimulus)]<-"Human IL-1 beta" -->
-<!-- cytokines$stimulus[grepl("Human IL-15",cytokines$stimulus)]<-"Human IL15" -->
-<!-- cytokines$stimulus[grepl("Human IFN-gamma",cytokines$stimulus)]<-"Human Interferon gamma" -->
-<!-- cytokines$stimulus[grepl("IL-10 human Animal component free",cytokines$stimulus)]<-"IL10 human Animal component free" -->
-<!-- cytokines$stimulus[grepl("Human TGF-beta1",cytokines$stimulus)] <- "Human TGF\u03B21" -->
-<!-- cytokines$stimulus[grepl("Human IL-6",cytokines$stimulus)]<-"Human IL6" -->
-<!-- cytokines$stimulus[grepl("alpha",cytokines$stimulus)] <- "Human SDF1 alpha (CXCL12)" -->
-<!-- cytokines$stimulus[grepl("HS-5 konditioniertes Medium",cytokines$stimulus)] <- "HS-5 conditioned medium" -->
-
-<!-- Cytokine_table<- cytokines %>% -->
-<!--   left_join(Cytokine_labels, by = "name") %>% -->
-<!--   dplyr::select(-name, -additional_pathways, -source) %>% -->
-<!--   dplyr::rename(Stimulus=stimulus, Name = Cytlabel, Supplier=company, Concentration=conc, `Catalogue Number`=cat_no, `Lot Number`=lot_no, Pathway=pathway) %>% -->
-
-<!--   select(Stimulus, Name,  everything()) -->
-
-
-<!-- Cytokine_table %>%    -->
-<!--   kable() %>% -->
-<!--   row_spec(0,bold=TRUE) %>% -->
-<!--   kable_styling(latex_options = "striped", font_size=8, html_font = "arial") -->
-
-
-<!-- # writexl::write_xlsx(Cytokine_table, "../../inst/extdata/Cytokines.xlsx") -->
-<!-- ``` -->
-<!-- **Appendix Table 2. Stimuli contained in the study.** List of microenvironmental stimuli, supplier, concentration and main pathway. -->
-
-<!-- \elandscape -->
-
-```{r Appendix Table 3 Pat Characteristics}
+```{r, fig.pos="H"}
 
 patMeta %>%
+  mutate(IGHV.status=factor(IGHV.status, levels = c("U","M"), labels = c("unmutated", "mutated")),
+         treatment=factor(treatment, levels = c(1,0), labels = c("Yes", "No")),
+         Methylation_Cluster=factor(Methylation_Cluster, levels = c("LP","IP","HP"), labels = c("Low Programmed", "Intermediate Programmed", "High Programmed")),
+         gender=factor(gender, levels = c("f","m"), labels = c("female", "male"))
+         ) %>% 
   dplyr::select(PatientID, gender, treatment, IGHV.status, `Methylation_Cluster`, del13q, del11q, trisomy12, del17p) %>%
-  dplyr::rename(`Patient ID`=PatientID, `Sex`=gender, `Treated before`=treatment, `IGHV status`=IGHV.status, `Methylation Cluster`=`Methylation_Cluster`, `Del13q`=del13q, `Del11q`=del11q, `Trisomy 12`=trisomy12, `Del17p`=del17p) %>%
+  dplyr::rename(`Patient ID`=PatientID, `Sex`=gender, `Treated before`=treatment, `IGHV status`=IGHV.status, `Methylation Cluster`=`Methylation_Cluster`, `Del(13q)`=del13q, `Del(11q)`=del11q, `Trisomy 12`=trisomy12, `Del(17p)`=del17p) %>%
    kable( longtable = TRUE) %>%
   row_spec(0,bold=TRUE) %>%
     kable_styling(latex_options = c("hold_position", "repeat_header", "striped"), font_size=8)
 
 ```
-**Appendix Table 3. Patient samples included in the study.** List of patient samples and selected characteristics. For a full list of characteristics see [online vignette](https://github.com/Huber-group-EMBL/CLLCytokineScreen2021).
+## Appendix Table 1. Patient samples included in the study.
+List of patient samples and selected characteristics. For a full list of characteristics see [online vignette](https://github.com/Huber-group-EMBL/CLLCytokineScreen2021).NA=Not available.
+
 \newpage
 
-```{r Appendix Table 4 OS ~ MES response}
+
+```{r, fig.pos="H"}
+
+CNVs<-  patMeta %>% 
+    select(PatientID, del10p:trisomy12) %>% 
+    pivot_longer(cols=del10p:trisomy12, names_to = "Chr_Aberration", values_to = "Value") %>% 
+    mutate(Value=as.numeric(levels(Value))[Value]) %>% 
+    group_by(PatientID) %>% 
+    summarise(CNVs=sum(Value)) %>% 
+  mutate(Complex_Karyotype=as.factor(case_when(CNVs>2~1, CNVs<=2~0)),
+         Complex_Karyotype5=as.factor(case_when(CNVs>4~1, CNVs<=4~0)),
+         CNVs=NULL)  %>% 
+  select(PatientID, Complex_Karyotype)
+
+selected_mutations <- 
+  patMeta %>% 
+  mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
+  dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+  
+      ## Add Complex Caryotype column, remove single columns
+  left_join(CNVs, by = "PatientID") %>% 
+  
+  dplyr::select( -gender, 
+                 -diagnosis, 
+                 ) %>%
+  pivot_longer(-PatientID, 
+               names_to="Genetic_Alteration", 
+               values_to = "alteration_value") %>% 
+  dplyr::filter(alteration_value %in% c(1, "U")) %>% 
+  dplyr::group_by(Genetic_Alteration) %>% 
+  dplyr::count() %>% 
+  dplyr::filter(n>2) %>% 
+  dplyr::select(Genetic_Alteration) %>% 
+  unlist()
+
+ Table_of_alterations<-patMeta %>%
+  
+  ## Add Ras/Raf column, remove single columns
+  mutate(Ras_Raf=as.factor(ifelse(BRAF==1|KRAS==1|NRAS==1, 1,0))) %>% 
+  dplyr::select(-BRAF, -KRAS, -NRAS) %>% 
+  mutate(IGHV.status=as.factor(case_when(IGHV.status=="U"~0, 
+                               IGHV.status=="M"~1))) %>% 
+   
+       ## Add Complex Caryotype column, remove single columns
+  left_join(CNVs, by = "PatientID") %>% 
+
+## remove unused columns from metadata
+  dplyr::select( -gender, 
+                 -diagnosis, 
+                 -treatment) %>% 
+  
+  ## transform data to long format
+  pivot_longer(cols=c(-PatientID), 
+               names_to = "Genetic_alt", 
+               values_to="alt_value") %>% 
+  
+  group_by(Genetic_alt, alt_value) %>% 
+  
+  count() %>% 
+  pivot_wider(names_from = alt_value, values_from = n) %>% 
+   
+   filter(Genetic_alt%in%selected_mutations) %>% 
+   rename('Genetic feature'=Genetic_alt, 'Wildtype/IGHV unmutated'="0", 'Mutated/ IGHV Mutated'="1", 'Not available'='NA')%>% 
+   select_if(~sum(!is.na(.)) > 0)
+   
+  Table_of_alterations %>% 
+      kable( longtable = TRUE) %>%
+  row_spec(0,bold=TRUE) %>%
+    kable_styling(latex_options = c("HOLD_position", "repeat_header", "striped"), font_size=8)
+
+  
+```
+## Appendix Table 2. List of genetic features tested for their association with stimulus response in the univariate model of Figure 3A.
+Only genetic features with at least three positive cases were considered. 
+\newpage
+
+
+```{r, fig.pos="H"}
+######Arrange data######
+clusters.surv <- left_join(Heatmap_clusters, survT, by = "PatientID")
+
+#Add meta data to heatmap clusters
+clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
+
+
+coxph <- clusters.surv%>%
+  mutate(Cluster=factor(Cluster))%>%
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3), data=.) 
+
+# cox_outputcoxph_summ$coefficients
+
+#tidy results, exponentiate coefficients and estimate 95% confidence intervals 
+cox_output<- tidy(coxph, conf.int = TRUE,  exponentiate = TRUE) %>%
+  dplyr::select(term, estimate, p.value, conf.low, conf.high)
+
+#tidy names
+cox_output$term<-
+  cox_output$term %>% 
+  gsub(pattern="factor2ind", "", .)%>% 
+  gsub(pattern="[()]", "", .)%>% 
+  gsub(pattern=":", " ", .)%>% 
+  gsub(pattern="Cluster, 3", "Cluster 3 vs ", .)%>% 
+  gsub(pattern="Methylation_ClusterIP", "Methylation Cluster IP", .)%>% 
+  gsub(pattern="Methylation_ClusterLP", "Methylation Cluster LP", .)
+
+colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High")
+
+cox_output$HR <- round(cox_output$HR, 2)
+cox_output$p.value <- round(cox_output$p.value, 2)
+cox_output$CI.low <- round(cox_output$CI.low, 2)
+cox_output$CI.High <- round(cox_output$CI.High, 2)
+
+cox_output <- cox_output %>% 
+  dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
+
+
+colnames(cox_output) <- c("Factor", "Hazard Ratio", "p-value", "CI Low", "CI High")
+
+cox_output %>%  
+  kable() %>%
+  kable_styling(latex_options = c("striped", "HOLD_position")) 
+
+```
+
+## Appendix Table 3. Survival analysis of microenvironmental response clusters comparing C3 to C1, C2 and C4.
+Cox proportional hazards model of stimulus response clusters using time to next treatment and with C3 as reference.
+
+```{r, fig.pos="H"}
+######Arrange data######
+clusters.surv <- left_join(Heatmap_clusters, survT, by = "PatientID")
+
+#Add meta data to heatmap clusters
+clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
+
+
+coxph <- clusters.surv%>%
+  filter(Cluster%in%c(1,2,3)) %>% 
+  mutate(Cluster3vs12=ifelse(Cluster%in%c(1,2), "1_2", "3")) %>% 
+  mutate(Cluster3vs12=factor(Cluster3vs12))%>%
+    coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster3vs12, "3"), data=.) 
+
+# cox_outputcoxph_summ$coefficients
+
+#tidy results, exponentiate coefficients and estimate 95% confidence intervals 
+cox_output<- tidy(coxph, conf.int = TRUE,  exponentiate = TRUE) %>%
+  dplyr::select(term, estimate, p.value, conf.low, conf.high)
+
+#tidy names
+cox_output$term<-
+  cox_output$term %>% 
+  gsub(pattern="factor2ind", "", .)%>% 
+  gsub(pattern="[()]", "", .)%>% 
+  gsub(pattern=":", " ", .)%>% 
+  gsub(pattern="Cluster3vs12", "Cluster 3 vs combined Clusters 1 and 2 ", .)
+
+colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High")
+
+cox_output$HR <- round(cox_output$HR, 2)
+cox_output$p.value <- round(cox_output$p.value, 2)
+cox_output$CI.low <- round(cox_output$CI.low, 2)
+cox_output$CI.High <- round(cox_output$CI.High, 2)
+
+cox_output <- cox_output %>% 
+  dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
+
+
+colnames(cox_output) <- c("Factor", "Hazard Ratio", "p-value", "CI Low", "CI High")
+
+cox_output %>%  
+  mutate(Factor=gsub(pattern=", \"3\"", "",Factor)) %>% 
+  kable() %>%
+  kable_styling(latex_options = c("striped", "HOLD_position")) 
+
+```
+
+## Appendix Table 4. Survival analysis of microenvironmental response clusters comparing C3 to C1 and C2 combined.
+Cox proportional hazards model of stimuli response clusters using TTT.
+
+```{r, fig.pos="H" }
 
 clusters.surv<- left_join(Heatmap_clusters, survT, by = "PatientID")
 
@@ -709,7 +1279,7 @@ clusters.surv <- left_join(clusters.surv, patMeta, by="PatientID")
 c <- 
   clusters.surv %>%
   mutate(Cluster=factor(Cluster)) %>%
-  coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3)+ IGHV.status + trisomy12 + TP53,  data=.)
+  coxph(Surv( TTT, treatedAfter) ~  factor2ind(Cluster, 3)+ IGHV.status + trisomy12 + TP53+Methylation_Cluster+POT1,  data=.)
 
 #tidy results, exponentiate coefficients and estimate 95% confidence intervals 
 cox_output<- tidy(c, conf.int = TRUE,  exponentiate = TRUE) %>%
@@ -724,7 +1294,8 @@ cox_output$term<-
   gsub(pattern="Cluster, 3", "Cluster 3 vs ", .)%>% 
   gsub(pattern="IGHV.statusU", "IGHV.status", .)%>% 
   gsub(pattern="trisomy121", "trisomy 12", .)%>% 
-  gsub(pattern="TP531", "TP53", .)
+  gsub(pattern="TP531", "TP53", .)%>% 
+  gsub(pattern="POT11", "POT1", .)
 
 colnames(cox_output) <- c("Factor", "HR", "p.value", "CI.low", "CI.High")
 
@@ -737,20 +1308,467 @@ cox_output <- cox_output %>%
   dplyr::mutate(p.value=ifelse(p.value<0.0001,"<0.0001", p.value )) 
 
 
-colnames(cox_output) <- c("Factor", "HR", "p value", "CI Low", "CI High")
+colnames(cox_output) <- c("Factor", "Hazard Ratio", "p-value", "CI Low", "CI High")
 
 cox_output %>%  
   kable() %>%
-  kable_styling(latex_options = "striped") 
+  kable_styling(latex_options = c("striped", "HOLD_position")) 
+
+```
+
+## Appendix Table 5. Multivariate survival analysis of response clusters.
+Multivariate Cox proportional hazards model of stimulus response clusters and genetic subgroups of disease progression using time to next treatment  with C3 as reference.
+
+
+
+
+\blandscape
+\newpage
+
+```{r message=FALSE}
+
+#filter for top peaks 
+
+TFBS <- BIGCLL52_SPIB %>% dplyr::filter(abs(l2FC) >1, pval_adj <0.1)
+
+
+#remove Chr
+TFBS <- TFBS %>% 
+        #remove chr string
+        mutate_at(vars(TFBSID), list(~as.character(gsub("chr.*:", "", .)))) %>% 
+        #separate into start and end
+        separate(TFBSID, c("start", "end"))
+
+#Convert to a genomic ranges object
+peak<- 
+  TFBS %>%
+  dplyr::select(TF, chr, start, end, strand, l2FC, pval,  pval_adj) %>%
+  makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+
+
+
+#Annotate peaks    
+#Here I use the annotatePeak function to find nearest gene to each of my SPIB binding sites, looking in the region ±3kb around the tss sites defined in the TxDB object. The resulting `peakAnno` object contains all the original information on my SPIB binding sites, along with information on the annotation of these sites (eg promoter/Exon/intron/intergenic) and the nearest gene and its function. 
+
+
+#get annotation database
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+
+#annoate all genes within 5kb
+peakAnno <- annotatePeak(peak, 
+                         tssRegion=c(-3000, 3000), #region in whcih to look for genes
+                         TxDb=txdb, #define where to get transcript info
+                         annoDb="org.Hs.eg.db", addFlankGeneInfo = TRUE, verbose = FALSE) #set annotation package to add ensembl, smbol and genames
 
 
 ```
 
-**Appendix Table 4. Multivariate survival analysis of response clusters.** Multivariate Cox proportional hazards model of stimuli response clusters and genetic subgroups of disease progression using TTT and C3 as reference.
+```{r fig.width = 10}
 
+#get  KEGG pathways from msigdbr database
+kegg <- 
+  msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP:KEGG") %>% 
+  #select pathway name and entrez id 
+  dplyr::select(gs_name, entrez_gene)
+
+
+#subset for pathways that we want to test
+kegg <-
+  dplyr::filter(kegg, 
+         #All KEGG immune signaling pathways
+         gs_name %in% c("KEGG_B_CELL_RECEPTOR_SIGNALING_PATHWAY",
+                        "KEGG_CHEMOKINE_SIGNALING_PATHWAY",
+                        "KEGG_CYTOKINE_CYTOKINE_RECEPTOR_INTERACTION", 
+                        "KEGG_JAK_STAT_SIGNALING_PATHWAY" ,
+                        "KEGG_NOD_LIKE_RECEPTOR_SIGNALING_PATHWAY"  , 
+                        "KEGG_NOTCH_SIGNALING_PATHWAY", 
+                        "KEGG_RIG_I_LIKE_RECEPTOR_SIGNALING_PATHWAY", 
+                        "KEGG_TOLL_LIKE_RECEPTOR_SIGNALING_PATHWAY",
+                        "KEGG_T_CELL_RECEPTOR_SIGNALING_PATHWAY",
+                        #Control genesets
+                        "KEGG_OXIDATIVE_PHOSPHORYLATION",                  
+                        "KEGG_DNA_REPLICATION"
+         ))
+
+colnames(kegg) <- c("term", "gene")
+
+#tidy up terms - remove KEGG, underscore and put in lower cases
+kegg$term <- gsub("KEGG_", "",kegg$term )
+kegg$term <- gsub("_", " ",kegg$term )
+kegg$term <- gsub("B CELL RECEPTOR SIGNALING PATHWAY", 
+                  "BCR Signaling Pathway",kegg$term )
+kegg$term <- gsub("CHEMOKINE SIGNALING PATHWAY", 
+                  "Chemokine Signaling Pathway",kegg$term )
+kegg$term <- gsub("CYTOKINE CYTOKINE RECEPTOR INTERACTION", 
+                  "Cytokine Cytokine Receptor Interaction",kegg$term )
+kegg$term <- gsub("JAK STAT SIGNALING PATHWAY", 
+                  "JAK STAT signaling pathway",kegg$term )
+kegg$term <- gsub("NOD LIKE RECEPTOR SIGNALING PATHWAY", 
+                  "NLR Signaling Pathway",kegg$term )
+kegg$term <- gsub("NOTCH SIGNALING PATHWAY", 
+                  "Notch Signaling Pathway",kegg$term )
+kegg$term <- gsub("RIG I LIKE RECEPTOR SIGNALING PATHWAY", 
+                  "RLR Signaling Pathway",kegg$term )
+kegg$term <- gsub("TOLL LIKE RECEPTOR SIGNALING PATHWAY", 
+                  "TLR Signaling Pathway",kegg$term )
+
+kegg$term <- gsub("T CELL RECEPTOR SIGNALING PATHWAY", 
+                  "TCR Signaling Pathway",kegg$term )
+kegg$term <- gsub("OXIDATIVE PHOSPHORYLATION", 
+                  "Oxidative Phosphorylation",kegg$term )
+kegg$term <- gsub("P53 SIGNALING PATHWAY", 
+                  "P53 Signaling Pathway",kegg$term )
+kegg$term <- gsub("DNA REPLICATION", 
+                  "DNA Replication",kegg$term )
+
+kegg$genesetDatabase <- "KEGG"
+
+
+#get reactome pathways
+reactome <- 
+  msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP:REACTOME") %>% 
+  #select pathway name and entrez id
+  dplyr::select(gs_name, entrez_gene)
+
+#subset for pathways that we want to test
+reactome <-
+  dplyr::filter(reactome, 
+         gs_name %in% c(#selected immune pathways
+                        "REACTOME_SIGNALING_BY_TGF_BETA_RECEPTOR_COMPLEX",
+                        "REACTOME_TNF_SIGNALING",
+                        "REACTOME_INTERLEUKIN_1_SIGNALING",
+                        "REACTOME_INTERLEUKIN_10_SIGNALING",
+                        "REACTOME_INTERLEUKIN_15_SIGNALING",
+                        "REACTOME_INTERLEUKIN_2_SIGNALING",
+                        "REACTOME_INTERLEUKIN_4_AND_INTERLEUKIN_13_SIGNALING",
+                        "REACTOME_INTERLEUKIN_6_SIGNALING" ,
+                        "REACTOME_OTHER_INTERLEUKIN_SIGNALING",
+                        "REACTOME_SIGNALING_BY_INTERLEUKINS",
+                        "REACTOME_INTERFERON_ALPHA_BETA_SIGNALING" ,
+                        "REACTOME_INTERFERON_GAMMA_SIGNALING", 
+                        #Control genesets
+                        "REACTOME_CELL_CYCLE",                  
+                        "REACTOME_REGULATION_OF_TP53_ACTIVITY" 
+                        ))
+
+colnames(reactome) <- c("term", "gene")
+
+#tidy up terms
+reactome$term <- gsub("REACTOME_", "",reactome$term )
+reactome$term <- gsub("_", " ",reactome$term )
+
+
+#tidy up and put in lower case
+reactome$term <- gsub("CELL CYCLE", 
+                      "Cell Cycle",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 1 SIGNALING", 
+                      "Interleukin 1 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 10 SIGNALING", 
+                      "Interleukin 10 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 15 SIGNALING", 
+                      "Interleukin 15 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 2 SIGNALING", 
+                      "Interleukin 2 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 4 AND INTERLEUKIN 13 SIGNALING", 
+                      "Interleukin 4 and Interleukin 13 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 6 SIGNALING",
+                      "Interleukin 6 Signaling",reactome$term )
+reactome$term <- gsub("OTHER INTERLEUKIN SIGNALING", 
+                      "Other Interleukin Signaling",reactome$term )
+reactome$term <- gsub("SIGNALING BY INTERLEUKINS", 
+                      "Signaling by Interleukins",reactome$term )
+reactome$term <- gsub("REGULATION OF TP53 ACTIVITY", 
+                      "Regulation of TP53 Pathway",reactome$term )
+reactome$term <- gsub("SIGNALING BY TGF BETA RECEPTOR COMPLEX",
+                      # "Signaling by TGFbeta \nReceptor Complex", reactome$term )
+                      "Signaling by TGFbeta Receptor Complex", reactome$term )
+reactome$term <- gsub("TNF SIGNALING", 
+                      "TNF Signaling",reactome$term )
+reactome$term <- gsub("INTERFERON ALPHA BETA SIGNALING", 
+                      "Interferon Alpha Beta Signaling",reactome$term )
+
+reactome$term <- gsub("INTERFERON GAMMA SIGNALING", 
+                      "Interferon Gamma Signaling", reactome$term )
+
+#annotate which database these pathways come from 
+reactome$genesetDatabase <- "Reactome"
+
+```
+
+
+```{r T6}
+
+#generate TERM2GENE dataframe to use in over-representation test
+#join kegg and reactome gene sets together - this defines the list of pathways we are interested in, and select term and gene columns
+term2gene <- rbind(kegg, reactome) %>% dplyr::select(term, gene)
+
+#term2genesetdatabase - keep details of database source for each pathway 
+term2genesetdatabase <- rbind(kegg, reactome) %>% dplyr::select(term, genesetDatabase)
+colnames(term2genesetdatabase) <- c("term", "name")
+
+##SPIB
+#run over-representation test, and extract all results and p-values:
+#NB Bg ratio = number of genes in set / number of unique genes in term2gene, 
+#NB Gene ratio = number of SPIB targets in gene set being tested / total number of SPIB targets that overlap with genes in term to gene
+
+spibRes <- enricher(unique(as.data.frame(peakAnno)$geneId), 
+                    #Use pathways in term2gene
+                    TERM2GENE=term2gene, 
+                    #assign description for each term, as its database source
+                    TERM2NAME = term2genesetdatabase, 
+                    #no cutoffs on reported results, we want to see all results and p-values 
+                    minGSSize = 0,
+                    maxGSSize = 1000,
+                    pvalueCutoff = 1, 
+                    qvalueCutoff = 1)
+
+
+#get dataframe of results
+spibRes.df <- fortify(spibRes, 
+              showCategory = length(unique(term2gene$term)), #show all pathways tested
+              split=NULL)
+
+resTab.spib <-  
+  mutate(spibRes.df, genesetSize = BgRatio*length(unique(term2gene$gene))) %>%  #multiply BgRatio by total genes tested to get number of genes in set
+  dplyr::select(ID, Description, pvalue, p.adjust, Count, genesetSize)
+
+colnames(resTab.spib) <- c("ID", "genesetDatabase", "pvalue_SPIB", "adjpvalue_SPIB","count_SPIB", "genesetSize")
+
+
+resTab <- resTab.spib
+
+#where count and p-value is NA, put a 0 / 1 (ie there were no SPIB target genes in the set)
+resTab$count_SPIB[is.na(resTab$count_SPIB)] <- 0
+resTab$pvalue_SPIB[is.na(resTab$pvalue_SPIB)] <- 1
+resTab$adjpvalue_SPIB[is.na(resTab$adjpvalue_SPIB)] <- 1
+
+#select columns of interest to show in figure
+resTab <- dplyr::select(resTab, ID, genesetDatabase, genesetSize,  count_SPIB, pvalue_SPIB, adjpvalue_SPIB)
+
+#adjust decimal places of p-values
+resTab$adjpvalue_SPIB <- round(resTab$adjpvalue_SPIB, digits = 3)
+resTab$pvalue_SPIB <- round(resTab$pvalue_SPIB, digits = 3)
+
+#get significant results
+resTab <- dplyr::filter(resTab, adjpvalue_SPIB<0.1)
+
+colnames(resTab) <- c("Pathway",
+                      "Geneset\nDatabase" , 
+                      "Geneset\nSize",  
+                      
+                      #show the total number of SPIB targets in ChIPseq data 
+                      paste("Spi-B targets\n(/" ,length(unique(as.data.frame(peakAnno)$geneId)),")", sep= ""),
+                      "p-value",
+                      "adj. p-value")
+
+
+resTab %>%  
+  kable() %>%
+  kable_styling(latex_options = c("striped", "HOLD_position", "scale_down")) 
+
+
+
+```   
+
+## Appendix Table 6. Over-representation tests of immune signalling pathways (and control pathways) amongst Spi-B gene targets, based on primary CLL ATACseq data.
+
+
+```{R, T7, fig.width=15, fig.height=2, message=FALSE }
+
+# Get significant peaks
+#filter ChipSeq data for peaks with significant score -log10(Qscore)>1.3
+#if q < 0.05, then Qlog >1.3
+spib.filtered <- peak.spib[(elementMetadata(peak.spib)[,1] > 1.3)]
+
+# Annotate ChIP peaks
+# Annotate peaks with meta data
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+
+peakAnno.spib <- annotatePeak(spib.filtered, 
+                              tssRegion = c(-3000, 3000),
+                              TxDb = txdb, 
+                              annoDb = "org.Hs.eg.db",
+                              verbose=FALSE)
+
+peakAnno.spib.1kb <- as.data.frame(peakAnno.spib) %>% dplyr::filter(abs(distanceToTSS) <1000)
+
+
+#get  KEGG pathways from msigdbr database
+kegg <- 
+  msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP:KEGG") %>% 
+  #select pathway name and entrez id 
+  dplyr::select(gs_name, entrez_gene)
+#subset for pathways that we want to test
+kegg <-
+  dplyr::filter(kegg, 
+         #All KEGG immune signaling pathways
+         gs_name %in% c("KEGG_B_CELL_RECEPTOR_SIGNALING_PATHWAY",
+                        "KEGG_CHEMOKINE_SIGNALING_PATHWAY",
+                        "KEGG_CYTOKINE_CYTOKINE_RECEPTOR_INTERACTION", 
+                        "KEGG_JAK_STAT_SIGNALING_PATHWAY" ,
+                        "KEGG_NOD_LIKE_RECEPTOR_SIGNALING_PATHWAY"  , 
+                        "KEGG_NOTCH_SIGNALING_PATHWAY", 
+                        "KEGG_RIG_I_LIKE_RECEPTOR_SIGNALING_PATHWAY", 
+                        "KEGG_TOLL_LIKE_RECEPTOR_SIGNALING_PATHWAY",
+                        "KEGG_T_CELL_RECEPTOR_SIGNALING_PATHWAY",
+                        #Control genesets
+                        "KEGG_OXIDATIVE_PHOSPHORYLATION",                  
+                        "KEGG_DNA_REPLICATION"
+         ))
+colnames(kegg) <- c("term", "gene")
+#tidy up terms - remove KEGG, underscore and put in lower cases
+kegg$term <- gsub("KEGG_", "",kegg$term )
+kegg$term <- gsub("_", " ",kegg$term )
+kegg$term <- gsub("B CELL RECEPTOR SIGNALING PATHWAY", 
+                  "BCR Signaling Pathway",kegg$term )
+kegg$term <- gsub("CHEMOKINE SIGNALING PATHWAY", 
+                  "Chemokine Signaling Pathway",kegg$term )
+kegg$term <- gsub("CYTOKINE CYTOKINE RECEPTOR INTERACTION", 
+                  "Cytokine Cytokine Receptor Interaction",kegg$term )
+kegg$term <- gsub("JAK STAT SIGNALING PATHWAY", 
+                  "JAK STAT signaling pathway",kegg$term )
+kegg$term <- gsub("NOD LIKE RECEPTOR SIGNALING PATHWAY", 
+                  "NLR Signaling Pathway",kegg$term )
+kegg$term <- gsub("NOTCH SIGNALING PATHWAY", 
+                  "Notch Signaling Pathway",kegg$term )
+kegg$term <- gsub("RIG I LIKE RECEPTOR SIGNALING PATHWAY", 
+                  "RLR Signaling Pathway",kegg$term )
+kegg$term <- gsub("TOLL LIKE RECEPTOR SIGNALING PATHWAY", 
+                  "TLR Signaling Pathway",kegg$term )
+kegg$term <- gsub("T CELL RECEPTOR SIGNALING PATHWAY", 
+                  "TCR Signaling Pathway",kegg$term )
+kegg$term <- gsub("OXIDATIVE PHOSPHORYLATION", 
+                  "Oxidative Phosphorylation",kegg$term )
+kegg$term <- gsub("P53 SIGNALING PATHWAY", 
+                  "P53 Signaling Pathway",kegg$term )
+kegg$term <- gsub("DNA REPLICATION", 
+                  "DNA Replication",kegg$term )
+kegg$genesetDatabase <- "KEGG"
+#get reactome pathways
+reactome <- 
+  msigdbr(species = "Homo sapiens", category = "C2", subcategory = "CP:REACTOME") %>% 
+  #select pathway name and entrez id
+  dplyr::select(gs_name, entrez_gene)
+#subset for pathways that we want to test
+reactome <-
+  dplyr::filter(reactome, 
+         gs_name %in% c(#selected immune pathways
+                        "REACTOME_SIGNALING_BY_TGF_BETA_RECEPTOR_COMPLEX",
+                        "REACTOME_TNF_SIGNALING",
+                        "REACTOME_INTERLEUKIN_1_SIGNALING",
+                        "REACTOME_INTERLEUKIN_10_SIGNALING",
+                        "REACTOME_INTERLEUKIN_15_SIGNALING",
+                        "REACTOME_INTERLEUKIN_2_SIGNALING",
+                        "REACTOME_INTERLEUKIN_4_AND_INTERLEUKIN_13_SIGNALING",
+                        "REACTOME_INTERLEUKIN_6_SIGNALING" ,
+                        "REACTOME_OTHER_INTERLEUKIN_SIGNALING",
+                        "REACTOME_SIGNALING_BY_INTERLEUKINS",
+                        "REACTOME_INTERFERON_ALPHA_BETA_SIGNALING" ,
+                        "REACTOME_INTERFERON_GAMMA_SIGNALING", 
+                        #Control genesets
+                        "REACTOME_CELL_CYCLE",                  
+                        "REACTOME_REGULATION_OF_TP53_ACTIVITY" 
+                        ))
+colnames(reactome) <- c("term", "gene")
+#tidy up terms
+reactome$term <- gsub("REACTOME_", "",reactome$term )
+reactome$term <- gsub("_", " ",reactome$term )
+#tidy up and put in lower case
+reactome$term <- gsub("CELL CYCLE", 
+                      "Cell Cycle",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 1 SIGNALING", 
+                      "Interleukin 1 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 10 SIGNALING", 
+                      "Interleukin 10 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 15 SIGNALING", 
+                      "Interleukin 15 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 2 SIGNALING", 
+                      "Interleukin 2 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 4 AND INTERLEUKIN 13 SIGNALING", 
+                      "Interleukin 4 and Interleukin 13 Signaling",reactome$term )
+reactome$term <- gsub("INTERLEUKIN 6 SIGNALING",
+                      "Interleukin 6 Signaling",reactome$term )
+reactome$term <- gsub("OTHER INTERLEUKIN SIGNALING", 
+                      "Other Interleukin Signaling",reactome$term )
+reactome$term <- gsub("SIGNALING BY INTERLEUKINS", 
+                      "Signaling by Interleukins",reactome$term )
+reactome$term <- gsub("REGULATION OF TP53 ACTIVITY", 
+                      "Regulation of TP53 Pathway",reactome$term )
+reactome$term <- gsub("SIGNALING BY TGF BETA RECEPTOR COMPLEX",
+                      "Signaling by TGFbeta Receptor Complex", reactome$term )
+reactome$term <- gsub("TNF SIGNALING", 
+                      "TNF Signaling",reactome$term )
+reactome$term <- gsub("INTERFERON ALPHA BETA SIGNALING", 
+                      "Interferon Alpha Beta Signaling",reactome$term )
+reactome$term <- gsub("INTERFERON GAMMA SIGNALING", 
+                      "Interferon Gamma Signaling", reactome$term )
+#annotate which database these pathways come from 
+reactome$genesetDatabase <- "Reactome"
+#generate TERM2GENE dataframe to use in overrepresetation test
+#join kegg and reactome gene sets together - this defines the list of pathways we are interested in, and select term and gene columns
+term2gene <- rbind(kegg, reactome) %>% dplyr::select(term, gene)
+#term2genesetdatabase - keep details of database source for each pathway 
+term2genesetdatabase <- rbind(kegg, reactome) %>% dplyr::select(term, genesetDatabase)
+colnames(term2genesetdatabase) <- c("term", "name")
+##SPIB
+#run over-representation test, and extract all results and p-values:
+#NB Bg ratio = number of genes in set / number of unique genes in term2gene, 
+#NB Gene ratio = number of SPIB targets in gene set being tested / total number of SPIB targets that overlap with genes in term to gene
+spibRes <- enricher(unique(as.data.frame(peakAnno.spib.1kb)$geneId), 
+                    #Use pathways in term2gene
+                    TERM2GENE=term2gene, 
+                    #assign description for each term, as its database source
+                    TERM2NAME = term2genesetdatabase, 
+                    #no cutoffs on reported results, we want to see all results and p-values 
+                    minGSSize = 0,
+                    maxGSSize = 1000,
+                    pvalueCutoff = 1, 
+                    qvalueCutoff = 1)
+#get dataframe of results
+spibRes.df <- fortify(spibRes, 
+              showCategory = length(unique(term2gene$term)), #show all pathways tested
+              split=NULL)
+resTab.spib <-  
+  mutate(spibRes.df, genesetSize = BgRatio*length(unique(term2gene$gene))) %>%  #multiply BgRatio by total genes tested to get number of genes in set
+  dplyr::select(ID, Description, pvalue, p.adjust, Count, genesetSize)
+colnames(resTab.spib) <- c("ID", "genesetDatabase", "pvalue_SPIB", "adjpvalue_SPIB","count_SPIB", "genesetSize")
+resTab <- resTab.spib
+#where count and p-value is NA, put a 0 / 1 (ie there were no SPIB target genes in the set)
+resTab$count_SPIB[is.na(resTab$count_SPIB)] <- 0
+resTab$adjpvalue_SPIB[is.na(resTab$adjpvalue_SPIB)] <- 1
+resTab$pvalue_SPIB[is.na(resTab$pvalue_SPIB)] <- 1
+
+#select columns of interest to show in figure
+resTab <- dplyr::select(resTab, ID, genesetDatabase, genesetSize,  count_SPIB, pvalue_SPIB, adjpvalue_SPIB)
+#adjust decimal places of p-values
+resTab$adjpvalue_SPIB <- round(resTab$adjpvalue_SPIB, digits = 3)
+resTab$pvalue_SPIB <- round(resTab$pvalue_SPIB, digits = 3)
+
+#get significant results
+resTab <- dplyr::filter(resTab, adjpvalue_SPIB<0.1)
+colnames(resTab) <- c("Pathway",
+                      "Geneset\nDatabase" , 
+                      "Geneset\nSize",  
+                      
+                      #show the total number of SPIB targets in ChIPseq data 
+                      paste("Spi-B targets\n(/" ,length(unique(as.data.frame(peakAnno.spib.1kb)$geneId)),")", sep= ""),
+                      "SPIB\n p-value",
+                      "SPIB\n adj. p-value")
+
+resTab %>%  
+  kable() %>%
+  kable_styling(latex_options = c("striped", "HOLD_position", "scale_down")) 
+
+```
+## Appendix Table 7. Over-representation tests of immune signalling pathways (and control pathways) amongst Spi-B gene targets, based on DLBCL ChIPseq data from Care et al. 2014^1^. 
+
+
+\elandscape
 \newpage
 
-```{r S1 Genetic profiles, Fig S1, fig.width=10, fig.height=5}
+# Appendix Figures 
+
+```{r S1, fig.path=plotDir, dev=c("cairo_pdf"), fig.width=10, fig.height=5, fig.pos="H"}
 
 theme_temp<-theme(
   plot.background = element_blank(),
@@ -826,128 +1844,10 @@ p1+
   p2+
   plot_layout(nrow=1, guides="collect", widths = c(0.7,0.3))
 ```
-**Appendix Figure 1. Genetic profiles of screened patient samples.**  Selected genetic alterations on y-axis and screened patient samples on x-axis.
 
-
-
-
-```{r S2 Person Correlations,  fig.height=8, fig.width=16, warning = FALSE, message=FALSE}
-# Using high Drug Concentrations
-
-tmp<-df%>%
-  filter((Drug=="DMSO"&Cytokine!="No Cytokine")|(Drug!="DMSO"&Cytokine=="No Cytokine"), Drug_Concentration%in%c("High", "None"))%>%
-  group_by(PatientID, Drug, Cytlabel) %>%
-  summarize(Log=mean(Log), .groups = "keep") %>%
-  ungroup() %>%
-  mutate(Cytlabel=as.character(Cytlabel), Drug=as.character(Drug)) %>%
-  mutate(Condition=case_when(Cytlabel=="No Cytokine"~ Drug, Drug=="DMSO"~Cytlabel)) %>%
-  select(PatientID, Condition, Log)%>%
-  spread(Condition, Log)%>%
-  ungroup()
-
-
-Drug_Cyt_df<-tmp%>%
-  select(-"PatientID")%>%
-  as.matrix()
-
-rownames(Drug_Cyt_df)<-tmp %>%
-  ungroup() %>%
-  group_by(PatientID)%>%
-  dplyr::summarise( .groups = "keep")%>%
-  ungroup()%>%
-  unlist()
-
-Corr_method="pearson"
-
-Drug_Cyt_Correlation<-stats::cor(Drug_Cyt_df, method=Corr_method)
-
-# Plot
-
-
-Cytokines <-unique(df$Cytlabel) %>% setdiff("No Cytokine")
-
-Drugs<-unique(df$Drug) %>% setdiff("DMSO")
-
-
-t_tmp<-theme(
-  plot.background = element_blank(),
-  panel.grid.major = element_blank(),
-  panel.grid.major.x = element_blank(),
-  panel.grid.minor = element_blank(),
-  panel.border = element_blank(),
-  panel.background = element_blank(),
-  axis.line = element_line(),
-  axis.text.x  = element_text(size = 12, face="bold"),
-  axis.text.y = element_text(size = 12, face="bold"),
-  axis.ticks.x = element_blank())
-
-
-#Drug
-
-Drug_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Drugs), which(colnames(Drug_Cyt_Correlation)%in%Drugs)]
-
-    Drug_Corr[upper.tri(Drug_Corr, diag = TRUE)]<- NA
-
-Drug_Cor_Plot<-  Drug_Corr %>%
-  as_tibble(rownames="Drug_1") %>%
-    dplyr::mutate(Drug_1=factor(Drug_1, levels = rev(rownames(Drug_Corr)))) %>%
-  pivot_longer(-Drug_1, names_to="Drug_2", values_to="Pearson_R") %>%
-  dplyr::filter(!is.na(Pearson_R)) %>%
-
-
-  ggplot(aes(Drug_1, Drug_2))+
-  geom_tile(aes(fill=Pearson_R),color = "grey")+
-  scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+
-  geom_text(aes(label=round(Pearson_R,2)), size=4)+
-    t_tmp+
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
-    labs(fill = "Pearson R", x="", y="")+
-  guides(fill="none")
-
-
-# Cytokine
-
-Cyt_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Cytokines), which(colnames(Drug_Cyt_Correlation)%in%Cytokines)]
-
-
-    Cyt_Corr[upper.tri(Cyt_Corr, diag = TRUE)]<- NA
-
-Cyt_Cor_Plot<-  Cyt_Corr %>%
-  as_tibble(rownames="Cyt_1") %>%
-    dplyr::mutate(Cyt_1=factor(Cyt_1, levels = rev(rownames(Cyt_Corr)))) %>%
-  pivot_longer(-Cyt_1, names_to="Cyt_2", values_to="Pearson_R") %>%
-  dplyr::filter(!is.na(Pearson_R)) %>%
-  # View()
-
-  ggplot(aes(Cyt_1, Cyt_2))+
-  geom_tile(aes(fill=Pearson_R),color = "grey")+
-  scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+
-  geom_text(aes(label=round(Pearson_R,2)), size=4)+
-    t_tmp+
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
-    labs(fill = "Pearson R", x="", y="")+
-  scale_y_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))+
-  scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))
-
-
-
-#Drug Cytokine
-Drug_Cyt_Corr<-Drug_Cyt_Correlation[which(rownames(Drug_Cyt_Correlation)%in%Cytokines), which(colnames(Drug_Cyt_Correlation)%in%Drugs)]
-
-
-design1<-"
-  12
-  "
-tp<- theme(plot.tag=element_text(size = 30))
-
-Drug_Cor_Plot + tp +
-Cyt_Cor_Plot + tp +
-  plot_layout(design = design1, widths = c(1,1.3))+
-  plot_annotation(tag_levels = "A")
-```
-
-**Appendix Figure 2. Correlation of responses to stimuli and drugs.** Pearson correlation of log transformed viability values normalised to untreated control. Correlation between drug treatments  **(A)** and microenvironmental stimuli **(B)**.
-
+## Appendix Figure 1. Genetic profiles of screened patient samples.
+Selected genetic features on y-axis and patient samples (n=192) on x-axis.
+\newpage
 
 ```{r}
 order_Cytokines<-df%>%
@@ -963,7 +1863,7 @@ df$Cytlabel<-factor(df$Cytlabel, levels=order_Cytokines)
 ```
 
 
-```{r  Cyokine viability beeswarms, fig.height=8, fig.width=16}
+```{r S2,fig.path=plotDir, dev=c("cairo_pdf"),  fig.pos="H", fig.height=8, fig.width=16}
 
 t_tests = df %>%
   dplyr::filter(Drug=="DMSO") %>%
@@ -981,48 +1881,59 @@ df_patMeta <- left_join(df, patMeta, by ="PatientID")
 
 p1<-df_patMeta%>%
   filter(Cytokine%in%c("Resiquimod","IL-4", "sCD40L+IL-4","CpG ODN"), Drug=="DMSO", !is.na(IGHV.status))%>%
+  mutate(IGHV.status=factor(IGHV.status, levels = c("U","M"), labels = c("unmutated", "mutated"))) %>% 
   ggplot(aes(x=Cytlabel,
              y=Log))+
   geom_hline(yintercept = 0)+
   geom_violin(cex=0.4, alpha=0.7,  aes(x=Cytlabel,y=Log, color = IGHV.status, fill = IGHV.status))+
    geom_text(aes(label = Sig, y = 2), size = 6, data = filter(t_tests, Cytlabel%in%c("Resiquimod","IL4", "sCD40L + IL4","CpG ODN")))+
-  scale_colour_manual(name = 'IGHV status', values = setNames(c(palreds[8],palblues[1]), c("M", "U")))+
- scale_fill_manual(name = 'IGHV status', values = setNames(c(palreds[8],palblues[1]), c("M", "U"))) +
+      scale_colour_manual(name = 'IGHV status', values = setNames(c(palblues[1],palreds[8]), c("mutated", "unmutated"))) +
+      scale_fill_manual(name = 'IGHV status', values = setNames(c(palblues[1],palreds[8]), c("mutated", "unmutated"))) +
    theme_minimal()+
   # guides(size="none", color = "none")+
   theme(axis.text.x = element_text(angle = 90, hjust = 1), text = element_text(size=20), legend.position = "none")+
-  ylab("Log(Viability)")+
+  ylab("Logarithm of relative viability")+
   xlab("")
 
 
 p2<-df_patMeta%>%
-  filter(Cytokine%in%c("TGF-b1","IL-1b","Interferon gamma","SDF-1a","sCD40L","soluble anti-IgM","IL-6","IL-10","IL-21","HS-5 CM","IL-15","BAFF","IL-2"), Drug=="DMSO", !is.na(IGHV.status))%>%
+  filter(Cytokine%in%c("TGF-b1","IL-1b","Interferon gamma","SDF-1a","sCD40L","soluble anti-IgM","IL-6","IL-10","IL-21","HS-5 CM","IL-15","BAFF","IL-2"), Drug=="DMSO", !is.na(IGHV.status))%>%  
+  mutate(IGHV.status=factor(IGHV.status, levels = c("U","M"), labels = c("unmutated", "mutated"))) %>% 
   ggplot(aes(x=Cytlabel,
              y=Log))+
   geom_hline(yintercept = 0)+
   geom_violin(cex=0.4, alpha=0.7,aes(x=Cytlabel, y=Log, colour = IGHV.status, fill = IGHV.status))+
-   geom_text(aes(label = Sig, y = 0.625), size = 6, data = filter(t_tests, Cytlabel%in%c("IL1\u03B2","Interferon \u03B3","SDF-1\u03B1","sCD40L","soluble anti-IgM","IL6","IL10","IL21","HS-5 CM","IL15","BAFF","IL2", "TGF\u03B21")))+
-  scale_colour_manual(name = 'IGHV status', values = setNames(c(palreds[8],palblues[1]), c("M", "U"))) +
-  scale_fill_manual(name = 'IGHV status', values = setNames(c(palreds[8],palblues[1]), c("M", "U"))) +
+   geom_text(aes(label = Sig, y = 0.625), size = 6, data = filter(t_tests, Cytlabel%in%c("IL1\u03B2","Interferon \u03B3","Interferonγ","SDF-1\u03B1","sCD40L","soluble anti-IgM","IL6","IL10","IL21","HS-5 CM","IL15","BAFF","IL2", "TGF\u03B21")))+
+  # scale_colour_manual(name = 'IGHV status', values = setNames(c(palreds[8],palblues[1]), c("M", "U"))) +
+  # scale_fill_manual(name = 'IGHV status', values = setNames(c(palreds[8],palblues[1]), c("M", "U"))) +
+      scale_colour_manual(name = 'IGHV status', values = setNames(c(palblues[1],palreds[8]), c("mutated", "unmutated"))) +
+      scale_fill_manual(name = 'IGHV status', values = setNames(c(palblues[1],palreds[8]), c("mutated", "unmutated"))) +
   theme_minimal()+
   theme(axis.text.x = element_text(angle = 90, hjust = 1), text = element_text(size=20), legend.position = "bottom")+
-  ylab("") + xlab("Cytokine")
+  ylab("") + xlab("Stimulus")
 
-FigS3B<-
   p1+
   p2+
   plot_layout(nrow = 1, widths = c(1,3.5))
-
-FigS3B
-
+  
+  # df_patMeta%>%
+  # filter(!is.na(IGHV.status))%>%
+  #   group_by(PatientID, IGHV.status) %>% 
+  #   summarise() %>% 
+  #   ungroup() %>% 
+  #   group_by(IGHV.status) %>%
+  #   count()
+  
 ```
 
-**Appendix Figure 3. Response to stimuli by IGHV status.** Viability after 48h incubation with microenvironmental stimuli. Log transformed viabilities, normalized to DMSO solvent controls, stratified by IGHV status.  BH-adjusted p-values are shown from one-sample t-tests of all patient samples. (p<0.00001=&#42;&#42;&#42;&#42;&#42;, p<0.0001=&#42;&#42;&#42;&#42;, p>0.05=ns) 
+## Appendix Figure 2. Response to stimuli stratified by IGHV status.
+Logarithm of the relative viability after 48h incubation with microenvironmental stimuli, stratified by IGHV status (IGHV mutated: n=99; IGHV unmutated: n=83). BH-transformed p-values are shown from one-sample Student's t-tests of all patient samples. (p<0.00001=&#42;&#42;&#42;&#42;&#42;, p<0.0001=&#42;&#42;&#42;&#42;, p>0.05=ns) 
 
 
-```{r S4 Cytokine response between Clusters 1 and 2, fig.width=11, fig.height=14}
 
-example_cyt<-c("IL1\u03B2","Resiquimod", "TGF\u03B21","soluble anti-IgM",  "sCD40L",  "BAFF", "CpG ODN","sCD40L + IL4","IL6","SDF-1\u03B1","IL15", "IL4","IL21", "HS-5 CM", "Interferon \u03B3","IL2","IL10")
+```{r S3, fig.path=plotDir, dev=c( "cairo_pdf"), fig.pos="H", fig.width=11, fig.height=12}
+
+example_cyt<-c("Resiquimod","CpG ODN","IL1\u03B2", "Interferon\u03B3","sCD40L","TGF\u03B21","IL4", "soluble anti-IgM", "IL15","sCD40L + IL4","IL21", "HS-5 CM","BAFF", "IL6", "SDF-1\u03B1","IL10","IL2")
 
 stat.test <- df %>%
   left_join(Heatmap_clusters, by = "PatientID") %>%
@@ -1054,22 +1965,20 @@ df %>%
   scale_color_manual(values=colors[1:4])+
   t2+ theme(strip.background =element_blank())+
   guides(color="none")+
-  facet_wrap(~Cytlabel, ncol=3, scales="free_y")+
-  ylab("Log(Viability)")+
+  facet_wrap(~Cytlabel, ncol=4, scales="free_y")+
+  ylab("Logarithm of relative viability")+
   coord_cartesian(clip="off")
 
+# Heatmap_clusters %>% 
+#   group_by(Cluster) %>% 
+#   count()
 
 ```
 
-**Appendix Figure 4. Stimuli response by clusters.** Log transformed viabilities after treatment with stimuli, faceted by cluster. BH-adjusted p-values from student's t-tests are shown.
+## Appendix Figure 3. Stimulus response stratified by clusters.
+Logarithm of the relative viability after treatment with stimuli, faceted by cluster. BH-transformed p-values from Student's t-test (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
 
-
-
-\newpage
-
-
-
-```{r S5 CM curves for TFT and OS, fig.width=10, fig.height=12, warning=F, message=F}
+```{r S4, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.pos="H", fig.width=9, fig.height=10, warning=F, message=F}
 
 # Run model with OS
 coxph_summ <- clusters.surv%>%
@@ -1099,7 +2008,8 @@ OS_Clusters_KM_surv <- ggsurvplot(fit,
                  tables.theme = t_table,
                  legend = "bottom",
                  xlab="Time in years",
-                 ylab="Overall survival",
+                 ylab="Probability",
+                 title="Overall survival",
                  break.time.by=1,
                  xlim=c(0,6.8),
                  ylim=c(0.6,1))
@@ -1158,7 +2068,8 @@ TFT_Clusters_KM_surv <- ggsurvplot(fit,
                  tables.theme = t_table,
                  legend = "bottom",
                  xlab="Time in years",
-                 ylab="Time to first treatment",
+                 ylab="Probability",
+                 title = "Time to first treatment",
                  break.time.by=5,
                  xlim=c(0,33))
 
@@ -1178,11 +2089,353 @@ OS_Clusters_KM+theme(plot.tag=element_text(size = 20))+
 
 ```
 
-**Appendix Figure 5. Time to first treatment and overall survival by clusters.** Kaplan-Meier Curves of time to first treatment with p-value from univariate Cox proportional hazards model between C3 and C4 **(A)** and overall survival with p-value from univariate Cox proportional hazards  model between C1&2 and C3&4 **(B)**. Median survival not reached.
+## Appendix Figure 4. Time to first treatment and overall survival by clusters.
+Kaplan-Meier curves of time to first treatment with p-value from univariate Cox proportional hazards model between C3 and C4 **(A)** and overall survival with p-value from univariate Cox proportional hazards  model between C1&2 and C3&4 **(B)**. Median survival not reached.
+
+
+```{r fig.height=5}
+
+plotTab<-CLL_PD %>% 
+  left_join( patMeta_Cluster, by="PatientID") %>% 
+  mutate(Cluster=as.factor(Cluster)) 
+  
+ CLL_PD_Boxplot<- 
+  ggplot(plotTab, aes(x=Cluster, y=CLL_PD, group=Cluster, fill=Cluster ))+
+  geom_boxplot(outlier.shape = NA)+
+  geom_beeswarm(aes( ))+
+  t2+
+  scale_fill_manual(values=colors[1:4]) +
+  guides(fill="none") +
+  ylab("CLL Proliferative Drive") +
+  stat_compare_means(method="t.test", comparison=list(c(1,2),c(3,4)), size=4, label.x = 1.3, label.y=3.1)+
+  coord_cartesian(clip="off")+
+  theme(axis.title.x = element_text(size=12),
+        axis.title.y = element_text(size=12),
+        axis.text.x = element_text(size=10),
+        axis.text.y = element_text(size=10), 
+        strip.text = element_text(size=12))
+ 
+ # plotTab %>% 
+ #   group_by(Cluster) %>% 
+ #   count()
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+
+########### Lasso Model of CLL_PD and Cytokine response in all patients ################
+#make viability matrix for cytokine treatments for patients
+cyt_viab <- dplyr::select(dplyr::filter(df, Drug == "DMSO", Cytokine != "No Cytokine"), 
+                PatientID, 
+                Log, 
+                Cytokine) %>% spread(Cytokine, Log) %>% as.data.frame()
+
+#make PatID the row names
+rownames(cyt_viab) <- unlist(cyt_viab[,1]) # the first row will be the header
+cyt_viab <- dplyr::select(cyt_viab,-PatientID) 
+
+cyt_viab <- t(cyt_viab)
+
+#run scaleCytResp on viability matrix
+x <- scaleCytResp(cyt_viab)
+
+viabMat <-t(x)
+
+
+## Response matrix 
+PDmat <- 
+  dplyr::select(CLL_PD, PatientID, CLL_PD) %>% 
+  #reshape data
+  spread(key = PatientID, value = CLL_PD) %>% 
+  data.frame() 
+  
+
+
+#get only viability values for aptients that have a PD
+viabMat <- viabMat[colnames(PDmat),]
+
+
+# Run logistic regression
+## Run model
+PDmat <- t(PDmat)
+
+#fit the model
+cvglmfit <- runGlm(viabMat, PDmat, method = "lasso", repeats = 30, folds = 3)
+    
+#collect the results for each stimulus in one object
+dataResult <- cvglmfit
+
+
+# 
+# Get predictor profiles for stimuli of interest
+
+PDmat <- 
+  dplyr::select(CLL_PD, PatientID, CLL_PD) %>% 
+  #reshape data
+  spread(key = PatientID, value = CLL_PD) %>% 
+  data.frame() 
+  
+
+#make sample order same as in geneMatrix
+PDmat <- PDmat[,rownames(viabMat)]
+
+#get only viability values for patients that have a PD
+viabMat <- viabMat[colnames(PDmat),]
+
+
+CLLPD_Lasso_all_patients <-
+  lassoPlot_CLLPD(dataResult, 
+          viabMat, #use viab matrix for heatmap 
+          PDmat, #use CLL_PD matrix for scatter plot
+          freqCut = 0.75, #coefficients should be selected in <75% of bootstrapped model files
+          coefCut = 0.00) #no minimum value for coefficients 
+
+# str(PDmat)
+# str(viabMat)
+```
 
 
 
-```{r S6 GSEA, fig.height= 14, fig.width = 12, warning=F, message=F, cache=FALSE}
+```{r, message=FALSE, warning=FALSE}
+########### Lasso Model of CLL_PD and Cytokine response in IGHV M patients ################
+#make viability matrix for cytokine treatments for patients
+cyt_viab <- dplyr::select(dplyr::filter(df, Drug == "DMSO", Cytokine != "No Cytokine"), 
+                PatientID, 
+                Log, 
+                Cytokine) %>% spread(Cytokine, Log) %>% as.data.frame()
+
+#make PatID the row names
+rownames(cyt_viab) <- unlist(cyt_viab[,1]) # the first row will be the header
+cyt_viab <- dplyr::select(cyt_viab,-PatientID) 
+
+cyt_viab <- t(cyt_viab)
+
+#run scaleCytResp on viability matrix
+x <- scaleCytResp(cyt_viab)
+
+viabMat <-t(x)
+
+Mpat <- patMeta %>% filter(IGHV.status == "M") %>% select(PatientID)
+
+PDmat <- 
+  filter(CLL_PD, PatientID %in% Mpat$PatientID) %>%
+  dplyr::select(PatientID, CLL_PD) %>% 
+  #reshape data
+  spread(key = PatientID, value = CLL_PD) %>% 
+  data.frame() 
+  
+#get only viability values for aptients that have a PD
+viabMat <- viabMat[colnames(PDmat),]
+
+PDmat <- t(PDmat)
+
+#fit the model
+cvglmfit <- runGlm(viabMat, PDmat, method = "lasso", repeats = 30, folds = 3)
+    
+#collect the results for each stimulus in one object
+dataResult <- cvglmfit
+
+
+PDmat <- 
+  dplyr::select(CLL_PD, PatientID, CLL_PD) %>% 
+  #reshape data
+  spread(key = PatientID, value = CLL_PD) %>% 
+  data.frame() 
+  
+
+#make sample order same as in geneMatrix
+PDmat <- PDmat[,rownames(viabMat)]
+
+#get only viability values for patients that have a PD
+viabMat <- viabMat[colnames(PDmat),]
+
+
+CLLPD_Lasso_M_patients<-lassoPlot_CLLPD(dataResult, 
+          viabMat, #use viab matrix for heatmap 
+          PDmat, #use CLL_PD matrix for scatter plot
+          freqCut = 0.75, #coefficients should be selected in <75% of bootstrapped model files
+          coefCut = 0.00) #no minimum value for coefficients 
+
+
+# str(PDmat)
+# str(viabMat)
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+########### Lasso Model of CLL_PD and Cytokine response in IGHV U patients ################
+#make viability matrix for cytokine treatments for patients
+cyt_viab <- dplyr::select(dplyr::filter(df, Drug == "DMSO", Cytokine != "No Cytokine"), 
+                PatientID, 
+                Log, 
+                Cytokine) %>% spread(Cytokine, Log) %>% as.data.frame()
+
+#make PatID the row names
+rownames(cyt_viab) <- unlist(cyt_viab[,1]) # the first row will be the header
+cyt_viab <- dplyr::select(cyt_viab,-PatientID) 
+
+cyt_viab <- t(cyt_viab)
+
+#run scaleCytResp on viability matrix
+x <- scaleCytResp(cyt_viab)
+
+viabMat <-t(x)
+
+Upat <- patMeta %>% filter(IGHV.status == "U") %>% select(PatientID)
+
+PDmat <- 
+  filter(CLL_PD, PatientID %in% Upat$PatientID) %>%
+  dplyr::select(PatientID, CLL_PD) %>% 
+  #reshape data
+  spread(key = PatientID, value = CLL_PD) %>% 
+  data.frame() 
+  
+#get only viability values for aptients that have a PD
+viabMat <- viabMat[colnames(PDmat),]
+
+PDmat <- t(PDmat)
+
+#fit the model
+cvglmfit <- runGlm(viabMat, PDmat, method = "lasso", repeats = 30, folds = 3)
+    
+dataResult <- cvglmfit
+
+
+PDmat <- 
+  dplyr::select(CLL_PD, PatientID, CLL_PD) %>% 
+  #reshape data
+  spread(key = PatientID, value = CLL_PD) %>% 
+  data.frame() 
+  
+
+#make sample order same as in geneMatrix
+PDmat <- PDmat[,rownames(viabMat)]
+
+#get only viability values for patients that have a PD
+viabMat <- viabMat[colnames(PDmat),]
+
+
+CLLPD_Lasso_U_patients <- lassoPlot_CLLPD(dataResult, 
+          viabMat, #use viab matrix for heatmap 
+          PDmat, #use CLL_PD matrix for scatter plot
+          freqCut = 0.75, #coefficients should be selected in <75% of bootstrapped model files
+          coefCut = 0.00) #no minimum value for coefficients 
+
+
+# str(PDmat)
+# str(viabMat)
+```
+
+```{r, fig.width=4, fig.height=8}
+
+IL1b_Scatterplot<-left_join(CLL_PD, filter(df, Drug=="DMSO"), by = "PatientID") %>% 
+  left_join(patMeta, by = "PatientID") %>% 
+  filter(Cytokine%in%c("IL-1b"), !is.na(IGHV.status)) %>% 
+  
+  ggplot(aes(x=CLL_PD, y=Log)) +
+  geom_smooth(method="lm", formula= 'y ~ x')+
+  geom_point(aes(color=IGHV.status))+
+  scale_colour_manual(name = 'IGHV status', values = setNames(c(palreds[8],palblues[1]), c("M", "U"))) +
+  facet_wrap(.~IGHV.status,  nrow = 2, strip.position="right", labeller = labeller(IGHV.status = c("U" = "IGHV-U", "M" =  "IGHV-M")))+
+  stat_cor()+
+  guides(color="none")+
+  t2+
+  theme(axis.title.x = element_text(size=12),
+        axis.title.y = element_text(size=12),
+        axis.text.x = element_text(size=10),
+        axis.text.y = element_text(size=10), 
+        strip.text = element_text(size=12),
+        plot.title = element_text(size=14))+
+  ggtitle("IL1ß")+
+  ylab("Logarithm of relative viability")
+
+Res_Scatterplot<-left_join(CLL_PD, filter(df, Drug=="DMSO"), by = "PatientID") %>% 
+  left_join(patMeta, by = "PatientID") %>% 
+  filter(Cytokine%in%c("Resiquimod"), !is.na(IGHV.status)) %>% 
+  
+  ggplot(aes(x=CLL_PD, y=Log)) +
+  geom_smooth(method="lm", formula= 'y ~ x')+
+  geom_point(aes(color=IGHV.status))+
+  scale_colour_manual(name = 'IGHV status', values = setNames(c(palreds[8],palblues[1]), c("M", "U"))) +
+  facet_wrap(.~IGHV.status,  nrow = 2, strip.position="right", labeller = labeller(IGHV.status = c("U" = "IGHV-U", "M" =  "IGHV-M")))+
+  stat_cor()+
+  guides(color="none")+
+  t2+
+  theme(axis.title.x = element_text(size=12),
+        axis.title.y = element_text(size=12),
+        axis.text.x = element_text(size=10),
+        axis.text.y = element_text(size=10), 
+        strip.text = element_text(size=12),
+        plot.title = element_text(size=14))+
+  ggtitle("Resiquimod")+
+  ylab("Logarithm of relative viability")
+
+# left_join(CLL_PD, filter(df, Drug=="DMSO"), by = "PatientID") %>% 
+#   left_join(patMeta, by = "PatientID") %>% 
+#   filter(Cytokine%in%c("IL-1b"), !is.na(IGHV.status)) %>% 
+#   group_by(IGHV.status) %>% 
+#   count()
+  
+  
+```
+
+
+```{r S5, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=13, fig.width=13}
+
+design1<-"
+  15
+  25
+  26
+  36
+  46
+  "
+
+wrap_elements(CLL_PD_Boxplot)+theme(plot.tag=element_text(size = 20))+
+wrap_elements(CLLPD_Lasso_all_patients)+theme(plot.tag=element_text(size = 20))+
+wrap_elements(CLLPD_Lasso_M_patients)+theme(plot.tag=element_text(size = 20))+
+wrap_elements(CLLPD_Lasso_U_patients)+theme(plot.tag=element_text(size = 20))+
+  Res_Scatterplot+theme(plot.tag=element_text(size = 20))+
+  IL1b_Scatterplot+theme(plot.tag=element_text(size = 20))+
+  
+  
+  
+  plot_layout(design=design1, heights = c(.9,.8,.1,.7,.85), widths = c(2,.7))+
+  plot_annotation(tag_levels = "A")
+  
+```
+
+## Appendix Figure 5. The relationship between CLL Proliferative Drive (as defined by Lu et al. (2021)^2^) and microenvironmental response.
+**(A)** Beeswarm-boxplot of CLL-PD values stratified by cluster. P-values are from Student's t-tests (C1: n=57; C2:n=20; C3: n=29; C4: n=40). **(B-D)** Predictor profiles depicting relationship between CLL-PD and stimulus response. Stimuli that were associated to the size of CLL-PD were identified with Gaussian linear modelling with L1-penalty, using viability z-scores for each stimulus as feature matrix, and CLL-PD values as response matrix (n=146). Predictor profiles show  z-scores of logarithm of relative viability for each stimuli associated with CLL-PD, bar plot on left shows size of coefficient assigned to each stimulus and scatter plot below indicates CLL-PD values for same patient sample. Coefficients are mean of 30 bootstrapped model fits, plotted when selected in >75% of fits.  **(C)** shows model outputs for  IGHV-M only samples   (n=80) and **(D)**  for IGHV-U only  samples (n=65). **(E & F)**  Exemplary scatter plots split by IGHV mutation status shown for Resiquimod **(E)** and IL1ß **(F)** (IGHV-M: n=80, IGHV-U: n=65). CLL-PD on x-axis and the logarithm of relative viability after microenvironmental stimulation on y-axis. Pearson correlation coefficients are shown with p-values. 
+
+\newpage
+
+
+\newpage
+
+```{r S6, fig.path=plotDir, dev=c("png", "cairo_pdf"),fig.height=5}
+plotTab<-patMeta_Cluster %>% 
+  group_by(Cluster, Methylation_Cluster) %>% 
+  count() %>% 
+  group_by(Cluster) %>% 
+  mutate(freq = n / sum(n)) %>% 
+   plyr::ddply("Cluster", transform, label_ypos=cumsum(freq)) %>% 
+  mutate(Methylation_Cluster=factor(Methylation_Cluster, levels = c("HP", "IP", "LP"), labels = c("High programmed", "Intermediate programmed", "Low programmed")))
+
+
+  ggplot(plotTab, aes(x=Cluster, y=freq, fill=Methylation_Cluster))+
+  geom_bar(stat="identity")+
+  ylab("Relative incidence of\n DNA methylation profiles")+
+  scale_fill_manual(name = 'DNA Methylation Profile', values = Methylation_cluster)+
+  t2
+```
+
+## Appendix Figure 6. DNA Methylation profile of Clusters defined by response to microenvironmental stimuli
+Barplot of DNA methylation profiles in the four clusters of microenvironmental response. C1 and C2 show higher abundance of low programmed (LP) DNA Methylation profiles, while C3 and C4 show more highly programmed (HP) DNA methylation clusters (C1: n=77; C2:n=27; C3: n=38; C4: n=50). NA=Not available. 
+
+\newpage
+
+
+```{r S7, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 14, fig.width = 12, warning=F, message=F, cache=FALSE}
 
 cytSeq <- dds_smp
 
@@ -1288,12 +2541,15 @@ ggplot( aes(x=log2FoldChange, y=-log10(padj))) +
       geom_point(aes(alpha=0.4, colour = ifelse(-log10(padj)>sgncuoff,"black","grey"))) +
       theme(legend.position = "none") +
       geom_label_repel(aes(label=ifelse(-log10(padj)>sgncuoff&abs(log2FoldChange)>2,as.character(symbol),''),
-                           colour=ifelse(log2FoldChange>0, palreds[2], palblues[4])),
+                           colour=ifelse(log2FoldChange>0, palreds[2], palblues[4])), fill="#FDFDFD",
                        size=3.5, max.overlaps=30)+
       scale_colour_manual(values=c(palblues[2], palreds[4], "black", "grey"))+
       t2 +
-      labs(title="Cluster 3 versus 4", x = "Log2FC", y = "-log10(adj p-val)", color = "Significance")+
-      guides(color="none", alpha="none")
+      labs(title="Cluster 3 versus 4", x = "log2 fold change", color = "Significance")+
+      guides(color="none", alpha="none")+
+  scale_y_continuous("BH-transformed p-value", 
+                     breaks=seq(0,10,5),
+                     labels=math_format(expr=10^.x)(-seq(0,10,5)))
 
 
 design1<-"
@@ -1312,10 +2568,463 @@ tp <- theme(plot.tag=element_text(size = 30))
   plot_layout(design=design1, heights = c(2,1,1))+
   plot_annotation(tag_levels = "A")
 
+# cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(3)]  
+# cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(4)]  
+  
 ```
-**Appendix Figure 6. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.** Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 **(A)**. X axis indicates log2 fold change values, calculated using the Deseq package, y axis gives corresponding -log10(adjusted p value). P values adjusted using BH method. Genes are labeled where p value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software.
 
-```{r S8 receptor expression, fig.width=10, fig.height=7, warning=F}
+\newpage
+## Appendix Figure 7. RNA-Sequencing of matched samples indicates differential gene expression between  Cluster 3 and Cluster 4.
+Volcano plot of differentially expressed genes between Cluster 3 and Cluster 4 (C3: n=9; C4: n=12) **(A)**. X axis indicates log2 fold change values, calculated using the DESeq2 package, y axis gives corresponding -log10(transformed p-value). P-values transformed using BH method. Genes are labeled where p-value < 0.05. Enrichment plots of selected pathways **(B-D)**. Gene set enrichment analysis (GSEA) was performed with the Hallmark gene sets from the GSEA Molecular Signatures Database. Wald statistic was used to rank the genes.  The green curve corresponds to the Enrichment Score curve, which is the running sum of the weighted enrichment score obtained from GSEA software. 
+\newpage
+
+```{r S8, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height= 7, fig.width = 12, warning=F, message=F, cache=FALSE}
+
+cytSeq <- dds_smp
+
+#Filter out IGHV genes
+cytSeq <- cytSeq[!grepl("IG_", rowData(cytSeq)$biotype),]
+
+#split into 1,2
+cytSeq.12 <- cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(1,2)]
+
+#remove patients where IGHV is unknown
+cytSeq.12 <- cytSeq.12[,colData(cytSeq.12)[,"IGHV.status"] %in% c("U","M")]
+
+#set order of factors
+cytSeq.12$Cluster <- factor(cytSeq.12$Cluster,
+                            levels = c("1","2"))
+
+cytSeq.12$IGHV.status <- factor(cytSeq.12$IGHV.status,
+                                levels = c("U","M"))
+
+design(cytSeq.12) <- ~ IGHV.status + Cluster
+
+cytSeq.12 <- DESeq(cytSeq.12)
+
+res.ds <-
+  results(cytSeq.12, contrast = c("Cluster", 1, 2), tidy = TRUE) %>%
+  dplyr::rename(Symbol = "row") %>%
+  arrange(pvalue)
+
+#get ensembl ids to Entrez dataframe
+ens2entrez <-
+  rowData(cytSeq.12)[c("entrezgene", "symbol")] %>%
+  as.data.frame() %>%
+  rownames_to_column("ENSEMBL") %>%
+  tibble::as_tibble()
+
+
+
+#Join
+res.ds <- left_join(res.ds, ens2entrez, by=c("Symbol"="ENSEMBL"))
+
+sgncuoff <- 1.4
+
+volPlot <-
+  res.ds %>%
+  filter(!is.na(padj), !is.na(symbol), symbol!="") %>%
+
+ggplot( aes(x=log2FoldChange, y=-log10(padj))) +
+      annotate("rect", xmin = 0.0, xmax = Inf, ymin = -Inf, ymax = Inf, fill = palreds[1], alpha = 0.2)+
+      annotate("rect", xmin = 0.0, xmax = -Inf, ymin = -Inf, ymax = Inf,alpha = 0.2, fill = palblues[1])+
+      geom_point(aes(alpha=0.4, colour = ifelse(-log10(padj)>sgncuoff,"black","grey"))) +
+      theme(legend.position = "none") +
+      geom_label_repel(aes(label=ifelse(-log10(padj)>sgncuoff&abs(log2FoldChange)>2,as.character(symbol),''),
+                           colour=ifelse(log2FoldChange>0, palreds[2], palblues[4])),
+                       size=3.5, max.overlaps=30)+
+      scale_colour_manual(values=c(palblues[2], palreds[4], "black", "grey"))+
+      t2 +
+      labs(title="Cluster 1 versus 2", x = "log2 fold change", color = "Significance")+
+      guides(color="none", alpha="none")+
+  scale_y_continuous("BH-transformed p-value", 
+                     breaks=seq(0,10,5),
+                     labels=math_format(expr=10^.x)(-seq(0,10,5)))
+
+
+volPlot
+
+# 
+# cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(1)]
+# cytSeq[,colData(cytSeq)[,"Cluster"] %in% c(2)]
+```
+
+## Appendix Figure 8. RNA-Sequencing of matched samples indicates differential gene expression between Cluster 1 and 2.
+Volcano plot of differentially expressed genes between Cluster 1 and Cluster 2 (C1: n=17; C2: n=11). X axis indicates log2 fold change values, calculated using the DESeq package, y axis gives corresponding -log10(transformed p-value). P-values transformed using BH method. Genes are labeled where p-value<0.05.
+
+\newpage
+
+
+```{r }
+
+########### Viability matrix ################
+#make viability matrix for cytokine treatments for patients
+viab.mat <- filter(df, Drug!="DMSO", Cytokine=="No Cytokine", Drug_Concentration=="High") %>% 
+            dplyr::select(PatientID, Log, Drug) %>% 
+            tidyr::spread(Drug, Log) %>%
+  as.data.frame()
+
+#make PatientID the row names
+rownames(viab.mat) <- unlist(viab.mat[,1]) # the first row will be the header
+viab.mat <- viab.mat[,-1]
+
+#Transform matrix
+viab.mat <- t(viab.mat)
+
+#keep unscaled matrix 
+viab.mat.unscaled <- viab.mat
+
+#run scaleCytResp on viability matrix
+# viab.mat <- scaleCytResp(viab.mat)
+
+#apply deckel function to matrix
+#Calculate dendrogram 
+breaks <- c(seq(-2,2, length.out = 101))
+
+# viab.mat.lims <- deckel(viab.mat,
+#                             lower = dplyr::first(breaks),
+#                             upper = dplyr::last(breaks))
+
+```
+
+<!-- Arrange annotations for heatmap -->
+```{r}
+
+#Sort heatmap annotations
+#Select annotations from patMeta_cl
+Heatmap_Annotation <- dplyr::select(patMeta_Cluster, 
+                                    PatientID, 
+                                    IGHV.status, 
+                                    Methylation_Cluster,
+                                    trisomy12,
+                                    TP53,
+                                    del17p,
+                                    ATM,
+                                    treatment, 
+                                    gender, 
+                                    Cluster) %>%
+  
+  #Adjust names/levels for legend
+  mutate(treatment=case_when(treatment==0~"No", 
+                             treatment==1~"Yes")) %>%
+
+  mutate(gender=case_when(gender=="f"~"Female", 
+                          gender=="m"~"Male")) %>%
+  
+  mutate(IGHV.status=case_when(IGHV.status=="U"~"Unmutated", 
+                               IGHV.status=="M"~"Mutated"))%>%
+  
+  mutate(Methylation_Cluster=case_when(Methylation_Cluster=="LP"~"Low", 
+                               Methylation_Cluster=="IP"~"Intermediate", 
+                               Methylation_Cluster=="HP"~"High"))
+
+
+#Rename columns for legend
+colnames(Heatmap_Annotation) <- c("PatientID", 
+                                  "IGHV status",
+                                  "Methylation Cluster",
+                                  "trisomy 12", 
+                                  "TP53", 
+                                  "deletion 17p",
+                                  "ATM",
+                                  "Pretreated", 
+                                  "Sex", 
+                                  "Cluster")
+
+#make Pat IDs the rownames
+Heatmap_Annotation <- as.data.frame(Heatmap_Annotation)
+rownames(Heatmap_Annotation) <- unlist(Heatmap_Annotation$PatientID)
+
+#Tidy Up Heatmap Annotation table
+Heatmap_Annotation$Cluster <- as.factor(Heatmap_Annotation$Cluster)
+
+Heatmap_Annotation <- dplyr::select(Heatmap_Annotation,-"PatientID")
+
+########### Set Heatmap Aesthetics ###############
+#Generate red-blue divergent palette
+breaks <- breaks %>% `names<-`(
+     colorRampPalette(c(palblues, "white",palreds))(101))
+
+#Specify colors of annotations 
+ ann_colors = 
+   list(
+    "IGHV status" = c("Unmutated"=IGHV[1],
+                      "Mutated"=IGHV[2]),
+    "Methylation Cluster"= c("Low"=Methylation_cluster[1],
+                             "Intermediate"=Methylation_cluster[2],
+                             "High"=Methylation_cluster[3]),
+    "Sex" = c("Female"=Sex[1],
+              "Male"=Sex[2]),
+    "Pretreated" = c("No"=Mutant[1],
+                  "Yes"=Mutant[2]),
+    "trisomy 12" = c("1"=Mutant[2],
+                     "0"=Mutant[1]),
+    "ATM" = c("1"=Mutant[2],
+              "0"=Mutant[1]),
+    "TP53" = c("1"=Mutant[2],
+               "0"=Mutant[1]),
+    "deletion 17p" = c("1"=Mutant[2],
+               "0"=Mutant[1]),
+    "Cluster" = c("1"=colors[1],
+                  "2"=colors[2],
+                  "3"=colors[3],
+                  "4"=colors[4]))
+```
+
+
+
+```{r S9, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=14.5, fig.height=11, warning = FALSE}
+Cluster_for_Heatmap<-patMeta_Cluster %>% select(PatientID, Cluster) %>%
+  column_to_rownames("PatientID") %>%
+  as.data.frame()
+
+
+#Plot heatmap
+viab.mat.tmp<-viab.mat.unscaled %>% 
+  t() %>% 
+  merge(Cluster_for_Heatmap,. , by=0)%>% 
+  column_to_rownames("Row.names") %>% 
+  filter(Cluster==1) %>% 
+  select(-Cluster) %>% 
+  t() 
+
+viab.mat.tmp.ordered<-viab.mat.tmp[ c( "Fludarabine" ,"Nutlin-3a" ,"Luminespib"  ,"BAY-11-7085" ,"Pyridone-6" ,"Ralimetinib" ,"I-BET 762"  ,"Everolimus" ,"Selumetinib" ,"Idelalisib" ,      "Ibrutinib" ,"PRT062607"), ]
+  
+
+C1_drug_heatmap<-pheatmap(viab.mat.tmp.ordered, 
+         annRow = Cluster_for_Heatmap,
+         type="Cluster",
+         doTranspose=TRUE,
+         # scale = "row",
+         # clustering_method = "complete", 
+         cluster_rows = FALSE,
+         show_colnames = FALSE,
+         annotation_col = Heatmap_Annotation,
+         annotation_colors = ann_colors,
+         cellheight = 22,
+         cellwidth = 4,
+         breaks = breaks,
+         color= names(breaks),
+         border_color=NA,
+         fontsize=10,
+         fontsize_row=16, 
+         legend=FALSE,
+         annotation_legend = FALSE, 
+         show_rownames=FALSE,
+         annotation_names_col=FALSE, 
+         silent = TRUE
+         )
+  
+#Plot heatmap
+viab.mat.tmp<-viab.mat.unscaled %>% 
+  t() %>% 
+  merge(Cluster_for_Heatmap,. , by=0)%>% 
+  column_to_rownames("Row.names") %>% 
+  filter(Cluster==2) %>% 
+  select(-Cluster) %>% 
+  t() 
+
+viab.mat.tmp.ordered<-viab.mat.tmp[ c( "Fludarabine" ,"Nutlin-3a" ,"Luminespib"  ,"BAY-11-7085" ,"Pyridone-6" ,"Ralimetinib" ,"I-BET 762"  ,"Everolimus" ,"Selumetinib" ,"Idelalisib" ,      "Ibrutinib" ,"PRT062607"), ]
+  
+# row.names(viab.mat.tmp)
+
+C2_drug_heatmap<-pheatmap(viab.mat.tmp.ordered, 
+         annRow = Cluster_for_Heatmap,
+         type="Cluster",
+         doTranspose=TRUE,
+         # scale = "row",
+         # clustering_method = "complete", 
+         cluster_rows = FALSE,
+         show_colnames = FALSE,
+         annotation_col = Heatmap_Annotation,
+         annotation_colors = ann_colors,
+         cellheight = 22,
+         cellwidth = 4,
+         breaks = breaks,
+         color= names(breaks),
+         border_color=NA,
+         fontsize=10,
+         fontsize_row=16, 
+         legend=FALSE,
+         annotation_legend = FALSE, 
+         show_rownames=FALSE,
+         annotation_names_col=FALSE, 
+         silent = TRUE
+         )
+  
+#Plot heatmap
+viab.mat.tmp<-viab.mat.unscaled %>% 
+  t() %>% 
+  merge(Cluster_for_Heatmap,. , by=0)%>% 
+  column_to_rownames("Row.names") %>% 
+  filter(Cluster==3) %>% 
+  select(-Cluster) %>% 
+  t() 
+
+viab.mat.tmp.ordered<-viab.mat.tmp[ c( "Fludarabine" ,"Nutlin-3a" ,"Luminespib"  ,"BAY-11-7085" ,"Pyridone-6" ,"Ralimetinib" ,"I-BET 762"  ,"Everolimus" ,"Selumetinib" ,"Idelalisib" ,      "Ibrutinib" ,"PRT062607"), ]
+  
+# row.names(viab.mat.tmp)
+
+C3_drug_heatmap<-pheatmap(viab.mat.tmp.ordered, 
+         annRow = Cluster_for_Heatmap,
+         type="Cluster",
+         doTranspose=TRUE,
+         # scale = "row",
+         # clustering_method = "complete", 
+         cluster_rows = FALSE,
+         show_colnames = FALSE,
+         annotation_col = Heatmap_Annotation,
+         annotation_colors = ann_colors,
+         cellheight = 22,
+         cellwidth = 4,
+         breaks = breaks,
+         color= names(breaks),
+         border_color=NA,
+         fontsize=10,
+         fontsize_row=16, 
+         legend=FALSE,
+         annotation_legend = FALSE, 
+         show_rownames=FALSE,
+         annotation_names_col=FALSE, 
+         silent = TRUE
+         )
+  
+
+#Plot heatmap
+viab.mat.tmp<-viab.mat.unscaled %>% 
+  t() %>% 
+  merge(Cluster_for_Heatmap,. , by=0)%>% 
+  column_to_rownames("Row.names") %>% 
+  filter(Cluster==4) %>% 
+  select(-Cluster) %>% 
+  t() 
+
+viab.mat.tmp.ordered<-viab.mat.tmp[ c( "Fludarabine" ,"Nutlin-3a" ,"Luminespib"  ,"BAY-11-7085" ,"Pyridone-6" ,"Ralimetinib" ,"I-BET 762"  ,"Everolimus" ,"Selumetinib" ,"Idelalisib" ,      "Ibrutinib" ,"PRT062607"), ]
+  
+# row.names(viab.mat.tmp)
+
+C4_drug_heatmap<-pheatmap(viab.mat.tmp.ordered, 
+         annRow = Cluster_for_Heatmap,
+         type="Cluster",
+         doTranspose=TRUE,
+         # scale = "row",
+         # clustering_method = "complete", 
+         cluster_rows = FALSE,
+         show_colnames = FALSE,
+         annotation_col = Heatmap_Annotation,
+         annotation_colors = ann_colors,
+         cellheight = 22,
+         cellwidth = 4,
+         breaks = breaks,
+         color= names(breaks),
+         border_color=NA,
+         fontsize=10,
+         fontsize_row=16, 
+         silent = TRUE
+         )
+  
+
+
+wrap_elements(arrangeGrob(C1_drug_heatmap[[4]]))+
+wrap_elements(arrangeGrob(C2_drug_heatmap[[4]]))+
+wrap_elements(arrangeGrob(C3_drug_heatmap[[4]]))+
+wrap_elements(arrangeGrob(C4_drug_heatmap[[4]]))+
+  plot_layout(nrow=1, widths = c(0.93,0.13,0.52,1.03))
+```
+
+## Appendix Figure 9. Drug response between clusters.
+Heatmap showing the logarithm of relative viability after drug treatment. Rows represent drug treatments and columns represent primary CLL samples (n=192), annotated for their genetic background, sex and pretreatment status above. Red values indicate increased viability upon treatment, blue indicates decreased viability.
+
+```{r S10, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=11, fig.height=12}
+
+Drug_order<-c("BAY-11-7085","Fludarabine","Everolimus","Nutlin-3a","Idelalisib","Ralimetinib","Ibrutinib","I-BET 762","PRT062607","Pyridone-6","Selumetinib","Luminespib")
+  
+stat.test <- df %>%
+  left_join(Heatmap_clusters, by = "PatientID") %>%
+  dplyr::filter(Drug!="DMSO",
+                Drug_Concentration=="High",
+                Cytlabel=="No Cytokine",
+                Cluster%in%c(1,2,3,4)) %>%
+  dplyr::mutate(Cluster=factor(Cluster)
+                ,Drug=factor(Drug, levels = Drug_order)
+                )  %>%
+  group_by(Drug) %>%
+  rstatix::t_test(Log ~ Cluster, p.adjust.method="BH",paired = FALSE,
+  var.equal = FALSE,  alternative = "two.sided", comparisons=list(c(1,2),c(3,4)))%>%
+  rstatix::add_y_position(step.increase=0.001)
+
+df %>%
+  left_join(Heatmap_clusters, by = "PatientID") %>%
+  dplyr::filter(Drug!="DMSO",
+                Drug_Concentration=="High",
+                Cytlabel=="No Cytokine",
+                Cluster%in%c(1,2,3,4)) %>%
+  dplyr::mutate(Cluster=factor(Cluster)
+                ,Drug=factor(Drug, levels = Drug_order)
+                ) %>%
+  
+
+  ggplot(aes(x=Cluster, y= Log))+
+  stat_pvalue_manual(stat.test, label = "p.adj", tip.length = 0.01)+
+  geom_hline(yintercept = 0)+
+  geom_boxplot()+
+  geom_beeswarm(aes(color=Cluster))+
+  scale_color_manual(values=colors[1:4])+
+  t2+ theme(strip.background =element_blank())+
+  guides(color="none")+
+  facet_wrap(.~Drug, ncol=3, scales="free_y")+
+  ylab("Logarithm of relative viability")+
+  coord_cartesian(clip="off")
+
+
+```
+
+## Appendix Figure 10. Drug response by clusters.
+Logarithm of the relative viability after treatment with drugs, faceted by cluster. BH-transformed p-values from non-paired, two-sided Student's t-test are shown (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
+
+
+
+
+```{r S11, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=6, fig.width=8}
+
+df_patMeta %>% 
+  left_join(Heatmap_clusters, by = "PatientID") %>% 
+  filter(Drug%in%c("DMSO", "BAY-11-7085"), Cytokine%in%c("No Cytokine", "BAFF"), Drug_Concentration%in%c("None", "High"), !(Drug=="DMSO"&Cytokine=="No Cytokine")) %>% 
+  mutate(Cluster=as.factor(Cluster),
+         DCK=factor(DCK, levels=c("DMSO:BAFF", "BAY-11-7085:No Cytokine", "BAY-11-7085:BAFF" ))
+         ) %>% 
+  
+  ggplot(aes(DCK, Log)) +
+  
+  geom_hline(yintercept = 0, linetype=2, color="black")+
+  
+  geom_boxplot(aes(fill=Cluster))+
+  # geom_beeswarm(aes(color=Cluster))+
+
+  # lemon::geom_pointline(aes(group=PatientID), size=1,   
+                         # colour="#003DA5", alpha=0.2)+
+  facet_wrap(~Cluster, scales = "fixed", nrow = 1, labeller = labeller(Cluster = c("1" = "Cluster 1", "2" = "Cluster 2","3" = "Cluster 3","4" = "Cluster 4")))+
+    scale_color_manual(values=colors[1:4])+
+  t1+ theme(strip.background =element_blank())+
+  guides(fill="none")+
+  scale_x_discrete(labels=c("DMSO:BAFF"="BAFF",
+                            "BAY-11-7085:No Cytokine"="BAY-11-7085",
+                            "BAY-11-7085:BAFF"="BAY-11-7085 + BAFF"))+
+  ylab("Logarithm of relative viability")+
+  xlab("Treatment")+
+  coord_cartesian(clip="off")+
+  stat_compare_means(comparisons = list(c(1,3)), paired = TRUE)
+
+```
+
+## Appendix Figure 11. Effect of BAY-11-7085 treatment on BAFF response
+Logarithm of the relative viability after treatment BAFF, BAY-11-7085 or both, faceted by cluster. P-values from paired, two-sided Student's t-test are shown (C1: n=77; C2:n=27; C3: n=38; C4: n=50).
+
+\newpage
+
+
+
+```{r S12, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=10, fig.height=7, warning=F}
 
 #VST
 vsd <- vst(dds_smp, blind=TRUE)
@@ -1420,67 +3129,65 @@ CR_volcanoplot <-
   theme_minimal()+
   scale_x_continuous(breaks = c(-0.3,0,0.3))+
   xlab("Pearson Correlation Coefficient")+
-  ylab("-log10(BH adjusted p-value)")+
-  t2
+  t2+
+  scale_y_continuous("BH-transformed p-value", 
+                     breaks=seq(0,10,1),
+                     labels=math_format(expr=10^.x)(-seq(0,10,1)))
 
 CR_volcanoplot
 
 
 
 ```
-**Appendix Figure 7. Correlation of stimuli response and receptor expression.** The effects of the microenvironmental stimuli on viability were largely independent of the expression of the corresponding stimuli receptors. Volcano plot depicts Pearson correlation coefficients against corresponding BH-adjusted p values, for the correlation between control - normalised  log viability values with each stimulus and vst RNA counts of corresponding stimuli receptor. RNA counts taken from RNA-Sequencing of untreated matched CLL patient sample. Only viability  after treatment with Resiquimod correlated with receptor expression (R>0.3).
 
-
-```{r Ibrutinib Resiquimod in trisomy 12 and IGHV, fig.height=7, fig.width=12}
-tri12.labs <- c("0" = "Non-\ntrisomy 12", "1" = "trisomy 12")
-ighv.labs <- c("U" = "IGHV-U", "M" =  "IGHV-M")
-
-#filter for Resiquimod-only treatment, only show patients who are annoyated for IGHV and Trisomy12
-plotTab <- left_join(df, patMeta, by = "PatientID") %>% 
-  dplyr::filter(drugC %in% c("DMSO:None", "Ibrutinib:High"),
-                Cytokine=="Resiquimod",
-                !is.na(trisomy12),
-                !is.na(IGHV.status))
-
-
- 
-  plotTab %>%
-         
-  ggplot(aes(x = DCK,
-             y=Log,
-             color=(trisomy12)))+
-  geom_hline(yintercept = 0)+
-  geom_boxplot()+
-  geom_beeswarm(cex=1.5) +
-  guides(color="none", shape="none")+
-  facet_grid(~IGHV.status + trisomy12, labeller = labeller(trisomy12 = tri12.labs, IGHV.status = ighv.labs))+
- 
-  
-  stat_compare_means(method = "t.test",
-                     label.x.npc = "center", 
-                     comparisons = list( c(1,2)),
-                     size=5)+
-  xlab("") +
-  ylab("Log(Viability)") +
-  ggtitle("Resiquimod + Ibrutinib") +
-  scale_color_manual(values=c(palblues[3], palreds[8])) + 
-  t1+
-  theme(axis.text.x = element_text(angle = 45, vjust =1))+ 
-  coord_cartesian(ylim = c(-2.1, 2.5), clip="off")+
-  scale_x_discrete(labels=c("DMSO:Resiquimod"="Resiquimod",
-                            "Ibrutinib:Resiquimod"="Ibrutinib + Resiquimod"))
-  
-
-
-rm(plotTab)
-
-
-```
-**Appendix Figure 8. BCR inhibition by ibrutinib counters the protective effect of TLR stimulation in all genetic subgroups of IGHV and trisomy 12.** Log normalized viability after treatment with resiquimod with and without ibrutinib. Faceted by IGHV mutation status and trisomy 12.
+## Appendix Figure 12. Correlation of stimulus response and receptor expression.
+Volcano plot depicts Pearson correlation coefficients against corresponding BH-transformed p-values, for the correlation between the logarithm of the relative viability and vst RNA counts of corresponding stimulus receptor (n=49). RNA counts taken from RNA-Sequencing of untreated matched CLL patient sample. Only viability  after treatment with Resiquimod correlated with receptor expression (R>0.3).
 
 \newpage
 
-```{r S9 tri12atac_2v2, fig.height = 6, fig.width = 10}
+```{r S13,fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=12, fig.height=4, message=FALSE, warning=FALSE}
+load("../../data/fig3_data_for_lassoplots.RData")
+
+
+# Get predictor profiles for stimuli of interest
+
+heatMaps_cyt <- lassoPlot3Appendix(dataResult[c("Resiquimod","sCD40L+IL-4")] ,  # 
+                          geneMatrix.complete, #use gene matrix for heatmap 
+                          viabMatrix, #use viab matrix for scatter plot
+                          freqCut = 0.75, #coefficients should be selected in <75% of bootstrapped model files
+                          coefCut = 0.02) #no minimum value for coefficients 
+
+
+# Assemble legend for heatmaps
+
+#G = gene mutations, I = IGHV, M = Methylation Cluster
+legendFor = c("G", "I", "M")
+
+#assign colours for I, G and M
+coldef<-list()
+coldef["I"] <- list(c(offwhite,"#707372")) #U-CLL and M-CLL
+coldef["M"] <- list(c(offwhite, "#707372", "#A8A99E")) #IP, HP, LP
+coldef["G"] <- list(c(offwhite, "#373A36")) #WT and Mutated
+
+
+legends = makelegends(legendFor=c("G","I","M"),coldef)
+
+
+
+grid.arrange( grobs = heatMaps_cyt[1], ncol =1)
+grid.arrange( grobs = heatMaps_cyt[2], ncol =1)
+
+# str(geneMatrix.complete)
+```
+
+## Appendix Figure 13. Predictor profiles to represent genetic feature-stimulus associations.
+Stimuli which are not shown in Figure 3B but have predictors >0.02 assigned by multivariate analysis using Gaussian linear modelling with L1-penalty are shown. Within the plots, the bar plots on left indicate size and sign of coefficients assigned to the named predictors. Positive coefficients indicate higher viability after stimulation if the feature is present. Scatter plots indicate the logarithm of relative viability values, in order of magnitude, for each individual sample. Heatmaps show status for each of the genetic predictors for corresponding sample in scatter plot (n=128). 
+
+
+\newpage
+
+
+```{r S14, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 8, fig.width = 10}
 
 plotTab <- diffTF_small %>%  filter(!is.na(pvalueAdj))
 
@@ -1489,21 +3196,25 @@ plotTab$TF <- gsub("SPI1", "PU1", plotTab$TF)
 
 atac.plot =
   ggplot(data = plotTab,
-         aes(x = weighted_meanDifference, y = -log10(pvalueAdj))) +
+         aes(x = weighted_meanDifference, y = -log10(pvalueAdj+0.000001))) +
 
   geom_point(aes(alpha=0.4, colour = ifelse(-log10(pvalueAdj) > 2,"black","grey")),size=3) +
+  
   geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 4&abs(weighted_meanDifference)>0.15,
                                     as.character(TF),''),
                        colour=ifelse(weighted_meanDifference>0,
                                      palreds[1],
                                      palblues[1])),
-                   size=7, max.overlaps=10)+
+                   size=5, max.overlaps=20)+
   scale_colour_manual(values=c(palblues[3], palreds[8], "black", "grey")) +
   t2 +
-  ggtitle("ATAC seq: Tri12 v WT") +
+  ggtitle("Trisomy 12 v Non-Trisomy 12") +
   xlab("Change in inferred TF activity") +
   guides(color="none", alpha="none") +
-  scale_y_continuous(expression("-log(adjusted  "* italic(p)*"-value)"), breaks=seq(0,150,50))
+  coord_cartesian(ylim = c(0,6.5))+
+  scale_y_continuous("BH-transformed p-value", 
+                     breaks=seq(0,10,3),
+                     labels=math_format(expr=10^.x)(-seq(0,10,3)))
 
 
 atac.plot
@@ -1514,12 +3225,200 @@ rm(plotTab)
 # nrow(filter(diffTF_small, weighted_meanDifference>0, pvalueAdj <0.05))
 ```
 
-**Appendix Figure 9. ATAC-Seq comparing trisomy 12 and non-trisomy 12 CLL samples.** Volcano plot shows change in inferred TF activity (x axis) against adjusted p-values (y axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in analytic mode and adjusted by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.15, and adjusted p-value < 0.01.
+## Appendix Figure 14. ATACseq comparing trisomy 12 and non-trisomy 12 CLL samples.
+Volcano plot shows change in inferred TF activity (x-axis) against transformed p-values (y-axis) for  trisomy 12 (n = 2) versus non-trisomy 12 samples (n = 2). Inferred TF activity calculated using the diffTF package,  TFs are labeled where inferred activity > 0.15, and BH-transformed p-value < 0.01.
 
 
+\newpage
+
+```{r S15, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 6, fig.width = 10, eval=TRUE}
+
+plotTab <- diffTF_Beekman %>%  filter(!is.na(pvalueAdj))
+
+#make naming consistent with text
+plotTab$TF <- gsub("SPI1", "PU1", plotTab$TF)
+
+atac.plot =
+  ggplot(data = plotTab,
+         aes(x = weighted_meanDifference, y = -log10(pvalueAdj))) +
+
+  geom_point(aes(alpha=0.4, colour = ifelse(-log10(pvalueAdj) > 1.3,"black","grey")),size=3) +
+  geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 1.3&abs(weighted_meanDifference)>0.1,
+                                    as.character(TF),''),
+                       colour=ifelse(weighted_meanDifference>0,
+                                     palreds[1],
+                                     palblues[1])),
+                   size=7, max.overlaps=20)+
+  scale_colour_manual(values=c(palblues[3], palreds[8], "black", "grey")) +
+  t2 +
+  ggtitle("Trisomy 12 v Non-trisomy 12") +
+  xlab("Change in inferred TF activity") +
+  guides(color="none", alpha="none")+
+  scale_y_continuous("BH-transformed p-value", 
+                     breaks=seq(0,10,1),
+                     labels=math_format(expr=10^.x)(-seq(0,10,1)))
+
+atac.plot
+
+rm(plotTab)
+
+#check number of upregulated TFs
+#nrow(filter(diffTF_Beekman, weighted_meanDifference>0, pvalueAdj <0.05))
+```
+
+## Appendix Figure 15. ATACseq comparing trisomy 12 and non-trisomy 12 CLL samples.
+Volcano plot shows change in inferred TF activity (x-axis) against transformed p-values (y-axis) for  trisomy 12 (n = 13) versus non-trisomy 12 samples (n = 87). Inferred TF activity calculated using the diffTF package, and measured as weighted mean difference. p-values are obtained through diffTF in permutation mode and transformed by the Benjamini-Hochberg procedure. TFs are labeled where absolute weighted mean difference > 0.1, and transformed p-value < 0.05. Data from Beekman et al. 2018^4^. 
+
+\newpage
+
+
+```{r S16, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height = 15, fig.width = 12}
+
+plotTab <- diffTF_wochr12 %>%  filter(!is.na(pvalueAdj))
+
+#make naming consistent with text
+plotTab$TF <- gsub("SPI1", "PU1", plotTab$TF)
+
+atac.plot =
+  ggplot(data = plotTab,
+         aes(x = weighted_meanDifference, y = -log10(pvalueAdj + 0.000001))) +
+
+  geom_point(aes(alpha=0.4, colour = ifelse(-log10(pvalueAdj) > 2,"black","grey")),size=3) +
+  geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 4&abs(weighted_meanDifference)>0.15,
+                                    as.character(TF),''),
+                       colour=ifelse(weighted_meanDifference>0,
+                                     palreds[1],
+                                     palblues[1])),
+                   size=7, max.overlaps=20)+
+  scale_colour_manual(values=c(palblues[3], palreds[8], "black", "grey")) +
+  t2 +
+  ggtitle("Trisomy 12 v non-trisomy 12") +
+  xlab("Change in inferred TF activity") +
+  guides(color="none", alpha="none") +
+  scale_y_continuous("BH-transformed p-value", 
+                     breaks=seq(0,10,5),
+                     labels=math_format(expr=10^.x)(-seq(0,10,5)))+
+  coord_cartesian(ylim = c(0,6.5))
+
+
+
+
+rm(plotTab)
+
+plotTab <- diffTF_wochr12_big %>%  filter(!is.na(pvalueAdj))
+
+#make naming consistent with text
+plotTab$TF <- gsub("SPI1", "PU1", plotTab$TF)
+
+atac.plot.big =
+  ggplot(data = plotTab,
+         aes(x = weighted_meanDifference, y = -log10(pvalueAdj + 0.000001))) +
+
+  geom_point(aes(alpha=0.4, colour = ifelse(-log10(pvalueAdj) > 1,"black","grey")),size=3) +
+  geom_label_repel(aes(label=ifelse(-log10(pvalueAdj) > 1&abs(weighted_meanDifference)>0.05,
+                                    as.character(TF),''),
+                       colour=ifelse(weighted_meanDifference>0,
+                                     palreds[1],
+                                     palblues[1])),
+                   size=7, max.overlaps=25)+
+  scale_colour_manual(values=c(palblues[3], palreds[8], "black", "grey")) +
+  t2 +
+  ggtitle("Trisomy 12 v non-trisomy 12") +
+  xlab("Change in inferred TF activity") +
+  guides(color="none", alpha="none") +
+  scale_y_continuous("BH-transformed p-value", 
+                     breaks=seq(0,10,1),
+                     labels=math_format(expr=10^.x)(-seq(0,10,1)))+
+  coord_cartesian(ylim = c(0,1.7))
+
+rm(plotTab)
+
+tp <- theme(plot.tag=element_text(size = 30, face="plain"))
+
+(wrap_elements( atac.plot )+ tp)/
+(wrap_elements( atac.plot.big )+ tp) +
+plot_annotation(tag_levels = "A", theme = theme(title=element_text(size = 20)))
+
+```
+
+## Appendix Figure 16. ATACseq comparing trisomy 12 and non-trisomy 12 CLL samples, independent of third copy of chromosome 12
+Volcano plot shows change in inferred TF activity (x axis) against transformed p-values (y axis) for  trisomy 12 versus non-trisomy 12 samples, for (A) the 2 versus 2 comparison and (B) the 9 versus 42 comparison based on the data from Rendeiro et al. 2016^3^.  Input peak files supplied to diffTF did not include peaks on chromosome 12. p-values are obtained through diffTF in (A) analytic mode and (B) permutation mode, transformed by the Benjamini-Hochberg procedure. TFs are labelled in (A) where absolute weighted mean difference > 0.15, and transformed p-value < 0.01 and in (B) where absolute weighted mean difference > 0.05, and transformed p-value < 0.1.
+
+
+\newpage
+
+```{r Spib_binding_sites}
+
+#filter SPIB binding sites  for those that are sig between two conditions, and show a sig Log2FC
+TFBS <- BIGCLL52_SPIB %>% dplyr::filter(abs(l2FC) >1, pval_adj <0.1)
+
+#prepare to make this into a genomic ranges object for plotting
+TFBS <- TFBS %>% 
+        #remove chr string
+        mutate_at(vars(TFBSID), list(~as.character(gsub("chr.*:", "", .)))) %>% 
+        #separate into start and end
+        separate(TFBSID, c("start", "end"))
+
+#Convert to a genomic ranges object
+peak <- 
+  TFBS %>%
+  dplyr::select(TF, chr, start, end, strand, l2FC, pval,  pval_adj) %>%
+  makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+
+```
+
+```{r S17, fig.path=plotDir, dev=c("cairo_pdf"), fig.height = 15, fig.width = 10, warning = FALSE}
+
+#get a dataframe of all SPIB binding sites that show sig Log2FC
+peak_df <- 
+  TFBS %>%
+  dplyr::select(TF, chr, start, end, strand, l2FC, pval,  pval_adj)
+
+#make factors / numeric
+chr.sorted <- unique(sortChrName(peak_df$chr))
+peak_df$chr <- factor(peak_df$chr, levels = chr.sorted)
+peak_df$start <- as.numeric(peak_df$start)
+peak_df$end <- as.numeric(peak_df$end)
+
+
+chr_length<-filter(human.hg19.genome, V1%in%levels(peak_df$chr)) %>% 
+         mutate(V1=factor(V1, levels = rev(levels(peak_df$chr)))) %>% 
+          mutate(chromosome=gsub("chr","Chromosome ",V1)) %>% 
+  rename(chr_length=V2) %>% 
+  select(-V1)
+peak_df%>% 
+  mutate(chromosome=gsub("chr","Chromosome ",chr)) %>% 
+  left_join(chr_length, by="chromosome") %>%
+  mutate(chromosome=factor(chromosome, levels = c(paste0("Chromosome ", 1:22)))) %>% 
+
+ggplot(aes(start/10^6, l2FC))+
+  geom_segment(aes(y=0, yend=0, x=0, xend=chr_length/10^6))+
+  geom_rect(aes(xmin = start/10^6, ymin = 0, xmax = end/10^6, ymax = l2FC,
+                color = ifelse(l2FC<0, palreds[5], palblues[1]), 
+                fill= ifelse(l2FC<0, palreds[5], palblues[1]))) +
+  scale_fill_manual(values = c(palreds[5], palblues[1]), guide = "none") +
+  scale_color_manual(values = c(palreds[5], palblues[1]), guide = "none") +
+  facet_grid(chromosome ~ ., scales = "fixed", space = "fixed")+ 
+  xlab("Chromosome Size (Mbp)") + 
+  ylab("log2 fold change") + 
+  ggtitle("Change in inferred TF activity for Spi-B motifs by Chromosome")+
+  t2 + 
+  theme(strip.text.y = element_text(angle = 360, hjust = 0),
+        strip.background.y = element_blank(),
+        axis.text.y = element_text(size=10),
+        axis.ticks.length.y = unit(3, "pt"),
+        panel.grid.major.x=element_blank(),
+        panel.spacing = unit(0.1, "lines")) + 
+  ylim(-3, 3) 
+
+```
+
+## Appendix Figure 17. Chromosomal locations of Spi-B motifs that show differential accessibility between trisomy 12 and non-trisomy 12 CLL. 
+Log2 fold changes are plotted (y axis) for Spi-B motifs that show an absolute Log2 fold change > 1 and a p-value < 0.1, as calculated using the diffTF package for all Spi-B motif locations, (motif defined in the HOCOMOCO database). Data shown is the 9 (trisomy 12 CLL) versus 42 (non-trisomy 12 CLL) comparison based on the data from Rendeiro et al. 2016^3^.
+
+\newpage
 
 ```{r }
-
 #First check whether script for Figure 6 has been run, and if  fig6_data_for_supplement.RData exists.
 #fig6_data_for_supplement.RData object contains Lasso_Plots_Fig6, a list of TableGrobs and coeff.long.mat_Fig6, a dataframe (840*3) of drug - stimulus - gene combinations and their coefficients
 
@@ -1629,7 +3528,7 @@ for(x in drug.list){
     fit.lm <- lm(Viability ~ treatment_drug * treatment_cytokine * PatientID, modelTab)
     fit[[nam]] <- fit.lm
 
-    #extract coefficients and p values and put into a dataframe
+    #extract coefficients and p-values and put into a dataframe
     coeffdf <- summary(fit.lm)$coefficients[,1] %>% as.data.frame()
 
     #process coeffdf
@@ -1801,7 +3700,7 @@ coeff.long.mat_Fig6 <- coeff.long.mat
 }
 ```
 
-```{r, fig.height=19.5, fig.width=16}
+```{r s18, fig.path=plotDir, dev=c("cairo_pdf"), fig.height=19.5, fig.width=16}
 colnames(Cytokine_labels) <- c("Stimulus", "label")
 
 coeff.long.mat_Fig6 %>%
@@ -1831,18 +3730,19 @@ coeff.long.mat_Fig6 %>%
         legend.background = element_rect(color = NA),
         strip.text.y.left = element_text(angle = 0, face="bold", size = 22),
         strip.background = element_blank())+
-  labs(fill = expression(paste(beta, "-int")))+
+  labs(fill = "Coefficient")+
   scale_y_discrete(position = "right",limits=rev)+
   scale_x_discrete(labels=c("KRAS,\nNRAS,\nBRAF"="RAS/RAF"))+
    facet_grid(label~., scales = "free_y",  space="free_y", switch = "both")
 
 ```
-**Appendix Figure 10. Genetic predictors of drug - stimulus interactions.** Heatmap depicting overview of genetic predictors of drug - stimulus interactions (each row represents the coefficients from fitting a single multivariate model). Stimuli are shown on left, and corresponding drugs on right. Drugs, stimuli and genetic alterations are alphabetically sorted. Coloured fields indicate that the $\beta_{int}$ for given drug and stimulus is modulated by corresponding genetic feature. Positive coefficients are shown in red, indicating $\beta_{int}$ is more positive for given drug and stimulus combination if the feature is present.
+
+## Appendix Figure 18. Genetic predictors of drug-stimulus interactions.
+Based on the drug-stimulus viability data of 137 CLL patient samples with complete genetic annotation,  we fitted a sample specific linear model. Heatmap depicting overview of genetic predictors of drug - stimulus interactions (each row represents the coefficients from fitting a single multivariate model). Stimuli are shown on left, and corresponding drugs on right. Drugs, stimuli and genetic alterations are alphabetically sorted. Coloured fields indicate that the interaction coefficient for given drug and stimulus is modulated by corresponding genetic feature. Positive coefficients are shown in red, indicating the interaction coefficient is more positive for given drug and stimulus combination if the feature is present.
 
 \newpage
 
-
-```{r fig.width = 10, fig.height =4,  eval = TRUE}
+```{r S19, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 10, fig.height =4,  eval = TRUE}
 
 # Plot predictor profile for Ibrutinib + IL4
  grid.arrange(grobs = Lasso_Plots_Fig6["Ibrutinib + IL-4"], ncol = 1)
@@ -1850,14 +3750,16 @@ coeff.long.mat_Fig6 %>%
 
 ```
 
-**Appendix Figure 11. Genetic predictors of the interaction between ibrutinib and IL4.** Predictor profile depicting genetic features that modulate the size of $\beta_{int}$ for ibrutinib and IL4. To generate predictor profile, linear model in Eqn. (1) was fitted in a sample - specific manner, to calculate drug-stimulus interaction coefficients ($\beta_{int}$) for each patient sample. Ranked patient-specific $\beta_{int}$ values are shown in lower scatter plot. Associations between the size of $\beta_{int}$ and genetic features were identified using multivariate regression with L1 (lasso) regularisation, with gene mutations and IGHV status as predictors, and selecting coefficients that were chosen in >90% of bootstrapped model fits. The horizontal bars  on left show the size of fitted coefficients assigned to genetic features. Matrix above scatter plot indicates patient mutation status for the selected genetic features. Matrix fields correspond to points in scatter plot (ie patient data is aligned), to indicate how the size of $\beta_{int}$ varies with selected genetic feature.
+## Appendix Figure 19. Genetic predictors of the interaction between ibrutinib and IL4.
+Predictor profile depicting genetic features that modulate the size of the $\beta_{int}$  for ibrutinib and IL4. To generate the predictor profile, linear model in Equation 1 was fitted in a sample-specific manner, to calculate drug-stimulus $\beta_{int}$ s for each patient sample (n=137). Ranked patient-specific $\beta_{int}$  values are shown in lower scatter plot. Associations between the size of the $\beta_{int}$  and genetic features were identified using multivariate regression with L1 (lasso) regularisation, with gene mutations and IGHV status as features, and selecting coefficients that were chosen in >90% of bootstrapped model fits. The horizontal bars  on left show the size of fitted coefficients assigned to genetic features. Matrix above scatter plot indicates patient mutation status for the selected genetic features. Matrix fields correspond to points in scatter plot (i.e. patient data is aligned), to indicate how the size of the $\beta_{int}$  varies with selected genetic feature.
 
 \newpage
 
-```{r  STAT6_Ibrutinib_IL4, fig.width=8}
-p1<-
+```{r  S20,fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=8}
+S20 <-
 IbrStat6iComb %>%
-  mutate(trisomy12=as.character(trisomy12)) %>% 
+  mutate(trisomy12=as.character(trisomy12),
+         IGHV.status=factor(IGHV.status, levels = c("U","M"), labels = c("unmutated", "mutated"))) %>% 
   
   ggplot( aes(x = interaction(Drug_2, Drug_1, Cytokine), y = Log))+
   geom_boxplot(outlier.shape = NA)+
@@ -1868,8 +3770,9 @@ IbrStat6iComb %>%
   ylab("\n\n\nViability") +
   ggtitle(paste0("")) +
   xlab("") +
-  ylab("Log(Viability)") +
-  scale_color_manual(values = c("M"=palblues[1], "U"=palreds[8]), na.value="#7a7c80") +
+  ylab("Logarithm of relative viability") +
+  # scale_color_manual(values = c("M"=palblues[1], "U"=palreds[8]), na.value="#7a7c80") +
+    scale_colour_manual(name = 'IGHV status', values = setNames(c(palblues[1],palreds[8]), c("mutated", "unmutated"))) +
   scale_x_discrete(labels=c("DMSO.DMSO.IL-4" = "IL4",
                             "Ibrutinib.DMSO.IL-4" = "IL4\nIbrutinib",
                             "DMSO.STAT6i.IL-4" = "IL4\nSTAT6i",
@@ -1877,24 +3780,34 @@ IbrStat6iComb %>%
 
   labs(shape = "trisomy 12", color = "IGHV status")
 
-p1
-```
-**Appendix Figure 12. STAT6 dependency of IL4 signaling.** The effects observed with IL4 stimulation are dependent on STAT6 activation. Addition of the STAT6 inhibitor AS1517499 could revoke the effect on baseline viability as well as drug induced toxicity.  Log transformed viability after treatment with IL4 in combination with ibrutinib, the STAT6 inhibitor AS1517499, and both.
+S20
 
+# IbrStat6iComb %>% 
+#   group_by(PatientID) %>% 
+#   summarise()
+
+
+```
+
+## Appendix Figure 20. STAT6 dependency of IL4 signaling.
+Natural logarithm of the relative viability after treatment with IL4 in combination with ibrutinib, the STAT6 inhibitor AS1517499, and both (n=16). The effects observed with IL4 stimulation are dependent on STAT6 activation. Addition of the STAT6 inhibitor AS1517499 could revoke the effect on baseline viability as well as drug induced toxicity. 
 
 \newpage
 
+# References 
+
+1. Care, M.A., Cocco, M., Laye, J.P., et al. (2014) SPIB and BATF provide alternate determinants of IRF4 occupancy in diffuse large B-cell lymphoma linked to disease heterogeneity. Nucleic Acids Res 42: 7591–7610
+
+2. Lu, J., Cannizzaro, E., Meier-Abt, F. et al. Multi-omics reveals clinically relevant proliferative drive associated with mTOR-MYC-OXPHOS activity in chronic lymphocytic leukemia. Nat Cancer 2, 853–864 (2021).
 
 
+3. Rendeiro, A., Schmidl, C., Strefford, J. et al. Chromatin accessibility maps of chronic lymphocytic leukaemia identify subtype-specific epigenome signatures and transcription regulatory networks. Nat Commun 7, 11938 (2016).
 
+4. Beekman, R., Chapaprieta, V., Russiñol, N. et al. The reference epigenome and regulatory chromatin landscape of chronic lymphocytic leukemia. Nat Med 24, 868–880 (2018).
 
-**References**  
-  
-1. Dietrich S, Oleś M, Lu J, et al. Drug-perturbation-based stratification of blood cancer. J. Clin. Invest. 2018;128(1):427–445.
+```{r}
 
-2. Buenrostro JD, Wu B, Chang HY, Greenleaf WJ. ATAC-seq: A Method for Assaying Chromatin Accessibility Genome-Wide. Curr. Protoc. Mol. Biol. 2015;109:21.29.1–21.29.9.
+knitr::knit_exit()
 
-3. Berest I, Arnold C, Reyes-Palomares A, et al. Quantification of Differential Transcription Factor Activity and Multiomics-Based Classification into Activators and Repressors: diffTF. Cell Rep. 2019;29(10):3147–3159.e12.
-
-4. Kulakovskiy IV, Vorontsov IE, Yevshin IS, et al. HOCOMOCO: expansion and enhancement of the collection of transcription factor binding sites models. Nucleic Acids Res. 2016;44(D1):D116–25.
+```
 

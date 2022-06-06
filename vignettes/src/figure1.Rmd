@@ -155,348 +155,158 @@ wrap_elements(Fig1C)
 
 
 ### Fig 1D
-Forrest plot of top 8 drug - drug Pearson Correlation Coefficients    
-Generate drug-only viability matrix 
-```{r drugViabMatrix1}
+```{r Fig1D,   fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=7, fig.width=10, warning = FALSE}
+# Data preparation
+#:::::::::::::::::::::::::::::::::::::::::::
 
-#Select high conc drug data and generate drug-only viability matrix
-Drug_mat <- 
-  df %>%
-  dplyr::filter(Drug != "DMSO", Drug_Concentration == "High", Cytokine== "No Cytokine") %>%
-  
-  #Get log(viability) values for all drugs, for each patient         
-  dplyr::select(PatientID, Drug, Log) %>% 
-  spread(Drug, Log) %>%
-  dplyr::select(-"PatientID")%>%
-  as.matrix()
+mydata<-df%>%
+  filter((Drug=="DMSO"&Cytokine!="No Cytokine")|(Drug!="DMSO"&Cytokine=="No Cytokine"), Drug_Concentration%in%c("High", "None"))%>%
+  group_by(PatientID, Drug, Cytokine) %>%
+  summarize(Log=mean(Log), .groups = "keep") %>%
+  ungroup() %>%
+  mutate(Cytokine=as.character(Cytokine), Drug=as.character(Drug)) %>%
+  mutate(Condition=case_when(Cytokine=="No Cytokine"~ Drug, Drug=="DMSO"~Cytokine)) %>%
+  select(PatientID, Condition, Log)%>%
+  spread(Condition, Log)%>%
+  ungroup() %>% 
+  column_to_rownames("PatientID")
 
-```
-
-Calculate Pearson Coefficients for all drug-drug combinations
-```{r drugPearsonCoefficients1}
-
-# Pearson Coefficients for all drug-drug combinations
-
-#get a list of all drug -drug combinations 
-drug.comb <- 
-  combn(colnames(Drug_mat), 2) %>% 
-  t() %>% 
-  as.data.frame()  %>% 
-  mutate(comb = paste(V1, V2, sep = ":"))
-
-#set up list of dataframes to store outputs of cor.test, for each drug -drug combination
-drug.corr <- vector("list", length = nrow(drug.comb))
-#set names as drug - drug combinations
-names(drug.corr)  <- drug.comb$comb
+# Compute correlation matrix
+#::::::::::::::::::::::::::::::::::::::::::
+# Correlation matrix between all variables
+cor.mat <- mydata %>% rstatix::cor_mat()
 
 
-#calculate Correlations and confidence intervals for every drug - drug combination
-for(drug1 in colnames(Drug_mat)){
-  for(drug2 in colnames(Drug_mat)){
+Cor.p.value<-cor.mat %>% rstatix::cor_get_pval() %>% 
+  column_to_rownames( var="rowname")%>%
+  as_tibble(rownames="Component_1") %>%
+    dplyr::mutate(Component_1=factor(Component_1)) %>%
+  pivot_longer(-Component_1, names_to="Component_2", values_to="p_value")
+
+cor.mat <- column_to_rownames(cor.mat, var="rowname")  
+
+# Define Lists of Stimuli and Drugs
+Cytokines <-unique(df$Cytokine) %>% setdiff("No Cytokine")
+Drugs<-unique(df$Drug) %>% setdiff("DMSO")
+
+# Define Theme for plots
+t_tmp<-theme(
+  plot.background = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.major.x = element_blank(),
+  panel.grid.minor = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.line = element_line(),
+  axis.text.x  = element_text(size = 12, face="bold"),
+  axis.text.y = element_text(size = 12, face="bold"),
+  axis.ticks.x = element_blank())
+
+
+#Drug
+Druglist<-c("Pyridone-6",  "BAY-11-7085", "Ralimetinib", "Everolimus",  "Selumetinib", "Idelalisib",  "Ibrutinib",   "PRT062607",   "Fludarabine", "Nutlin-3a",   "I-BET 762",   "Luminespib")
+
+Drug_data_tmp<-cor.mat[Druglist, Druglist]
+
+Drug_Corr<-Drug_data_tmp
+
+    Drug_Corr[upper.tri(Drug_Corr, diag = TRUE)]<- NA
     
-    #subset drug viability matrix for each drug of interest
-    x <- Drug_mat[,drug1]
-    y <- Drug_mat[,drug2]
     
-    #define drug - drug combination
-    comb <-paste(drug1, drug2, sep=":")
+# Drug_heatmap_clusters<-pheatmap::pheatmap(Drug_data_tmp)    
+
+
+# Drug_data_order<-rownames(Drug_data_tmp[Drug_heatmap_clusters$tree_row[["order"]],])
+
+Drug_Corr_tab<-Drug_Corr %>%
+  as_tibble(rownames="Drug_1") %>%
+  pivot_longer(-Drug_1, names_to="Drug_2", values_to="Pearson_R") %>%
+  dplyr::filter(!is.na(Pearson_R)) %>% 
+  left_join(Cor.p.value, by=c("Drug_1"="Component_1", "Drug_2"="Component_2")) %>% 
+  mutate(adj.p.value=p.adjust(p_value, method="BH"))
     
-    #only run cor.test if this combination is not rendundant
-    if(comb%in% names(drug.corr)){
-    
-    #run correlation test
-    cor <- cor.test(x, y, conf.level = 0.95, method = c("pearson"))
-    
-    #convert to table
-    cor.df <- unlist(cor) %>% as.data.frame()
-    colnames(cor.df) <- comb
-    
-    #add corr.test output to drug.corr dataframe
-    drug.corr[[comb]] <- cor.df
-    }
-  }
-}
+Drug_Cor_Plot<- Drug_Corr_tab %>% 
+    dplyr::mutate(Drug_1=factor(Drug_1, levels = rev(Druglist)),
+                   Drug_2=factor(Drug_2, levels = (Druglist))) %>%
+  ggplot(aes(Drug_1, Drug_2))+
+  geom_tile(aes(fill=Pearson_R),color = "grey")+
+  scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+
+  geom_text(aes(label=ifelse(adj.p.value<0.05,sub("^(-?)0.", "\\1.", sprintf("%.2f", round(Pearson_R,2))),""), fontface = ifelse(adj.p.value<0.05, 1, 1)), size=4)+
+    t_tmp+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
+    labs(fill = "Pearson R", x="", y="")+
+  guides(fill="none")
 
-#bind list of dataframes into single dataframe
-drug.corr <- do.call(cbind, drug.corr)
-
-
-
-```
-
-Arrange data for plotting
-```{r arrangeDataFig1D}
-
-#transform dataframe
-drug.corr <- 
-  drug.corr %>% 
-  rownames_to_column("feature") %>% 
-  t() %>% 
-  as.data.frame()
-
-#tidy up drug.corr dataframe
-colnames(drug.corr) <- drug.corr[1,]
-drug.corr <- drug.corr[-1,]
-drug.corr <- 
-  drug.corr %>% 
-  rownames_to_column("Combination")
-
-#sort out class types
-drug.corr$estimate.cor <- as.numeric(drug.corr$estimate.cor)
-drug.corr$conf.int1 <- as.numeric(drug.corr$conf.int1)
-drug.corr$conf.int2 <- as.numeric(drug.corr$conf.int2)
-
-#get top 8 correlations with highest R
-sig.drug <- 
-  drug.corr %>%
-  dplyr::filter(estimate.cor<1) %>%
-  top_n(8, estimate.cor)
-
-#Make drug combinations readable
-sig.drug$Combination <- gsub(':', ' and ', sig.drug$Combination)
-
-#Get order in which to plot
-order.drug <- 
-  sig.drug %>%
-  dplyr::arrange(estimate.cor) %>%
-  dplyr::select(Combination) %>%
-  unlist()
-  
-sig.drug$Combination <- factor(sig.drug$Combination, levels=order.drug)
-
-```
-
-```{r Fig1D, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=7, fig.height=5}
-
-#Plot Forest Plot
-Fig1D = 
-  ggplot(sig.drug, 
-         #PLot 8 drug-drug combinationns, against Pearson Coeffiecnet and show confidence intervals 
-         aes(x = Combination, y = estimate.cor, ymin = conf.int1, ymax = conf.int2 )) +
-  geom_pointrange(color = drugpal[1])+
-  geom_errorbar(aes(ymin=conf.int1, ymax=conf.int2), width=0.5, cex=1, color = drugpal[1])+
-  coord_flip()+
-  scale_y_continuous(limits=c(-0.1,1), 
-                     breaks=c(0,0.25,0.5,0.75,1),
-                     labels=c("0","0.25","0.50","0.75","1"))+
-  scale_x_discrete(position = "top") + 
-  ylab("Pearson Coefficient")+
-  xlab("")+
-  t2+
-  theme(axis.line.y = element_blank())+
-  guides(color="none") 
-
+Fig1D <- Drug_Cor_Plot
 Fig1D
-   
-  
+
 ```
 
 ### Fig 1E
-Forest plot of top 4 cytokine - cytokine Pearson Correlation Coefficients   
-Generate Cytokine only viability matrix
-```{r  cytokineViabilityMatrix1}
+```{r Fig1E,   fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.height=7, fig.width=10, warning=FALSE}
 
-##Select cytokine data and generate viability matrix
-Cytokine_mat <- 
-  df %>%
-  dplyr::filter(Drug =="DMSO", Cytokine !="No Cytokine") %>%
-  #Get log(viability) values for all cytokines, for each patient
-  dplyr::select(PatientID, Cytokine, Log) %>%
-  spread(Cytokine, Log) %>%
-  dplyr::select(-"PatientID") %>%
-  as.matrix()
+# Cytokine
+
+tmp_heatmap<-pheatmap::pheatmap(cor.mat[which(rownames(cor.mat)%in%Cytokines), which(colnames(cor.mat)%in%Cytokines)], silent = TRUE)
+
+Cytokinelist<-rownames(cor.mat[which(rownames(cor.mat)%in%Cytokines), which(colnames(cor.mat)%in%Cytokines)][tmp_heatmap$tree_row[["order"]],])
+
+Cyt_Corr<-cor.mat[Cytokinelist, Cytokinelist]
 
 
-```
+    Cyt_Corr[upper.tri(Cyt_Corr, diag = TRUE)]<- NA
 
-Calculate Pearson Coefficients for all cytokine-cytokine combinations
-```{r cytokinePearsonCoefficients1}
-
-#Pearson Coefficients for all cytokine-cytokine combinations
-#get a list of all combinations of stimuli
-cyt.comb <- 
-  combn(colnames(Cytokine_mat), 2) %>% 
-  t() %>% 
-  as.data.frame()  %>% 
-  mutate(comb = paste(V1, V2, sep = ":"))
-
-
-#set up list of dataframes to store outputs of cor.test, for each cytokine - cytokine combination
-cyt.corr <- vector("list", length = nrow(cyt.comb))
-
-#set names as cytokine - cytokine combinations
-names(cyt.corr)  <- cyt.comb$comb
-
-
-#calculate Correlations and confidence intervals for every combination
-for(cyt1 in colnames(Cytokine_mat)){
-  for(cyt2 in colnames(Cytokine_mat)){
+Cyt_Corr_tab<-Cyt_Corr %>%
+  as_tibble(rownames="Cyt_1") %>%
+    # dplyr::mutate(Cyt_1=factor(Cyt_1, levels = rev(rownames(Cyt_Corr)))) %>%
+  pivot_longer(-Cyt_1, names_to="Cyt_2", values_to="Pearson_R") %>%
+  dplyr::filter(!is.na(Pearson_R)) %>% 
+  left_join(Cor.p.value, by=c("Cyt_1"="Component_1", "Cyt_2"="Component_2")) %>% 
+  mutate(adj.p.value=p.adjust(p_value, method="BH"))    
     
-    #subset cytokine viability matrix for each cytokine of interest
-    x <- Cytokine_mat[,cyt1]
-    y <- Cytokine_mat[,cyt2]
-    
-    #define combination
-    comb <-paste(cyt1, cyt2, sep=":")
-    
-    #only run if this combinationn is not redundant
-    if(comb %in% names(cyt.corr)){
-    
-    #run correlation test
-    cor <- cor.test(x, y, conf.level = 0.95, method = c("pearson"))
-    
-    #convert to table
-    cor.df <- unlist(cor) %>% as.data.frame()
-    colnames(cor.df) <- comb
-    
-    #add to results dataframe
-    cyt.corr[[comb]] <- cor.df
-    }
-   
-  }
-}
+Cyt_Cor_Plot<-  Cyt_Corr_tab %>%
+    dplyr::mutate(Cyt_1=factor(Cyt_1, levels = rev(Cytokinelist)),
+                  Cyt_2=factor(Cyt_2, levels = (Cytokinelist))) %>%
+  ggplot(aes(Cyt_1, Cyt_2))+
+  geom_tile(aes(fill=Pearson_R),color = "grey")+
+  scale_fill_gradientn(colors=c("#003DA5",  "white",  "#A6093D"), limits=c(-1,1))+
+  geom_text(aes(label=ifelse(adj.p.value<0.05,sub("^(-?)0.", "\\1.", sprintf("%.2f", round(Pearson_R,2))),""), fontface = ifelse(adj.p.value<0.05, 1,1)), size=4)+
+    t_tmp+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))+
+    labs(fill = "Pearson R", x="", y="")+
+  scale_y_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))+
+  scale_x_discrete(labels=c("TGF-b1"="TGF-\u03B21", "sCD40L+IL-4"="sCD40L + IL4", "IL-1b"="IL1\u03B2", "IL-4"="IL4", "IL-6"="IL6","IL-15"="IL15","IL-10"="IL10", "IL-21"="IL21","IL-2"="IL2", "Interferon gamma"= "Interferon \u03B3", "SDF-1a"="SDF-1\u03B1"))+
+  guides(fill="none")
 
-
-
-cyt.corr <- do.call(cbind, cyt.corr)
-
-
-
-
-```
-
-Arrange data for plotting
-```{r arrangeDataFig1E}
-
-#Cytokine Forest plot
-#transform dataframe
-cyt.corr <- 
-  cyt.corr %>% 
-  rownames_to_column("feature") %>% 
-  t() %>% 
-  as.data.frame()
-
-#tidy up cyt.corr dataframe
-colnames(cyt.corr) <- cyt.corr[1,]
-cyt.corr <- cyt.corr[-1,]
-cyt.corr <- cyt.corr %>% rownames_to_column("Combination")
-
-#sort out class types
-cyt.corr$estimate.cor <- as.numeric(cyt.corr$estimate.cor)
-cyt.corr$conf.int1 <- as.numeric(cyt.corr$conf.int1)
-cyt.corr$conf.int2 <- as.numeric(cyt.corr$conf.int2)
-
-#get top 4 highest correlations
-sig.cyt <- 
-  cyt.corr %>%
-  dplyr::filter(estimate.cor<1) %>%
-  top_n(4, estimate.cor)
-
-#Make cytokine combinations readable
-sig.cyt$Combination <- gsub(':', ' and ', sig.cyt$Combination)
-
-#set plotting order
-order.cyt <- sig.cyt %>%
-            dplyr::arrange(estimate.cor) %>%
-            dplyr::select(Combination) %>%
-            unlist()
-  
-sig.cyt$Combination <- factor(sig.cyt$Combination, levels=order.cyt)
-
-
-```
-
-
-```{r Fig1E, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=7, fig.height=5, message=FALSE, warning=FALSE}
-
-#Plot Forest Plot
-Fig1E = 
-  ggplot(sig.cyt, 
-         aes(x = Combination, y = estimate.cor, ymin = conf.int1, ymax = conf.int2 ))+
-  geom_pointrange(color = cytpal[1])+
-  geom_errorbar(aes(ymin=conf.int1, ymax=conf.int2),width=0.5,cex=1, color = cytpal[1])+
-  coord_flip()+
-  scale_y_continuous(limits=c(-0.1,1), 
-                     breaks=c(0,0.25,0.5,0.75,1),
-                     labels=c("0","0.25","0.50","0.75","1"))+
-  ylab("Pearson Coefficient")+
-  xlab("")+
-  scale_x_discrete(position = "top", labels=c("IL-4 and sCD40L+IL-4"="IL4 and sCD40L + IL4","IL-1b and soluble anti-IgM"="IL1\u03B2 and soluble anti-IgM","Resiquimod and IL-4"="Resiquimod and IL4", "IL-6 and IL-10"="IL6 and IL10" ,"Interferon gamma and IL-10"="Interferon \u03B3 and IL10"))+
-  t2 +
-  theme(axis.line.y = element_blank()) +
-  guides(color="none")
-  
+Fig1E <- Cyt_Cor_Plot
 Fig1E
+
 ```
 
-### Fig 1F
-Forest plot of selected cytokine - cytokine Pearson Correlation Coefficients 
-```{r Fig1F, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=7, fig.height=5, message=FALSE, warning=FALSE}
 
-#get selected correlations
-sig.cyt <- 
-  cyt.corr %>%
-  dplyr::filter(Combination %in% c("Interferon gamma:IL-6",
-                                   "IL-1b:sCD40L",
-                                   "IL-4:IL-6"))
-    
-  
-
-#Make cytokine combinations readable
-sig.cyt$Combination <- gsub(':', ' and ', sig.cyt$Combination)
-
-#set plotting order
-order.cyt <- sig.cyt %>%
-            dplyr::arrange(estimate.cor) %>%
-            dplyr::select(Combination) %>%
-            unlist()
-  
-sig.cyt$Combination <- factor(sig.cyt$Combination, levels=order.cyt)
-
-
-#Plot Forest Plot
-Fig1F = 
-  ggplot(sig.cyt, 
-         aes(x = Combination, y = estimate.cor, ymin = conf.int1, ymax = conf.int2 ))+
-  geom_pointrange(color = cytpal[1])+
-  geom_errorbar(aes(ymin=conf.int1, ymax=conf.int2),width=0.5,cex=1, color = cytpal[1])+
-  coord_flip()+
-  scale_y_continuous(limits=c(-0.1,1), 
-                     breaks=c(0,0.25,0.5,0.75,1),
-                     labels=c("0","0.25","0.50","0.75","1"))+
-  ylab("Pearson Coefficient")+
-  xlab("")+
-  scale_x_discrete(position = "top", labels=c("IL-1b and sCD40L"="IL1\u03B2 and sCD40L", "IL-4 and IL-6"="IL4 and IL6" ,"Interferon gamma and IL-6"="Interferon \u03B3 and IL6          "))+
-  t2 +
-  theme(axis.line.y = element_blank()) +
-  guides(color="none")
-  
-Fig1F
-```
 
 
 ## Assemble Figure
-```{r, Figure1, fig.height=11, fig.width=18, fig.path=plotDir, dev=c("png", "cairo_pdf"), message=FALSE, warning=FALSE}
+```{r, Figure1, fig.height=11, fig.width=14, fig.path=plotDir, dev=c("png", "cairo_pdf"), message=FALSE, warning=FALSE}
 
 tp <- theme(plot.tag=element_text(size = 30, face="plain"))
+
 
 design1 <-"
   ABBC
   DDEE
-  DDFF
 "
 
 Figure1 <-
   
-  Fig1A + tp+
-  Fig1B + tp+
+  wrap_elements(Fig1A) + tp+
+  wrap_elements(Fig1B) + tp+
   wrap_elements(Fig1C ) + tp+
   wrap_elements(Fig1D) + tp+
   wrap_elements(Fig1E) + tp+
-  wrap_elements(Fig1F) + tp+
   
   plot_annotation(tag_levels = "A", title="Figure 1", theme = theme(title=element_text(size = 20))) +
-  plot_layout(design = design1, heights = c(0.7,0.55,0.45), width=c(1,0.8,0.8,1))
+  plot_layout(design = design1, heights = c(0.7,1.2), width=c(1,.5,1,1.1))
 
 
 Figure1

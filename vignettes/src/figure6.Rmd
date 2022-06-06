@@ -633,7 +633,6 @@ for (x in rownames(betaMatrix)){
 
 }
 
-
 ```
 
 
@@ -730,7 +729,7 @@ coeff.long.mat %>%
 
 ```
 
-```{r Fig6B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 9, fig.height = 18, warning=FALSE}
+```{r Fig6A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 9, fig.height = 18, warning=FALSE}
 
 #Plot heatmap
 coeff.long.mat.ordered <-  
@@ -796,7 +795,7 @@ Fig6A <-
         strip.background = element_blank())+
   
   
-  labs(fill = expression(beta["int"]))+
+  labs(fill = "Coefficient")+
   scale_y_discrete(position = "right")+
   scale_x_discrete(labels = gene_labels) +
   facet_grid(Stimulus~., scales = "free_y",  space="free_y", switch = "both", labeller =labeller( Stimulus=cyt_labels))
@@ -819,7 +818,7 @@ heatMaps <- heatMaps[!is.na(heatMaps)]
 ```
 
 Plot predictor profile for Fludarabine + CpG ODN 
-```{r Fig6A, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 10, fig.height = 10}
+```{r Fig6B, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width = 10, fig.height = 10}
 
 Fig6B <- grid.arrange(grobs = heatMaps["Fludarabine + CpG ODN"], ncol = 1)
 
@@ -838,17 +837,19 @@ ighv.labs <- c("U" = "IGHV-U", "M" =  "IGHV-M")
 #join viability and genetic data tables
 df.patMeta <- left_join(df, patMeta, by = "PatientID")
 
-Fig6C <-
 
+plotTab<-
   df.patMeta %>% 
   #filter for drug:stimulus combinations of interest, make sure no NAs in genetic data
   dplyr::filter(DCK%in%c("DMSO:CpG ODN","Fludarabine:CpG ODN","Fludarabine:No Cytokine"),
                 !is.na(trisomy12),
                 !is.na(IGHV.status)) %>%
-    mutate(DCK=factor(DCK, levels=c("DMSO:CpG ODN","Fludarabine:No Cytokine","Fludarabine:CpG ODN"))) %>% 
-  
+    mutate(DCK=factor(DCK, levels=c("DMSO:CpG ODN","Fludarabine:No Cytokine","Fludarabine:CpG ODN"))) 
+
+    
+Fig6C <-
   #plot treatment combination against viability 
-  ggplot(aes(x = DCK,y = Viability,color= DCK))+
+  ggplot(plotTab, aes(x = DCK,y = Viability,color= DCK))+
   geom_hline(yintercept = 0)+
   geom_boxplot()+
   geom_beeswarm(cex=1.5) +
@@ -861,7 +862,7 @@ Fig6C <-
                      step.increase=0.2, 
                      size=6) +
   xlab("") +
-  ylab("Log(Viability)") +
+  ylab("Logarithm of relative viability") +
   #facet by trisomy 12 and IGHV status
   facet_grid(vars(trisomy12), 
              vars(IGHV.status),
@@ -880,6 +881,8 @@ Fig6C <-
         axis.text.x = element_text(size=fontsize+4, angle = 35, hjust = 1, vjust = 1))
  
 Fig6C 
+
+length(unique(plotTab$PatientID))
 
 ```
 
@@ -913,7 +916,7 @@ Fig6D <-
                      step.increase=0.2, 
                      size=6) +
   xlab("") +
-  ylab("Log(Viability)") +
+  ylab("Logarithm of relative viability") +
   #facet by trisomy 12 and IGHV status
   facet_grid(vars(trisomy12), 
              vars(IGHV.status),
@@ -983,6 +986,8 @@ Fig6
 
 
 ```
+
+
 
 ## Appendix
 ```{r appendix6}
