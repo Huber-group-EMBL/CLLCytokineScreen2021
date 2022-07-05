@@ -153,7 +153,7 @@ Image of IHC cross-section of CLL-infiltrated LN stained for pSTAT6
 ```{r Fig7C, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=6, fig.height=4}
 
 Fig7C <-cowplot::ggdraw() +
-  cowplot::draw_image( "../../inst/images/CLL1_I3_pSTAT6.png", scale = 1)
+  cowplot::draw_image( "../../inst/images/CLL1_I3_pSTAT6_scale.png", scale = 1)
 
 Fig7C
 
@@ -167,7 +167,7 @@ Image of IHC cross-section of healthy LN stained for pSTAT6
 
 ##read image
 Fig7D <- cowplot::ggdraw() + 
-  cowplot::draw_image("../../inst/images/LK2_B4_pSTAT6.png", scale = 1)
+  cowplot::draw_image("../../inst/images/LK2_B4_pSTAT6_scale.png", scale = 1)
 
 Fig7D
 
@@ -178,7 +178,7 @@ Image of IHC cross-section of CLL-infiltrated LN stained for pIRAK4
 ```{r Fig7E, fig.path=plotDir, dev=c("png", "cairo_pdf"), fig.width=6, fig.height=4}
 
 Fig7E <- cowplot::ggdraw() + 
-  cowplot::draw_image( "../../inst/images/CLL1_I3_pIRAK4.png", scale = 1)
+  cowplot::draw_image( "../../inst/images/CLL1_I3_pIRAK4_scale.png", scale = 1)
 
 Fig7E
 
@@ -191,7 +191,7 @@ Image of IHC cross-section of healthy LN stained for pIRAK4
 
 
 Fig7F <- cowplot::ggdraw() + 
-  cowplot::draw_image( "../../inst/images/LK2_B4_pIRAK4.png", scale = 1)
+  cowplot::draw_image( "../../inst/images/LK2_B4_pIRAK4_scale.png", scale = 1)
 
 Fig7F
 ```
