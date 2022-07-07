@@ -1066,25 +1066,25 @@ colnames(Cytokine_labels) <- c("name", "Cytlabel")
 
 # Appendix Tables
 
-```{r, fig.pos="H"}
-
-patMeta %>%
-  mutate(IGHV.status=factor(IGHV.status, levels = c("U","M"), labels = c("unmutated", "mutated")),
-         treatment=factor(treatment, levels = c(1,0), labels = c("Yes", "No")),
-         Methylation_Cluster=factor(Methylation_Cluster, levels = c("LP","IP","HP"), labels = c("Low Programmed", "Intermediate Programmed", "High Programmed")),
-         gender=factor(gender, levels = c("f","m"), labels = c("female", "male"))
-         ) %>% 
-  dplyr::select(PatientID, gender, treatment, IGHV.status, `Methylation_Cluster`, del13q, del11q, trisomy12, del17p) %>%
-  dplyr::rename(`Patient ID`=PatientID, `Sex`=gender, `Treated before`=treatment, `IGHV status`=IGHV.status, `Methylation Cluster`=`Methylation_Cluster`, `Del(13q)`=del13q, `Del(11q)`=del11q, `Trisomy 12`=trisomy12, `Del(17p)`=del17p) %>%
-   kable( longtable = TRUE) %>%
-  row_spec(0,bold=TRUE) %>%
-    kable_styling(latex_options = c("hold_position", "repeat_header", "striped"), font_size=8)
-
-```
-## Appendix Table S1. Patient samples included in the study.
-List of patient samples and selected characteristics. For a full list of characteristics see [online vignette](https://github.com/Huber-group-EMBL/CLLCytokineScreen2021).NA=Not available.
-
-\newpage
+# ```{r, fig.pos="H"}
+# 
+# patMeta %>%
+#   mutate(IGHV.status=factor(IGHV.status, levels = c("U","M"), labels = c("unmutated", "mutated")),
+#          treatment=factor(treatment, levels = c(1,0), labels = c("Yes", "No")),
+#          Methylation_Cluster=factor(Methylation_Cluster, levels = c("LP","IP","HP"), labels = c("Low Programmed", "Intermediate Programmed", "High Programmed")),
+#          gender=factor(gender, levels = c("f","m"), labels = c("female", "male"))
+#          ) %>% 
+#   dplyr::select(PatientID, gender, treatment, IGHV.status, `Methylation_Cluster`, del13q, del11q, trisomy12, del17p) %>%
+#   dplyr::rename(`Patient ID`=PatientID, `Sex`=gender, `Treated before`=treatment, `IGHV status`=IGHV.status, `Methylation Cluster`=`Methylation_Cluster`, `Del(13q)`=del13q, `Del(11q)`=del11q, `Trisomy 12`=trisomy12, `Del(17p)`=del17p) %>%
+#    kable( longtable = TRUE) %>%
+#   row_spec(0,bold=TRUE) %>%
+#     kable_styling(latex_options = c("hold_position", "repeat_header", "striped"), font_size=8)
+# 
+# ```
+# ## Appendix Table S1. Patient samples included in the study.
+# List of patient samples and selected characteristics. For a full list of characteristics see [online vignette](https://github.com/Huber-group-EMBL/CLLCytokineScreen2021).NA=Not available.
+# 
+# \newpage
 
 
 ```{r, fig.pos="H"}
@@ -1158,7 +1158,7 @@ selected_mutations <-
 
   
 ```
-## Appendix Table S2. List of genetic features tested for their association with stimulus response in the univariate model of Figure 3A.
+## Appendix Table S1. List of genetic features tested for their association with stimulus response in the univariate model of Figure 3A.
 Only genetic features with at least three positive cases were considered. 
 \newpage
 
@@ -1210,7 +1210,7 @@ cox_output %>%
 
 ```
 
-## Appendix Table S3. Survival analysis of microenvironmental response clusters comparing C3 to C1, C2 and C4.
+## Appendix Table S2. Survival analysis of microenvironmental response clusters comparing C3 to C1, C2 and C4.
 Cox proportional hazards model of stimulus response clusters using time to next treatment and with C3 as reference.
 
 ```{r, fig.pos="H"}
@@ -1261,7 +1261,7 @@ cox_output %>%
 
 ```
 
-## Appendix Table S4. Survival analysis of microenvironmental response clusters comparing C3 to C1 and C2 combined.
+## Appendix Table S3. Survival analysis of microenvironmental response clusters comparing C3 to C1 and C2 combined.
 Cox proportional hazards model of stimuli response clusters using TTT.
 
 ```{r, fig.pos="H" }
@@ -1316,7 +1316,7 @@ cox_output %>%
 
 ```
 
-## Appendix Table S5. Multivariate survival analysis of response clusters.
+## Appendix Table S4. Multivariate survival analysis of response clusters.
 Multivariate Cox proportional hazards model of stimulus response clusters and genetic subgroups of disease progression using time to next treatment  with C3 as reference.
 
 
@@ -1570,7 +1570,7 @@ resTab %>%
 
 ```   
 
-## Appendix Table S6. Over-representation tests of immune signalling pathways (and control pathways) amongst Spi-B gene targets, based on primary CLL ATACseq data.
+## Appendix Table S5. Over-representation tests of immune signalling pathways (and control pathways) amongst Spi-B gene targets, based on primary CLL ATACseq data.
 
 
 ```{R, T7, fig.width=15, fig.height=2, message=FALSE }
@@ -1760,7 +1760,7 @@ resTab %>%
   kable_styling(latex_options = c("striped", "HOLD_position", "scale_down")) 
 
 ```
-## Appendix Table S7. Over-representation tests of immune signalling pathways (and control pathways) amongst Spi-B gene targets, based on DLBCL ChIPseq data from Care et al. 2014^1^. 
+## Appendix Table S6. Over-representation tests of immune signalling pathways (and control pathways) amongst Spi-B gene targets, based on DLBCL ChIPseq data from Care et al. 2014^1^. 
 
 
 \elandscape
