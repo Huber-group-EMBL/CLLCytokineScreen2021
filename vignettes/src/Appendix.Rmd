@@ -1593,6 +1593,14 @@ allresTab$adjpvalue_PU1[is.na(allresTab$adjpvalue_PU1)] <- 1
 
 allresTab <- select(allresTab, "ID", "genesetDatabase", "genesetSize", "count_SPIB", "pvalue_SPIB", "adjpvalue_SPIB","count_SPIB" , "count_PU1", "pvalue_PU1", "adjpvalue_PU1" )
 
+
+allresTab$pvalue_SPIB <- ifelse(allresTab$pvalue_SPIB >0.01, allresTab$pvalue_SPIB, paste0("**", as.character(allresTab$pvalue_SPIB), "**")) 
+allresTab$adjpvalue_SPIB <- ifelse(allresTab$adjpvalue_SPIB >0.01, allresTab$adjpvalue_SPIB, paste0("**", as.character(allresTab$adjpvalue_SPIB), "**")) 
+
+allresTab$pvalue_PU1 <- ifelse(allresTab$pvalue_PU1 >0.01, allresTab$pvalue_PU1, paste0("**", as.character(allresTab$pvalue_PU1), "**")) 
+allresTab$adjpvalue_PU1 <- ifelse(allresTab$adjpvalue_PU1 >0.01, allresTab$adjpvalue_PU1, paste0("**", as.character(allresTab$adjpvalue_PU1), "**")) 
+
+
 colnames(allresTab) <- c("Pathway",
                       "Geneset\nDatabase" , 
                       "Geneset\nSize",  
@@ -1607,15 +1615,18 @@ colnames(allresTab) <- c("Pathway",
                       "PU.1 adj. p-value")
 
 
+
+
 allresTab %>%  
   kable() %>%
   kable_styling(latex_options = c("striped", "HOLD_position", "scale_down")) 
 
-
+#if p value <-, reformat as **value** 
 
 ``` 
 
-## Appendix Table S5. Over-representation tests of immune signalling pathways amongst Spi-B and PU.1 gene targets, based on primary CLL ATACseq data.  Gene sets were selected from KEGG and Reactome databases. Control pathways i.e not related to immune signalling (Oxidative Phosphorylation, TP53 signalling and DNA Replication) were also included in the analysis and are not significant. 25 genes sets were tested, results for all genesets containing at least one target gene are shown.
+## Appendix Table S5. Over-representation tests of immune signalling pathways amongst Spi-B and PU.1 gene targets, based on primary CLL ATACseq data.  
+Gene sets were selected from KEGG and Reactome databases. Control pathways i.e not related to immune signalling (Oxidative Phosphorylation, TP53 signalling and DNA Replication) were also included in the analysis and are not significant. 25 genes sets were tested, results for all genesets containing at least one target gene are shown.
 
 \newpage
 ```{R, T7, fig.width=15, fig.height=2, message=FALSE }
@@ -1851,6 +1862,13 @@ allresTab$pvalue_PU1 <- round(allresTab$pvalue_PU1, digits = 3)
 #get significant results
 allresTab <- select(allresTab, ID, genesetDatabase, genesetSize,  count_SPIB, pvalue_SPIB, adjpvalue_SPIB, count_PU1, pvalue_PU1, adjpvalue_PU1)
 
+allresTab$pvalue_SPIB <- ifelse(allresTab$pvalue_SPIB >0.01, allresTab$pvalue_SPIB, paste0("**", as.character(allresTab$pvalue_SPIB), "**")) 
+allresTab$adjpvalue_SPIB <- ifelse(allresTab$adjpvalue_SPIB >0.01, allresTab$adjpvalue_SPIB, paste0("**", as.character(allresTab$adjpvalue_SPIB), "**")) 
+
+allresTab$pvalue_PU1 <- ifelse(allresTab$pvalue_PU1 >0.01, allresTab$pvalue_PU1, paste0("**", as.character(allresTab$pvalue_PU1), "**")) 
+allresTab$adjpvalue_PU1 <- ifelse(allresTab$adjpvalue_PU1 >0.01, allresTab$adjpvalue_PU1, paste0("**", as.character(allresTab$adjpvalue_PU1), "**")) 
+
+
 
 colnames(allresTab) <- c("Pathway",
                       "Geneset\nDatabase" , 
@@ -1873,7 +1891,8 @@ allresTab %>%
 
 ```
 
-## Appendix Table S6. Over-representation tests of immune signalling pathways amongst Spi-B and PU.1 gene targets, based on DLBCL ChIPseq data from Care et al. 2014^1^. Gene sets were selected from KEGG and Reactome databases. Control pathways i.e not related to immune signalling (Oxidative Phosphorylation, TP53 signalling and DNA Replication) were also included in the analysis and are not significant. 25 genesets were tested, all are shown.
+## Appendix Table S6. Over-representation tests of immune signalling pathways amongst Spi-B and PU.1 gene targets, based on DLBCL ChIPseq data from Care et al. 2014^1^. 
+Gene sets were selected from KEGG and Reactome databases. Control pathways i.e not related to immune signalling (Oxidative Phosphorylation, TP53 signalling and DNA Replication) were also included in the analysis and are not significant. 25 genesets were tested, all are shown.
 
 
 \elandscape
