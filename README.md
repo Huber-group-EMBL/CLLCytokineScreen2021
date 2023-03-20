@@ -13,5 +13,5 @@ If you use this analysis in published research, please cite the paper. Please re
 
 The presented analysis was performed by Holly Giles and Peter-Martin Bruch, building on scripts from Sascha Dietrich, Wolfgang Huber, Junyan Lu, Malgorzata Oles, Frederik Ziebell, Sophie Herbst and Ivan Berest. This repository is maintained by Holly Giles. If you have questions, email me at drhollygiles@gmail.com. 
 
-The data can also be explored interactively via the online [shiny app](https://www.imbi.uni-heidelberg.de/dietrichlab/CLL_Microenvironment/). 
+The data can also be explored interactively via the online [shiny app](https://www.dietrichlab.de/CLL_Microenvironment/). 
 
